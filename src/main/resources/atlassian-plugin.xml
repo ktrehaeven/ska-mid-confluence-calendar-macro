@@ -8,21 +8,27 @@
     </plugin-info>
 
     <!-- add our i18n resource -->
-    <resource type="i18n" name="i18n" location="ska-low-calendar"/>
+    <resource type="i18n" name="i18n" location="ska-low-confluence-calendar-macro"/>
     
     <!-- add our web resources -->
-    <web-resource key="ska-low-calendar-resources" name="ska-low-calendar Web Resources">
+    <web-resource key="ska-low-confluence-calendar-macro-resources" name="ska-low-confluence-calendar-macro Web Resources">
         <dependency>com.atlassian.auiplugin:ajs</dependency>
         
-        <resource type="download" name="ska-low-calendar.css" location="/css/ska-low-calendar.css"/>
-        <resource type="download" name="ska-low-calendar.js" location="/js/ska-low-calendar.js"/>
+        <resource type="download" name="ska-low-confluence-calendar-macro.css" location="/css/ska-low-confluence-calendar-macro.css"/>
+        <resource type="download" name="ska-low-confluence-calendar-macro.js" location="/js/ska-low-confluence-calendar-macro.js"/>
         <resource type="download" name="images/" location="/images"/>
 
-        <context>ska-low-calendar</context>
+        <context>ska-low-confluence-calendar-macro</context>
     </web-resource>
 
     <xhtml-macro name="SKA-Low Map" class="com.skao.conluence.plugins.macro.skalowmap" key='skalowmap-macro'>
         <description key="skalowmap.macro.desc"/>
+        <category name="formatting"/>
+        <parameters/>
+    </xhtml-macro>
+
+    <xhtml-macro name="SKA-Low Station Bookings" class="com.skao.conluence.plugins.macro.skalowstationbookings" key='skalowstationbookings-macro'>
+        <description key="skalowstationbookings.macro.desc"/>
         <category name="formatting"/>
         <parameters/>
     </xhtml-macro>

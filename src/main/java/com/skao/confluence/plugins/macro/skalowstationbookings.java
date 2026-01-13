@@ -6,10 +6,10 @@ import com.atlassian.confluence.macro.MacroExecutionException;
 
 import java.util.Map;
 
-public class skalowmap implements Macro {
+public class skalowstationbookings implements Macro {
 
     public String execute(Map<String, String> map, String s, ConversionContext conversionContext) throws MacroExecutionException {
-        return "<h1>Hello World!</h1>";
+        return "<h1>Hello World</h1>";
     }
 
     public BodyType getBodyType() { return BodyType.NONE; }
