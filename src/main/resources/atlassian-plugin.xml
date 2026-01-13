@@ -1,0 +1,30 @@
+<atlassian-plugin key="${atlassian.plugin.key}" name="${project.name}" plugins-version="2">
+    <plugin-info>
+        <description>${project.description}</description>
+        <version>${project.version}</version>`
+        <vendor name="${project.organization.name}" url="${project.organization.url}" />
+        <param name="plugin-icon">images/pluginIcon.png</param>
+        <param name="plugin-logo">images/pluginLogo.png</param>
+    </plugin-info>
+
+    <!-- add our i18n resource -->
+    <resource type="i18n" name="i18n" location="ska-low-calendar"/>
+    
+    <!-- add our web resources -->
+    <web-resource key="ska-low-calendar-resources" name="ska-low-calendar Web Resources">
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+        
+        <resource type="download" name="ska-low-calendar.css" location="/css/ska-low-calendar.css"/>
+        <resource type="download" name="ska-low-calendar.js" location="/js/ska-low-calendar.js"/>
+        <resource type="download" name="images/" location="/images"/>
+
+        <context>ska-low-calendar</context>
+    </web-resource>
+
+    <xhtml-macro name="SKA-Low Map" class="com.skao.conluence.plugins.macro.skalowmap" key='skalowmap-macro'>
+        <description key="skalowmap.macro.desc"/>
+        <category name="formatting"/>
+        <parameters/>
+    </xhtml-macro>
+    
+</atlassian-plugin>
