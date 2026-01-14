@@ -1,7 +1,7 @@
 <atlassian-plugin key="${atlassian.plugin.key}" name="${project.name}" plugins-version="2">
     <plugin-info>
         <description>${project.description}</description>
-        <version>${project.version}</version>`
+        <version>${project.version}</version>
         <vendor name="${project.organization.name}" url="${project.organization.url}" />
         <param name="plugin-icon">images/pluginIcon.png</param>
         <param name="plugin-logo">images/pluginLogo.png</param>
@@ -18,16 +18,24 @@
         <resource type="download" name="ska-low-confluence-calendar-macro.js" location="/js/ska-low-confluence-calendar-macro.js"/>
         <resource type="download" name="images/" location="/images"/>
 
-        <context>ska-low-confluence-calendar-macro</context>
+        <context>atl.general</context>
     </web-resource>
 
-    <xhtml-macro name="SKA-Low Map" class="com.skao.conluence.plugins.macro.skalowmap" key='skalowmap-macro'>
+    <web-resource key="leaflet-resources" name="Leaflet Resources">
+        <resource type="download" name="leaflet.css" location="/leaflet/leaflet.css"/>
+        <resource type="download" name="leaflet.js" location="/leaflet/leaflet.js"/>
+        <resource type="download" name="images/" location="/leaflet/images"/>
+
+        <context>atl.general</context>
+    </web-resource>
+
+    <xhtml-macro name="SKA-Low Map" class="com.skao.confluence.plugins.macro.SkaLowMap" key='ska-low-map-macro'>
         <description key="skalowmap.macro.desc"/>
         <category name="formatting"/>
         <parameters/>
     </xhtml-macro>
 
-    <xhtml-macro name="SKA-Low Station Bookings" class="com.skao.conluence.plugins.macro.skalowstationbookings" key='skalowstationbookings-macro'>
+    <xhtml-macro name="SKA-Low Station Bookings" class="com.skao.confluence.plugins.macro.SkaLowStationBookings" key='ska-low-station-bookings-macro'>
         <description key="skalowstationbookings.macro.desc"/>
         <category name="formatting"/>
         <parameters/>

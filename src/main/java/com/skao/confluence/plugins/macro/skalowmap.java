@@ -1,4 +1,4 @@
-package com.skao.conluence.plugins.macro;
+package com.skao.confluence.plugins.macro;
 
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.macro.Macro;
@@ -6,13 +6,25 @@ import com.atlassian.confluence.macro.MacroExecutionException;
 
 import java.util.Map;
 
-public class skalowmap implements Macro {
+public class SkaLowMap implements Macro {
 
-    public String execute(Map<String, String> map, String s, ConversionContext conversionContext) throws MacroExecutionException {
-        return "<h1>Hello World!</h1>";
+    @Override
+    public String execute(Map<String, String> params, String body, ConversionContext ctx)
+            throws MacroExecutionException {
+
+        // HTML wrapper for the Leaflet map
+        return "<div class='map-wrapper'>" +
+               "  <div class='map'></div>" +
+               "</div>";
     }
 
-    public BodyType getBodyType() { return BodyType.NONE; }
+    @Override
+    public BodyType getBodyType() {
+        return BodyType.NONE;
+    }
 
-    public OutputType getOutputType() { return OutputType.BLOCK; }
+    @Override
+    public OutputType getOutputType() {
+        return OutputType.BLOCK;
+    }
 }
