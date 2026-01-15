@@ -14,6 +14,7 @@
     <web-resource key="ska-low-confluence-calendar-macro-resources" name="ska-low-confluence-calendar-macro Web Resources">
         <dependency>com.atlassian.auiplugin:ajs</dependency>
         
+        <resource type="download" name="stationLocations.json" location="/data/stationLocations.json"/>
         <resource type="download" name="ska-low-confluence-calendar-macro.css" location="/css/ska-low-confluence-calendar-macro.css"/>
         <resource type="download" name="ska-low-confluence-calendar-macro.js" location="/js/ska-low-confluence-calendar-macro.js"/>
         <resource type="download" name="images/" location="/images"/>
