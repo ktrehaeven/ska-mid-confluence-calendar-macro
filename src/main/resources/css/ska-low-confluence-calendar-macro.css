@@ -5,4 +5,17 @@
 .map {
     height: 600px;
     width: 75%;
+    position: relative;
+    z-index: 1;
+}
+
+/* prevent macro sliding over browser banner */
+.leaflet-container {
+    z-index: 1;
+}
+
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom {
+    z-index: 2;
 }
