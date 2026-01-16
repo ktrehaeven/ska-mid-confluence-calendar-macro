@@ -1,21 +1,41 @@
-.map-wrapper {
+.ska-low-map-macro {
     width: 100%;
 }
 
-.map {
+.ska-low-map-macro .map-wrapper {
+    width: 100%;
+}
+
+.ska-low-map-macro .map {
     height: 600px;
-    width: 75%;
+    width: 100%;
     position: relative;
     z-index: 1;
 }
 
 /* prevent macro sliding over browser banner */
-.leaflet-container {
+.ska-low-map-macro .leaflet-container {
     z-index: 1;
 }
 
-.leaflet-pane,
-.leaflet-top,
-.leaflet-bottom {
+.ska-low-map-macro .leaflet-pane,
+.ska-low-map-macro .leaflet-top,
+.ska-low-map-macro .leaflet-bottom {
     z-index: 2;
+}
+
+/* ------------------------ */
+
+.ska-low-station-bookings-macro {
+    width: 100%;
+}
+
+.ska-low-station-bookings-macro .cal-wrapper {
+    width: 100%;
+}
+
+.ska-low-station-bookings-macro .daypilot {
+    height: 500px;
+    position: relative;
+    overflow: hidden;
 }

@@ -9,7 +9,11 @@ import java.util.Map;
 public class SkaLowStationBookings implements Macro {
 
     public String execute(Map<String, String> map, String s, ConversionContext conversionContext) throws MacroExecutionException {
-        return "<h1>Hello World12</h1>";
+        return "<div class='ska-low-station-bookings-macro'>" +  
+            " <div class='cal-wrapper'>" +
+            " <div class='daypilot'></div>" +
+            "</div>" +
+            "</div>";
     }
 
     public BodyType getBodyType() { return BodyType.NONE; }

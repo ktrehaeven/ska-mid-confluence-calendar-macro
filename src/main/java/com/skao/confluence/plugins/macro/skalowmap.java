@@ -13,9 +13,11 @@ public class SkaLowMap implements Macro {
             throws MacroExecutionException {
 
         // HTML wrapper for the Leaflet map
-        return "<div class='map-wrapper'>" +
-               "  <div class='map'></div>" +
-               "</div>";
+        return "<div class='ska-low-map-macro'>" +  
+            " <div class='map-wrapper'>" +
+            " <div class='map'></div>" +
+            "</div>" +
+            "</div>";
     }
 
     @Override
