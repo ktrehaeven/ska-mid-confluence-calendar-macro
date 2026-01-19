@@ -1,5 +1,5 @@
 AJS.toInit(function () {
-    // For each macro instance on the page
+    // initialise each macro instance on the page
 
     document.querySelectorAll('.ska-low-map-macro').forEach(initMap);
 
@@ -8,7 +8,7 @@ AJS.toInit(function () {
 });
 
 function initMap(wrapper) {
-    // function for setting up and displaying station map
+    // function for initialising and displaying station map
 
     const mapEl = wrapper.querySelector('.map');
     if (!mapEl || mapEl.dataset.initialised) return;
@@ -65,7 +65,7 @@ function initMap(wrapper) {
 };
 
 async function initBookings(wrapper) {
-    // function for setting up and displaying daypilot scheduler 
+    // function for initialising and displaying daypilot scheduler 
 
     const calendarEl = wrapper.querySelector('.daypilot');
     if (!calendarEl || calendarEl.dataset.initialised) return;
@@ -123,7 +123,41 @@ async function initBookings(wrapper) {
     calendar.init();
     calendar.events.list = await getCalEvents();
     calendar.update();
-    getCalendars()
+}
+
+async function getCalEvents() {
+    // function to request all events for a list of calendar ids
+    // within a defined time period
+
+    const childSubCalendarIds = await getCalendars()
+    const start = "2026-01-01T00:00:00Z"
+    const end = "2026-02-01T00:00:00Z"
+    const fetchPromises = childSubCalendarIds.map(async (id) => {
+        const response = await fetch(
+            AJS.contextPath() +
+            `/rest/calendar-services/1.0/calendar/events.json` +
+            `?subCalendarId=${id}` +
+            `&start=${start}` +
+            `&end=${end}`
+        );
+
+        if (!response.ok) {
+            console.warn(`Failed to fetch events for ${id}`);
+            return []; // return empty array on failure to avoid breaking Promise.all
+        }
+
+        console.log(`getting ${id}`)
+        const data = await response.json();
+        console.log(data.events)
+        return (data.events || []).flatMap(confluenceEventToDayPilotEvents);
+    });
+
+    // Wait for all requests to complete
+    const allEventsArrays = await Promise.all(fetchPromises);
+    console.log(allEventsArrays)
+
+    // Flatten into a single array
+    return allEventsArrays.flat();
 }
 
 async function getCalendars() {
@@ -161,42 +195,6 @@ async function getCalendars() {
     return childSubCalendarIds
 }
 
-async function getCalEvents() {
-    // requests confluence for calendar events
-    // returns events formatted for daypilot
-
-    const response = await fetch(
-        AJS.contextPath() +
-        '/rest/calendar-services/1.0/calendar/events.json' +
-        '?subCalendarId=1d075e7d-8bde-4cdc-bb0b-b59a6f4d2847' +
-        '&start=2026-01-01T00:00:00Z' +
-        '&end=2026-02-01T00:00:00Z'
-    );
-
-    if (!response.ok) {
-        throw new Error('Failed to fetch calendar events');
-    }
-
-    const data = await response.json();
-
-    return data.events.flatMap(confluenceEventToDayPilotEvents);
-}
-
-function extractResourcesFromEvent(event) {
-    // tests if station ids are mentioned in the 
-    // description or title of a confluence event
-
-    const STATION_IDS = ["s8-1", "s9-2", "s8-6", "s10-3"];
-    const haystack = (
-        (event.title || "") + " " +
-        (event.description || "")
-    ).toLowerCase();
-
-    return STATION_IDS.filter(stationId =>
-        haystack.includes(stationId.toLowerCase())
-    );
-}
-
 function confluenceEventToDayPilotEvents(event) {
     // creates a daypilot event for each station id in a confluence event
     // will not create an event if no station id is found
@@ -215,4 +213,19 @@ function confluenceEventToDayPilotEvents(event) {
         end: event.end,
         resource: resourceId
     }));
+}
+
+function extractResourcesFromEvent(event) {
+    // tests if station ids are mentioned in the 
+    // description or title of a confluence event
+
+    const STATION_IDS = ["s8-1", "s9-2", "s8-6", "s10-3"];
+    const haystack = (
+        (event.title || "") + " " +
+        (event.description || "")
+    ).toLowerCase();
+
+    return STATION_IDS.filter(stationId =>
+        haystack.includes(stationId.toLowerCase())
+    );
 }
