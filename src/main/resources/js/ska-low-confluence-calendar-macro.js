@@ -8,6 +8,8 @@ AJS.toInit(function () {
 });
 
 function initMap(wrapper) {
+    // function for setting up and displaying station map
+
     const mapEl = wrapper.querySelector('.map');
     if (!mapEl || mapEl.dataset.initialised) return;
     mapEl.dataset.initialised = "true";
@@ -63,6 +65,8 @@ function initMap(wrapper) {
 };
 
 async function initBookings(wrapper) {
+    // function for setting up and displaying daypilot scheduler 
+
     const calendarEl = wrapper.querySelector('.daypilot');
     if (!calendarEl || calendarEl.dataset.initialised) return;
 
@@ -117,12 +121,50 @@ async function initBookings(wrapper) {
     });
 
     calendar.init();
-    calendar.events.list = await get_cal_events();
+    calendar.events.list = await getCalEvents();
     calendar.update();
+    getCalendars()
 }
 
-async function get_cal_events() {
-    const STATION_IDS = ["s8-1", "s9-2", "s8-6", "s10-3"];
+async function getCalendars() {
+    // requests confluence for all child calendars of the ska construction calendar
+    // returns list of child calendar ids
+
+    // public value
+    // const skaConstructionCalId = "4cc239ae-8b4d-4d6d-b852-0aa439fd4dbb"
+
+    // test value
+    const skaConstructionCalId = "343f5d43-bca6-42a8-a1d1-af0bae92e1e0"
+
+    const response = await fetch(
+        AJS.contextPath() +
+        "/rest/calendar-services/1.0/calendar/subcalendars.json?"
+    );
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch calendars');
+    }
+
+    const data = await response.json();
+
+    // filter to skaConstructionCal
+    const targetPayload = data.payload.find(
+        entry => entry.subCalendar && entry.subCalendar.id === skaConstructionCalId
+    );
+
+    // create list of child calendars
+    const childSubCalendarIds = targetPayload
+        ? targetPayload.childSubCalendars.map(child => child.subCalendar.id)
+        : [];
+
+    console.log(childSubCalendarIds)
+    return childSubCalendarIds
+}
+
+async function getCalEvents() {
+    // requests confluence for calendar events
+    // returns events formatted for daypilot
+
     const response = await fetch(
         AJS.contextPath() +
         '/rest/calendar-services/1.0/calendar/events.json' +
@@ -137,11 +179,40 @@ async function get_cal_events() {
 
     const data = await response.json();
 
-    return data.events.map(e => ({
-        id: e.id,
-        text: e.title,
-        start: e.start,
-        end: e.end,
-        resource: "s8-1" // later: map this properly
+    return data.events.flatMap(confluenceEventToDayPilotEvents);
+}
+
+function extractResourcesFromEvent(event) {
+    // tests if station ids are mentioned in the 
+    // description or title of a confluence event
+
+    const STATION_IDS = ["s8-1", "s9-2", "s8-6", "s10-3"];
+    const haystack = (
+        (event.title || "") + " " +
+        (event.description || "")
+    ).toLowerCase();
+
+    return STATION_IDS.filter(stationId =>
+        haystack.includes(stationId.toLowerCase())
+    );
+}
+
+function confluenceEventToDayPilotEvents(event) {
+    // creates a daypilot event for each station id in a confluence event
+    // will not create an event if no station id is found
+
+    const matchedResources = extractResourcesFromEvent(event);
+
+    if (matchedResources.length === 0) {
+        return [];
+    }
+
+    return matchedResources.map(resourceId => ({
+        id: `${event.id}:${resourceId}`,
+        parentId: event.id,
+        text: event.title,
+        start: event.start,
+        end: event.end,
+        resource: resourceId
     }));
 }
