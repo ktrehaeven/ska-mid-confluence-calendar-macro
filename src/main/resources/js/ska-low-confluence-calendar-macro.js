@@ -146,15 +146,12 @@ async function getCalEvents() {
             return []; // return empty array on failure to avoid breaking Promise.all
         }
 
-        console.log(`getting ${id}`)
         const data = await response.json();
-        console.log(data.events)
         return (data.events || []).flatMap(confluenceEventToDayPilotEvents);
     });
 
     // Wait for all requests to complete
     const allEventsArrays = await Promise.all(fetchPromises);
-    console.log(allEventsArrays)
 
     // Flatten into a single array
     return allEventsArrays.flat();
@@ -164,10 +161,10 @@ async function getCalendars() {
     // requests confluence for all child calendars of the ska construction calendar
     // returns list of child calendar ids
 
-    // public value
+    // public id
     // const skaConstructionCalId = "4cc239ae-8b4d-4d6d-b852-0aa439fd4dbb"
 
-    // test value
+    // test id
     const skaConstructionCalId = "343f5d43-bca6-42a8-a1d1-af0bae92e1e0"
 
     const response = await fetch(
@@ -191,7 +188,6 @@ async function getCalendars() {
         ? targetPayload.childSubCalendars.map(child => child.subCalendar.id)
         : [];
 
-    console.log(childSubCalendarIds)
     return childSubCalendarIds
 }
 
@@ -209,8 +205,8 @@ function confluenceEventToDayPilotEvents(event) {
         id: `${event.id}:${resourceId}`,
         parentId: event.id,
         text: event.title,
-        start: event.start,
-        end: event.end,
+        start: applyTimezoneOffset(new Date(event.start)),
+        end: applyTimezoneOffset(new Date(event.end)),
         resource: resourceId
     }));
 }
@@ -228,4 +224,8 @@ function extractResourcesFromEvent(event) {
     return STATION_IDS.filter(stationId =>
         haystack.includes(stationId.toLowerCase())
     );
+}
+
+function applyTimezoneOffset(dt) {
+    return dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
 }
