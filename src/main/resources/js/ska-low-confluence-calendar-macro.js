@@ -3,7 +3,7 @@ AJS.toInit(function () {
 
     document.querySelectorAll('.ska-low-map-macro').forEach(initMap);
 
-    document.querySelectorAll('.ska-low-station-bookings-macro').forEach(initBookings);
+    document.querySelectorAll('.ska-low-station-bookings-macro').forEach(initCalendar);
 
 });
 
@@ -64,28 +64,26 @@ function initMap(wrapper) {
         });
 };
 
-async function initBookings(wrapper) {
+async function initCalendar(wrapper) {
     // function for initialising and displaying daypilot scheduler 
 
     const calendarEl = wrapper.querySelector('.daypilot');
-    if (!calendarEl || calendarEl.dataset.initialised) return;
+    const navEl = wrapper.querySelector('.daypilot-nav');
 
+    if (!calendarEl || calendarEl.dataset.initialised) return;
     calendarEl.dataset.initialised = "true";
 
     const calendar = new DayPilot.Scheduler(calendarEl, {
         timeHeaders: [
-            {
-                groupBy: "Day",
-            },
-            {
-                groupBy: "Hour",
-            },
+            { groupBy: "Day", },
+            { groupBy: "Hour", },
         ],
         scale: "Hour",
-        days: DayPilot.Date.today().daysInMonth(),
+        days: 7,
+        width: "100%",
         businessBeginsHour: 9,
         businessEndsHour: 17,
-        startDate: DayPilot.Date.today().firstDayOfMonth(),
+        startDate: DayPilot.Date.today(),
         timeRangeSelectedHandling: "Enabled",
         resources: [
             { name: "s8-1", id: "s8-1" },
@@ -120,9 +118,21 @@ async function initBookings(wrapper) {
         },
     });
 
-    calendar.init();
+    const nav = new DayPilot.Navigator(navEl, {
+        selectMode: "Week",
+        showMonths: 1,
+        skipMonths: 1,
+        freeHandSelectionEnabled: true,
+        onTimeRangeSelected: args => {
+            calendar.startDate = args.start;
+            calendar.days = args.days;
+            calendar.update();
+        }
+    });
+
     calendar.events.list = await getCalEvents();
-    calendar.update();
+    nav.init()
+    calendar.init();
 }
 
 async function getCalEvents() {
@@ -131,7 +141,7 @@ async function getCalEvents() {
 
     const childSubCalendarIds = await getCalendars()
     const start = "2026-01-01T00:00:00Z"
-    const end = "2026-02-01T00:00:00Z"
+    const end = "2027-02-01T00:00:00Z"
     const fetchPromises = childSubCalendarIds.map(async (id) => {
         const response = await fetch(
             AJS.contextPath() +

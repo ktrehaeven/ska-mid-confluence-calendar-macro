@@ -10,10 +10,9 @@ public class SkaLowStationBookings implements Macro {
 
     public String execute(Map<String, String> map, String s, ConversionContext conversionContext) throws MacroExecutionException {
         return "<div class='ska-low-station-bookings-macro'>" +  
-            " <div class='cal-wrapper'>" +
-            " <div class='daypilot'></div>" +
-            "</div>" +
-            "</div>";
+                " <div class='daypilot-nav'></div>" +
+                " <div class='daypilot'></div>" +
+                "</div>";
     }
 
     public BodyType getBodyType() { return BodyType.NONE; }
