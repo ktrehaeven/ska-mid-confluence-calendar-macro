@@ -6,9 +6,19 @@ AJS.toInit(function () {
         stationIndex: {}
     };
 
+    // read stationLocations.json
+    window.SkaLowMaps.stationIndex = fetch(AJS.contextPath()
+        + '/download/resources/com.skao.confluence.plugins.ska-low-confluence-calendar-macro:'
+        + 'ska-low-confluence-calendar-macro-resources/stationLocations.json')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Failed to load stationLocations.json");
+            }
+            return response.json();
+        })
+
     // initialise each macro instance on the page
     document.querySelectorAll('.ska-low-map-macro').forEach(initMap);
-
     document.querySelectorAll('.ska-low-station-bookings-macro').forEach(initCalendar);
 
 });
@@ -31,7 +41,6 @@ function initMap(wrapper) {
         minZoom: 2,
         maxZoom: 17,
         attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
-        ext: 'jpg',
     }).addTo(map);
 
     // Load station JSON and plot markers
@@ -45,30 +54,32 @@ function initMap(wrapper) {
         })
         .then(stations => {
             stations.forEach(station => {
-                // save station lat and longs to shared map registry for quick reference
-                window.SkaLowMaps.stationIndex[station.Label.toLowerCase()] = {
-                    lat: station.Latitude,
-                    lng: station.Longitude
-                };
-                L.circleMarker(
+                const marker = L.circleMarker(
                     [station.Latitude, station.Longitude],
                     {
                         radius: 8,
                         color: '#1a73e8',
-                        fillColor: '#1a73e8',
+                        fillColor: '#18e01e',
                         fillOpacity: 0.9
                     }
-                )
-                    .addTo(map)
-                    .bindTooltip(
-                        station.Label,
-                        {
-                            permanent: true,
-                            direction: "right",
-                            offset: [10, 0],
-                            opacity: 0.8
-                        }
-                    );
+                ).addTo(map)
+
+                marker.bindTooltip(
+                    station.Label,
+                    {
+                        permanent: false,
+                        direction: "right",
+                        offset: [10, 0],
+                        opacity: 0.8
+                    }
+                );
+
+                // save station lat and longs and marker to shared map registry
+                window.SkaLowMaps.stationIndex[station.Label.toLowerCase()] = {
+                    lat: station.Latitude,
+                    lng: station.Longitude
+                };
+                window.SkaLowMaps.stationIndex[station.Label.toLowerCase()].marker = marker;
             });
         })
         .catch(err => {
@@ -81,6 +92,8 @@ async function initCalendar(wrapper) {
 
     const calendarEl = wrapper.querySelector('.daypilot');
     const navEl = wrapper.querySelector('.daypilot-nav');
+    const map = window.SkaLowMaps.map;
+    let selectedResourceId = null;
 
     if (!calendarEl || calendarEl.dataset.initialised) return;
     calendarEl.dataset.initialised = "true";
@@ -91,6 +104,7 @@ async function initCalendar(wrapper) {
             { groupBy: "Hour", },
         ],
         scale: "CellDuration",
+        locale: "en-AU",
         cellDuration: 15,
         cellWidth: 20,
         days: 1,
@@ -134,16 +148,46 @@ async function initCalendar(wrapper) {
         },
         resourceHeaderClickHandling: "Update",
         onRowClick: (args) => {
-            const station = window.SkaLowMaps.stationIndex[args.row.id];
-            window.SkaLowMaps.map.flyTo(
-                [station.lat, station.lng], 14,
-                { animate: true, duration: 0.8 }
-            );
+            //clicking new row
+            if (args.row.id != selectedResourceId) {
+                if (map) {
+                    const station = window.SkaLowMaps.stationIndex[args.row.id];
+                    map.flyTo(
+                        [station.lat, station.lng], 13,
+                        { animate: true, duration: 0.5 }
+                    );
+
+                    resetTooltips(map)
+                    station.marker.openTooltip();
+                }
+                selectedResourceId = args.row.id;
+                calendar.update();
+            }
+            //clicking same row
+            else {
+                if (map) {
+                    map.flyTo([-26.824722084, 116.76444824], 10,
+                        { animate: true, duration: 0.5 });
+                    resetTooltips(map)
+                }
+                selectedResourceId = null
+                calendar.update();
+            }
+        },
+        onBeforeRowHeaderRender: (args) => {
+            if (args.row.id === selectedResourceId) {
+                args.row.backColor = "#e0e0e0";
+            }
+            else {
+                args.row.backColor = null;
+            }
         }
     });
 
     const nav = new DayPilot.Navigator(navEl, {
         selectMode: "Day",
+        cellHeight: "40",
+        cellWidth: "40",
         showMonths: 1,
         skipMonths: 1,
         freeHandSelectionEnabled: true,
@@ -158,6 +202,8 @@ async function initCalendar(wrapper) {
     nav.init()
     calendar.init();
 }
+
+// --------- confluence utils ----------
 
 async function getCalEvents() {
     // function to request all events for a list of calendar ids
@@ -262,4 +308,12 @@ function extractResourcesFromEvent(event) {
 
 function applyTimezoneOffset(dt) {
     return dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+}
+
+// --------- map utils ----------
+
+function resetTooltips(map) {
+    map.eachLayer(function (layer) {
+        if (layer.options.pane === "tooltipPane") layer.removeFrom(map);
+    });
 }
