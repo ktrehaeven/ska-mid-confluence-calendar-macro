@@ -7,8 +7,7 @@ AJS.toInit(function () {
     };
 
     // read stationLocations.json
-    window.SkaLowMaps.stationIndex = fetch(AJS.contextPath()
-        + '/download/resources/com.skao.confluence.plugins.ska-low-confluence-calendar-macro:'
+    fetch(AJS.contextPath() + '/download/resources/com.skao.confluence.plugins.ska-low-confluence-calendar-macro:'
         + 'ska-low-confluence-calendar-macro-resources/stationLocations.json')
         .then(response => {
             if (!response.ok) {
@@ -16,11 +15,23 @@ AJS.toInit(function () {
             }
             return response.json();
         })
+        .then(stations => {
+            stations.forEach(station => {
+                // save station lat and longs and marker to shared map registry
+                window.SkaLowMaps.stationIndex[station.Label] = {
+                    Label: station.Label,
+                    Latitude: station.Latitude,
+                    Longitude: station.Longitude
+                };
+            });
+            // initialise each macro instance on the page
+            document.querySelectorAll('.ska-low-map-macro').forEach(initMap);
+            document.querySelectorAll('.ska-low-station-bookings-macro').forEach(initCalendar);
+        })
 
-    // initialise each macro instance on the page
-    document.querySelectorAll('.ska-low-map-macro').forEach(initMap);
-    document.querySelectorAll('.ska-low-station-bookings-macro').forEach(initCalendar);
-
+        .catch(err => {
+            console.error("Station map error:", err);
+        });
 });
 
 function initMap(wrapper) {
@@ -44,47 +55,29 @@ function initMap(wrapper) {
     }).addTo(map);
 
     // Load station JSON and plot markers
-    fetch(AJS.contextPath() + '/download/resources/com.skao.confluence.plugins.ska-low-confluence-calendar-macro:'
-        + 'ska-low-confluence-calendar-macro-resources/stationLocations.json')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error("Failed to load stationLocations.json");
+
+    Object.entries(window.SkaLowMaps.stationIndex).forEach(([key, station]) => {
+        const marker = L.circleMarker(
+            [station.Latitude, station.Longitude],
+            {
+                radius: 8,
+                color: '#1a73e8',
+                fillColor: '#18e01e',
+                fillOpacity: 0.9
             }
-            return response.json();
-        })
-        .then(stations => {
-            stations.forEach(station => {
-                const marker = L.circleMarker(
-                    [station.Latitude, station.Longitude],
-                    {
-                        radius: 8,
-                        color: '#1a73e8',
-                        fillColor: '#18e01e',
-                        fillOpacity: 0.9
-                    }
-                ).addTo(map)
+        ).addTo(map)
 
-                marker.bindTooltip(
-                    station.Label,
-                    {
-                        permanent: false,
-                        direction: "right",
-                        offset: [10, 0],
-                        opacity: 0.8
-                    }
-                );
-
-                // save station lat and longs and marker to shared map registry
-                window.SkaLowMaps.stationIndex[station.Label.toLowerCase()] = {
-                    lat: station.Latitude,
-                    lng: station.Longitude
-                };
-                window.SkaLowMaps.stationIndex[station.Label.toLowerCase()].marker = marker;
-            });
-        })
-        .catch(err => {
-            console.error("Station map error:", err);
-        });
+        marker.bindTooltip(
+            station.Label,
+            {
+                permanent: false,
+                direction: "right",
+                offset: [10, 0],
+                opacity: 0.8
+            }
+        );
+        window.SkaLowMaps.stationIndex[station.Label].marker = marker;
+    });
 };
 
 async function initCalendar(wrapper) {
@@ -116,10 +109,10 @@ async function initCalendar(wrapper) {
         startDate: DayPilot.Date.today(),
         timeRangeSelectedHandling: "Enabled",
         resources: [
-            { name: "s8-1", id: "s8-1" },
-            { name: "s9-2", id: "s9-2" },
-            { name: "s8-6", id: "s8-6" },
-            { name: "s10-3", id: "s10-3" }
+            { name: "S8-1", id: "S8-1" },
+            { name: "S9-2", id: "S9-2" },
+            { name: "S8-6", id: "S8-6" },
+            { name: "S10-3", id: "S10-3" }
         ],
         onTimeRangeSelected: async (args) => {
             const scheduler = args.control;
@@ -153,7 +146,7 @@ async function initCalendar(wrapper) {
                 if (map) {
                     const station = window.SkaLowMaps.stationIndex[args.row.id];
                     map.flyTo(
-                        [station.lat, station.lng], 13,
+                        [station.Latitude, station.Longitude], 13,
                         { animate: true, duration: 0.5 }
                     );
 
@@ -295,14 +288,14 @@ function extractResourcesFromEvent(event) {
     // tests if station ids are mentioned in the 
     // description or title of a confluence event
 
-    const STATION_IDS = ["s8-1", "s9-2", "s8-6", "s10-3"];
+    const STATION_IDS = ["S8-1", "S9-2", "S8-6", "S10-3"];
     const haystack = (
         (event.title || "") + " " +
         (event.description || "")
-    ).toLowerCase();
+    );
 
     return STATION_IDS.filter(stationId =>
-        haystack.includes(stationId.toLowerCase())
+        haystack.toUpperCase().includes(stationId)
     );
 }
 
