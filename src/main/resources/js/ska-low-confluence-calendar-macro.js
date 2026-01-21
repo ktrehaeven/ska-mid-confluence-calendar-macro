@@ -1,6 +1,12 @@
 AJS.toInit(function () {
-    // initialise each macro instance on the page
 
+    // shared map registry to allow daypilot to interact with map
+    window.SkaLowMaps = {
+        map: null,
+        stationIndex: {}
+    };
+
+    // initialise each macro instance on the page
     document.querySelectorAll('.ska-low-map-macro').forEach(initMap);
 
     document.querySelectorAll('.ska-low-station-bookings-macro').forEach(initCalendar);
@@ -16,6 +22,7 @@ function initMap(wrapper) {
 
     // Initialize Leaflet map
     const map = L.map(mapEl).setView([-26.824722084, 116.76444824], 10);
+    window.SkaLowMaps.map = map;
 
     L.control.scale().addTo(map);
 
@@ -38,6 +45,11 @@ function initMap(wrapper) {
         })
         .then(stations => {
             stations.forEach(station => {
+                // save station lat and longs to shared map registry for quick reference
+                window.SkaLowMaps.stationIndex[station.Label.toLowerCase()] = {
+                    lat: station.Latitude,
+                    lng: station.Longitude
+                };
                 L.circleMarker(
                     [station.Latitude, station.Longitude],
                     {
@@ -78,11 +90,15 @@ async function initCalendar(wrapper) {
             { groupBy: "Day", },
             { groupBy: "Hour", },
         ],
-        scale: "Hour",
-        days: 7,
+        scale: "CellDuration",
+        cellDuration: 15,
+        cellWidth: 20,
+        days: 1,
         width: "100%",
+        height: "Parent100Pct",
         businessBeginsHour: 9,
         businessEndsHour: 17,
+        dynamicEventRendering: "Disabled",
         startDate: DayPilot.Date.today(),
         timeRangeSelectedHandling: "Enabled",
         resources: [
@@ -116,10 +132,18 @@ async function initCalendar(wrapper) {
         onEventDeleted: (args) => {
             console.log("Event deleted: " + args.e.text());
         },
+        resourceHeaderClickHandling: "Update",
+        onRowClick: (args) => {
+            const station = window.SkaLowMaps.stationIndex[args.row.id];
+            window.SkaLowMaps.map.flyTo(
+                [station.lat, station.lng], 14,
+                { animate: true, duration: 0.8 }
+            );
+        }
     });
 
     const nav = new DayPilot.Navigator(navEl, {
-        selectMode: "Week",
+        selectMode: "Day",
         showMonths: 1,
         skipMonths: 1,
         freeHandSelectionEnabled: true,
