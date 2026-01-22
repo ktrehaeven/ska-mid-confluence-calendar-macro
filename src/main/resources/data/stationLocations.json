@@ -1,5 +1,16 @@
 [
     {
+        "Station ID": "00",
+        "Label": "Airstrip",
+        "Latitude": "-26.84114",
+        "Longitude": "116.74593",
+        "Elevation": "",
+        "ECEF-X": "",
+        "ECEF-Y": "",
+        "ECEF-Z": "",
+        "Project Stage": "NA"
+    },
+    {
         "Station ID": "0",
         "Label": "Centre",
         "Latitude": "-26.824722084",

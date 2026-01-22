@@ -83,6 +83,9 @@ function initMap(wrapper) {
         );
         window.SkaLowMaps.stationData[station.Label].marker = marker;
     });
+    window.SkaLowMaps.stationData["Airstrip"].marker.setStyle({
+        fillColor: 'black'
+    });
 };
 
 async function initCalendar(wrapper) {
@@ -137,7 +140,6 @@ async function initCalendar(wrapper) {
         onEventDeleted: (args) => {
             console.log("Event deleted: " + args.e.text());
         },
-        resourceHeaderClickHandling: "Update",
         onRowClick: (args) => {
             //clicking new row: zoom and tooltip station
             if (args.row.id != selectedResourceId) {
@@ -176,10 +178,11 @@ async function initCalendar(wrapper) {
         },
     });
     const calendar = window.SkaLowMaps.calendar
+    calendar.init();
 
     const nav = new DayPilot.Navigator(navEl, {
         selectMode: "Day",
-        showMonths: 1,
+        showMonths: 2,
         skipMonths: 1,
         freeHandSelectionEnabled: true,
         onTimeRangeSelected: args => {
@@ -189,10 +192,9 @@ async function initCalendar(wrapper) {
             calendar.update();
         }
     });
+    nav.init()
 
     calendar.events.list = await getCalEvents();
-    nav.init()
-    calendar.init();
     updateVisibleResources()
     calendar.update();
 }
@@ -204,8 +206,9 @@ async function getCalEvents() {
     // within a defined time period
 
     const childSubCalendarIds = await getCalendars()
-    const start = "2026-01-01T00:00:00Z"
-    const end = "2027-02-01T00:00:00Z"
+    const today = new DayPilot.Date().getDatePart()
+    const start = today.addDays(-365).toString().replace(/Z?$/, "Z");
+    const end = today.addDays(365).toString().replace(/Z?$/, "Z");
     const fetchPromises = childSubCalendarIds.map(async (id) => {
         const response = await fetch(
             AJS.contextPath() +
@@ -296,7 +299,7 @@ function extractResourcesFromEvent(event) {
     );
 
     return stationsIds.filter(stationId =>
-        haystack.toUpperCase().includes(stationId)
+        haystack.toUpperCase().includes(stationId.toUpperCase())
     );
 }
 
