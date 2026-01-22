@@ -48,8 +48,10 @@ function initMap(wrapper) {
     mapEl.dataset.initialised = "true";
 
     // Initialize Leaflet map
-    const map = L.map(mapEl).setView([window.SkaLowMaps.stationData.Centre.Latitude,
-    window.SkaLowMaps.stationData.Centre.Longitude], 10);
+    const map = L.map(mapEl).setView([
+        window.SkaLowMaps.stationData.Centre.Latitude,
+        window.SkaLowMaps.stationData.Centre.Longitude],
+        10);
     window.SkaLowMaps.map = map;
 
     L.control.scale().addTo(map);
@@ -61,6 +63,21 @@ function initMap(wrapper) {
         attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
     }).addTo(map);
 
+    const airstripPolyline = L.polyline([
+        ["-26.84110", "116.73869"],
+        ["-26.84114", "116.74569"],
+        ["-26.84114", "116.75297"]
+    ], {
+        color: 'black',
+        weight: 5,
+        opacity: 0.7
+    }).bindTooltip(
+        "Airstrip", {
+        permanent: false,
+        direction: "top",
+        opacity: 0.8
+    }).addTo(map)
+
     Object.entries(window.SkaLowMaps.stationData).forEach(([key, station]) => {
         const marker = L.circleMarker(
             [station.Latitude, station.Longitude],
@@ -70,9 +87,7 @@ function initMap(wrapper) {
                 fillColor: '#18e01e',
                 fillOpacity: 0.9
             }
-        ).addTo(map)
-
-        marker.bindTooltip(
+        ).bindTooltip(
             station.Label,
             {
                 permanent: false,
@@ -80,12 +95,13 @@ function initMap(wrapper) {
                 offset: [10, 0],
                 opacity: 0.8
             }
-        );
+        ).addTo(map)
         window.SkaLowMaps.stationData[station.Label].marker = marker;
     });
-    window.SkaLowMaps.stationData["Airstrip"].marker.setStyle({
-        fillColor: 'black'
-    });
+
+    map.removeLayer(window.SkaLowMaps.stationData.Airstrip.marker)
+    window.SkaLowMaps.stationData.Airstrip.marker = airstripPolyline
+
 };
 
 async function initCalendar(wrapper) {
