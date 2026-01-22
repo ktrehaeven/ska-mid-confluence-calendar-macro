@@ -1,8 +1,9 @@
 AJS.toInit(function () {
 
-    // shared map registry to allow daypilot to interact with map
+    // shared registry to allow cross macro interaction
     window.SkaLowMaps = {
         map: null,
+        calendar: null,
         stationIndex: {}
     };
 
@@ -17,7 +18,7 @@ AJS.toInit(function () {
         })
         .then(stations => {
             stations.forEach(station => {
-                // save station lat and longs and marker to shared map registry
+                // save station lat and longs to shared registry
                 window.SkaLowMaps.stationIndex[station.Label] = {
                     Label: station.Label,
                     Latitude: station.Latitude,
@@ -42,7 +43,8 @@ function initMap(wrapper) {
     mapEl.dataset.initialised = "true";
 
     // Initialize Leaflet map
-    const map = L.map(mapEl).setView([-26.824722084, 116.76444824], 10);
+    const map = L.map(mapEl).setView([window.SkaLowMaps.stationIndex.Centre.Latitude,
+    window.SkaLowMaps.stationIndex.Centre.Longitude], 10);
     window.SkaLowMaps.map = map;
 
     L.control.scale().addTo(map);
@@ -53,8 +55,6 @@ function initMap(wrapper) {
         maxZoom: 17,
         attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
     }).addTo(map);
-
-    // Load station JSON and plot markers
 
     Object.entries(window.SkaLowMaps.stationIndex).forEach(([key, station]) => {
         const marker = L.circleMarker(
@@ -91,7 +91,7 @@ async function initCalendar(wrapper) {
     if (!calendarEl || calendarEl.dataset.initialised) return;
     calendarEl.dataset.initialised = "true";
 
-    const calendar = new DayPilot.Scheduler(calendarEl, {
+    window.SkaLowMaps.calendar = new DayPilot.Scheduler(calendarEl, {
         timeHeaders: [
             { groupBy: "Day", },
             { groupBy: "Hour", },
@@ -102,7 +102,6 @@ async function initCalendar(wrapper) {
         cellWidth: 20,
         days: 1,
         width: "100%",
-        height: "Parent100Pct",
         businessBeginsHour: 9,
         businessEndsHour: 17,
         dynamicEventRendering: "Disabled",
@@ -141,7 +140,7 @@ async function initCalendar(wrapper) {
         },
         resourceHeaderClickHandling: "Update",
         onRowClick: (args) => {
-            //clicking new row
+            //clicking new row: zoom and tooltip station
             if (args.row.id != selectedResourceId) {
                 if (map) {
                     const station = window.SkaLowMaps.stationIndex[args.row.id];
@@ -156,10 +155,11 @@ async function initCalendar(wrapper) {
                 selectedResourceId = args.row.id;
                 calendar.update();
             }
-            //clicking same row
+            //clicking same row: reset view
             else {
                 if (map) {
-                    map.flyTo([-26.824722084, 116.76444824], 10,
+                    map.flyTo([window.SkaLowMaps.stationIndex.Centre.Latitude,
+                    window.SkaLowMaps.stationIndex.Centre.Longitude], 10,
                         { animate: true, duration: 0.5 });
                     resetTooltips(map)
                 }
@@ -174,8 +174,9 @@ async function initCalendar(wrapper) {
             else {
                 args.row.backColor = null;
             }
-        }
+        },
     });
+    const calendar = window.SkaLowMaps.calendar
 
     const nav = new DayPilot.Navigator(navEl, {
         selectMode: "Day",
@@ -191,9 +192,16 @@ async function initCalendar(wrapper) {
         }
     });
 
+    allStations = Object.keys(window.SkaLowMaps.stationIndex).map(name => ({
+        name,
+        id: name
+    }))
+
     calendar.events.list = await getCalEvents();
     nav.init()
     calendar.init();
+    updateVisibleResources()
+    calendar.update();
 }
 
 // --------- confluence utils ----------
@@ -288,13 +296,13 @@ function extractResourcesFromEvent(event) {
     // tests if station ids are mentioned in the 
     // description or title of a confluence event
 
-    const STATION_IDS = ["S8-1", "S9-2", "S8-6", "S10-3"];
+    const stationsIds = Object.keys(window.SkaLowMaps.stationIndex);
     const haystack = (
         (event.title || "") + " " +
         (event.description || "")
     );
 
-    return STATION_IDS.filter(stationId =>
+    return stationsIds.filter(stationId =>
         haystack.toUpperCase().includes(stationId)
     );
 }
@@ -309,4 +317,25 @@ function resetTooltips(map) {
     map.eachLayer(function (layer) {
         if (layer.options.pane === "tooltipPane") layer.removeFrom(map);
     });
+}
+
+function updateVisibleResources() {
+    // filters calender resources to only those that have events
+    // in visible time window
+
+    const calendar = window.SkaLowMaps.calendar
+    if (!calendar.visibleStart || !calendar.visibleEnd) return;
+
+    const viewStart = calendar.visibleStart().getTime();
+    const viewEnd = calendar.visibleEnd().getTime();
+
+    const resourcesInView = allStations.filter(r =>
+        calendar.events.list.some(e =>
+            e.resource === r.id &&
+            e.start < viewEnd &&
+            e.end > viewStart
+        )
+    );
+
+    calendar.resources = resourcesInView;
 }
