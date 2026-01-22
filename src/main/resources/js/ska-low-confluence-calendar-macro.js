@@ -4,7 +4,8 @@ AJS.toInit(function () {
     window.SkaLowMaps = {
         map: null,
         calendar: null,
-        stationIndex: {}
+        stationData: {},
+        stationList: []
     };
 
     // read stationLocations.json
@@ -19,7 +20,7 @@ AJS.toInit(function () {
         .then(stations => {
             stations.forEach(station => {
                 // save station lat and longs to shared registry
-                window.SkaLowMaps.stationIndex[station.Label] = {
+                window.SkaLowMaps.stationData[station.Label] = {
                     Label: station.Label,
                     Latitude: station.Latitude,
                     Longitude: station.Longitude
@@ -28,6 +29,10 @@ AJS.toInit(function () {
             // initialise each macro instance on the page
             document.querySelectorAll('.ska-low-map-macro').forEach(initMap);
             document.querySelectorAll('.ska-low-station-bookings-macro').forEach(initCalendar);
+            window.SkaLowMaps.stationList = Object.keys(window.SkaLowMaps.stationData).map(name => ({
+                name,
+                id: name
+            }))
         })
 
         .catch(err => {
@@ -43,8 +48,8 @@ function initMap(wrapper) {
     mapEl.dataset.initialised = "true";
 
     // Initialize Leaflet map
-    const map = L.map(mapEl).setView([window.SkaLowMaps.stationIndex.Centre.Latitude,
-    window.SkaLowMaps.stationIndex.Centre.Longitude], 10);
+    const map = L.map(mapEl).setView([window.SkaLowMaps.stationData.Centre.Latitude,
+    window.SkaLowMaps.stationData.Centre.Longitude], 10);
     window.SkaLowMaps.map = map;
 
     L.control.scale().addTo(map);
@@ -56,7 +61,7 @@ function initMap(wrapper) {
         attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
     }).addTo(map);
 
-    Object.entries(window.SkaLowMaps.stationIndex).forEach(([key, station]) => {
+    Object.entries(window.SkaLowMaps.stationData).forEach(([key, station]) => {
         const marker = L.circleMarker(
             [station.Latitude, station.Longitude],
             {
@@ -76,7 +81,7 @@ function initMap(wrapper) {
                 opacity: 0.8
             }
         );
-        window.SkaLowMaps.stationIndex[station.Label].marker = marker;
+        window.SkaLowMaps.stationData[station.Label].marker = marker;
     });
 };
 
@@ -137,7 +142,7 @@ async function initCalendar(wrapper) {
             //clicking new row: zoom and tooltip station
             if (args.row.id != selectedResourceId) {
                 if (map) {
-                    const station = window.SkaLowMaps.stationIndex[args.row.id];
+                    const station = window.SkaLowMaps.stationData[args.row.id];
                     map.flyTo(
                         [station.Latitude, station.Longitude], 13,
                         { animate: true, duration: 0.5 }
@@ -152,8 +157,8 @@ async function initCalendar(wrapper) {
             //clicking same row: reset view
             else {
                 if (map) {
-                    map.flyTo([window.SkaLowMaps.stationIndex.Centre.Latitude,
-                    window.SkaLowMaps.stationIndex.Centre.Longitude], 10,
+                    map.flyTo([window.SkaLowMaps.stationData.Centre.Latitude,
+                    window.SkaLowMaps.stationData.Centre.Longitude], 10,
                         { animate: true, duration: 0.5 });
                     resetTooltips(map)
                 }
@@ -184,11 +189,6 @@ async function initCalendar(wrapper) {
             calendar.update();
         }
     });
-
-    allStations = Object.keys(window.SkaLowMaps.stationIndex).map(name => ({
-        name,
-        id: name
-    }))
 
     calendar.events.list = await getCalEvents();
     nav.init()
@@ -289,7 +289,7 @@ function extractResourcesFromEvent(event) {
     // tests if station ids are mentioned in the 
     // description or title of a confluence event
 
-    const stationsIds = Object.keys(window.SkaLowMaps.stationIndex);
+    const stationsIds = Object.keys(window.SkaLowMaps.stationData);
     const haystack = (
         (event.title || "") + " " +
         (event.description || "")
@@ -322,7 +322,7 @@ function updateVisibleResources() {
     const viewStart = calendar.visibleStart().getTime();
     const viewEnd = calendar.visibleEnd().getTime();
 
-    const resourcesInView = allStations.filter(r =>
+    const resourcesInView = window.SkaLowMaps.stationList.filter(r =>
         calendar.events.list.some(e =>
             e.resource === r.id &&
             e.start < viewEnd &&
