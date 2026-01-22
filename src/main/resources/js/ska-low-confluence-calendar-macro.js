@@ -174,8 +174,6 @@ async function initCalendar(wrapper) {
 
     const nav = new DayPilot.Navigator(navEl, {
         selectMode: "Day",
-        cellHeight: "40",
-        cellWidth: "40",
         showMonths: 1,
         skipMonths: 1,
         freeHandSelectionEnabled: true,
@@ -241,7 +239,7 @@ async function getCalendars() {
     // const skaConstructionCalId = "4cc239ae-8b4d-4d6d-b852-0aa439fd4dbb"
 
     // test id
-    const skaConstructionCalId = "343f5d43-bca6-42a8-a1d1-af0bae92e1e0"
+    const skaConstructionCalId = "9182d8de-2a71-43a5-8daf-8fa8b102d4f6"
 
     const response = await fetch(
         AJS.contextPath() +
