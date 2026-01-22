@@ -107,12 +107,6 @@ async function initCalendar(wrapper) {
         dynamicEventRendering: "Disabled",
         startDate: DayPilot.Date.today(),
         timeRangeSelectedHandling: "Enabled",
-        resources: [
-            { name: "S8-1", id: "S8-1" },
-            { name: "S9-2", id: "S9-2" },
-            { name: "S8-6", id: "S8-6" },
-            { name: "S10-3", id: "S10-3" }
-        ],
         onTimeRangeSelected: async (args) => {
             const scheduler = args.control;
             const modal = await DayPilot.Modal.prompt("Create a new event:", "Event 1");
@@ -188,6 +182,7 @@ async function initCalendar(wrapper) {
         onTimeRangeSelected: args => {
             calendar.startDate = args.start;
             calendar.days = args.days;
+            updateVisibleResources();
             calendar.update();
         }
     });
