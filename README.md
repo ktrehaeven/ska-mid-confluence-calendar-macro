@@ -2,22 +2,20 @@
 
 Development on a confluence macro to link the existing SKA-Low calendar bookings with an interactive map of SKA-Low stations.
 
-## Setup
+## Setup local instance of Confluence
+
+Navigate to the top level of the directory in a terminal.
 
 `atlas-build`
 
-http://it1000132.local:1990/confluence/plugins/servlet/upm
+Go to [url](http://localhost:1990/confluence/plugins/servlet/upm) in your browser.
 
-username: admin, password: admin
+Login with username: admin, password: admin.
+
+## Build package
+
+Navigate to the top level of the directory in another terminal.
 
 `atlas-mvn package`
 
-## Development files
-
-pom.xml
-
-/src/main/resources/atlassian-plugin.xml
-
-src/main/resources/ska-low-confluence-calendar-macro.properties
-
-src/main/java/com/skao/confluence/plugins/macro/*.java
+Macros should now be available in the Confluence instance under SKA-Low Station Bookings and SKA-Low Map.
