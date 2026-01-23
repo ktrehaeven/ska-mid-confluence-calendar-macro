@@ -20,19 +20,28 @@
     </web-resource>
 
     <web-resource key="ska-low-confluence-calendar-macro-resources" name="ska-low-confluence-calendar-macro Web Resources">
-        <dependency>com.atlassian.auiplugin:ajs</dependency>
         <dependency>com.skao.confluence.plugins.ska-low-confluence-calendar-macro:leaflet-resources</dependency>
         
         <resource type="download" name="stationLocations.json" location="/data/stationLocations.json"/>
         <resource type="download" name="ska-low-confluence-calendar-macro.css" location="/css/ska-low-confluence-calendar-macro.css"/>
-        <resource type="download" name="ska-low-confluence-calendar-macro.js" location="/js/ska-low-confluence-calendar-macro.js"/>
+        <resource type="download" name="map.js" location="/js/map.js"/>
+        <resource type="download" name="calendar.js" location="/js/calendar.js"/>
+        <resource type="download" name="calendar-utils.js" location="/js/calendar-utils.js"/>
         <resource type="download" name="images/" location="/images"/>
 
         <context>atl.general</context>
     </web-resource>
 
+    <web-resource key="ska-low-bootstrap-js" name="SKA Low Bootstrap JS">
+        <dependency>com.skao.confluence.plugins.ska-low-confluence-calendar-macro:ska-low-confluence-calendar-macro-resources</dependency>
+
+        <resource type="download" name="bootstrap.js" location="/js/bootstrap.js"/>
+
+        <context>atl.general</context>
+    </web-resource>
+
     <web-resource key="daypilot-resources" name="DayPilot Lite Resources">
-        <dependency>com.atlassian.auiplugin:ajs</dependency>
+
         <resource type="download" name="daypilot-all.min.js" location="/daypilot/daypilot-all.min.js"/>
 
         <context>atl.general</context>

@@ -48,7 +48,7 @@
         _resetView: function (t) {
             e.DomEvent.stop(t);
 
-            resetView(this._map);
+            SkaLow.resetView(this._map);
         }
 
     }),
