@@ -54,9 +54,9 @@ function initMap(wrapper) {
         10);
     window.SkaLowMaps.map = map;
 
-    L.control.scale().addTo(map);
+    L.control.scale({ maxWidth: 300 }).addTo(map);
+    L.control.resetView({}).addTo(map);
 
-    // Add OpenStreetMap tiles
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         minZoom: 2,
         maxZoom: 17,
@@ -83,7 +83,7 @@ function initMap(wrapper) {
             [station.Latitude, station.Longitude],
             {
                 radius: 8,
-                color: '#1a73e8',
+                color: '#0052CC',
                 fillColor: '#18e01e',
                 fillOpacity: 0.9
             }
@@ -175,9 +175,7 @@ async function initCalendar(wrapper) {
             //clicking same row: reset view
             else {
                 if (map) {
-                    map.flyTo([window.SkaLowMaps.stationData.Centre.Latitude,
-                    window.SkaLowMaps.stationData.Centre.Longitude], 10,
-                        { animate: true, duration: 0.5 });
+                    resetView(map)
                     resetTooltips(map)
                 }
                 selectedResourceId = null
@@ -350,4 +348,10 @@ function updateVisibleResources() {
     );
 
     calendar.resources = resourcesInView;
+}
+
+function resetView(map) {
+    map.flyTo([window.SkaLowMaps.stationData.Centre.Latitude,
+    window.SkaLowMaps.stationData.Centre.Longitude], 10,
+        { animate: true, duration: 0.5 });
 }
