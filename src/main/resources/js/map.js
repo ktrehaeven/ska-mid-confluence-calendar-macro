@@ -43,8 +43,8 @@ window.SkaLow.initMap = function initMap(wrapper) {
             [station.Latitude, station.Longitude],
             {
                 radius: 8,
-                color: '#0052CC',
-                fillColor: '#18e01e',
+                color: '#070068',
+                fillColor: '#E70068',
                 fillOpacity: 0.9
             }
         ).bindTooltip(

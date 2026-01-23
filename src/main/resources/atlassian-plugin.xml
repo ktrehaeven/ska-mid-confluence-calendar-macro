@@ -6,9 +6,6 @@
         <param name="plugin-icon">images/pluginIcon.png</param>
         <param name="plugin-logo">images/pluginLogo.png</param>
     </plugin-info>
-
-    <!-- add our i18n resource -->
-    <resource type="i18n" name="i18n" location="ska-low-confluence-calendar-macro"/>
     
     <!-- add our web resources -->
     <web-resource key="leaflet-resources" name="Leaflet Resources">

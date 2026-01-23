@@ -44,3 +44,17 @@
     position: relative;
     overflow: hidden;
 }
+
+
+.ska-low-station-bookings-macro .navigator_default_todaybox {
+    border: 2px solid #070068;
+    position: absolute;
+    z-index: 20;
+}
+
+.ska-low-station-bookings-macro .navigator_default_select .navigator_default_cell_box {
+    background-color: #E70068;
+    opacity: .5;
+    position: absolute;
+    z-index: 1;
+}
