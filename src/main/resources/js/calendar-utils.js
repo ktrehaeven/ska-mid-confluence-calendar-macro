@@ -38,10 +38,10 @@ window.SkaLow.getCalendars = async function () {
     // returns list of child calendar ids
 
     // public id
-    const skaConstructionCalId = "4cc239ae-8b4d-4d6d-b852-0aa439fd4dbb"
+    // const skaConstructionCalId = "4cc239ae-8b4d-4d6d-b852-0aa439fd4dbb"
 
     // test id
-    // const skaConstructionCalId = "9182d8de-2a71-43a5-8daf-8fa8b102d4f6"
+    const skaConstructionCalId = "9182d8de-2a71-43a5-8daf-8fa8b102d4f6"
 
     const response = await fetch(
         AJS.contextPath() +
@@ -83,6 +83,7 @@ window.SkaLow.confluenceEventToDayPilotEvents = function (event) {
         text: event.title,
         start: window.SkaLow.applyTimezoneOffset(new Date(event.start)),
         end: window.SkaLow.applyTimezoneOffset(new Date(event.end)),
+        description: event.description,
         resource: resourceId,
         barColor: "#070068"
     }));

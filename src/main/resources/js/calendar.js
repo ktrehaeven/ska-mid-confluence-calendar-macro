@@ -2,6 +2,7 @@ window.SkaLow = window.SkaLow || {};
 
 window.SkaLow.initCalendar = async function (wrapper) {
     // function for initialising and displaying daypilot scheduler 
+    // async awaits the confluence events
 
     const calendarEl = wrapper.querySelector('.daypilot');
     const navEl = wrapper.querySelector('.daypilot-nav');
@@ -27,18 +28,54 @@ window.SkaLow.initCalendar = async function (wrapper) {
         dynamicEventRendering: "Disabled",
         startDate: DayPilot.Date.today(),
         timeRangeSelectedHandling: "Enabled",
-        onTimeRangeSelected: async (args) => {
-            const scheduler = args.control;
-            const modal = await DayPilot.Modal.prompt("Create a new event:", "Event 1");
-            scheduler.clearSelection();
-            if (modal.canceled) { return; }
-            scheduler.events.add({
+        onTimeRangeSelected: async function (args) {
+
+            const result = await showEventForm({
+                text: "",
                 start: args.start,
                 end: args.end,
-                id: DayPilot.guid(),
-                resource: args.resource,
-                text: modal.result
+                station: args.resource,
+                description: ""
             });
+
+            calendar.clearSelection();
+            if (!result) return;
+
+            const newEvent = {
+                id: DayPilot.guid(),
+                text: result.text,
+                start: result.start,
+                end: result.end,
+                resource: result.station,
+                description: result.description
+            };
+
+            calendar.events.add(newEvent);
+        },
+
+        onEventClick: async function (args) {
+
+            const e = args.e;
+
+            const result = await showEventForm({
+                text: e.text(),
+                start: e.start(),
+                end: e.end(),
+                station: e.data.resource || "",
+                description: e.data.description || ""
+            });
+
+            if (!result) return;
+
+            Object.assign(e.data,
+                {
+                    text: result.text,
+                    start: result.start,
+                    end: result.end,
+                    resource: result.station,
+                    description: result.description
+                });
+            calendar.events.update(e);
         },
         eventMoveHandling: "Update",
         onEventMoved: (args) => {
@@ -104,7 +141,26 @@ window.SkaLow.initCalendar = async function (wrapper) {
     });
     nav.init()
 
+
     calendar.events.list = await window.SkaLow.getCalEvents();
     window.SkaLow.updateVisibleResources()
     calendar.update();
+}
+
+const eventForm = [
+    { name: "Title", id: "text", type: "text" },
+    { name: "Start", id: "start", type: "datetime" },
+    { name: "End", id: "end", type: "datetime" },
+    { name: "Station", id: "station", type: "text" },
+    { name: "Description", id: "description", type: "textarea" }
+];
+
+async function showEventForm(data) {
+    const modal = await DayPilot.Modal.form(eventForm, data, {
+        width: 450,
+        height: 420,
+    });
+
+    if (modal.canceled) return null;
+    return modal.result;
 }

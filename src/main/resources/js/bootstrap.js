@@ -25,16 +25,15 @@ AJS.toInit(function () {
                     Longitude: station.Longitude
                 };
             });
-            // initialise each macro instance on the page
-            document.querySelectorAll('.ska-low-map-macro').forEach(window.SkaLow.initMap);
-            document.querySelectorAll('.ska-low-station-bookings-macro').forEach(window.SkaLow.initCalendar);
-            // list of stations for easy access to calendar
+            // list of stations for easy access
             window.SkaLow.stationList = Object.keys(window.SkaLow.stationData).map(name => ({
                 name,
                 id: name
             }))
+            // initialise each macro instance on the page
+            document.querySelectorAll('.ska-low-map-macro').forEach(window.SkaLow.initMap);
+            document.querySelectorAll('.ska-low-station-bookings-macro').forEach(window.SkaLow.initCalendar);
         })
-
         .catch(err => {
             console.error("Station map error:", err);
         });
