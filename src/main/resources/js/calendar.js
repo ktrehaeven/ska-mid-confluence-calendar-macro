@@ -149,8 +149,8 @@ window.SkaLow.initCalendar = async function (wrapper) {
 
 const eventForm = [
     { name: "Title", id: "text", type: "text" },
-    { name: "Start", id: "start", type: "datetime" },
-    { name: "End", id: "end", type: "datetime" },
+    { name: "Start", id: "start", type: "datetime", timeInterval: 5 },
+    { name: "End", id: "end", type: "datetime", timeInterval: 5 },
     { name: "Station", id: "station", type: "text" },
     { name: "Description", id: "description", type: "textarea" }
 ];
@@ -159,6 +159,7 @@ async function showEventForm(data) {
     const modal = await DayPilot.Modal.form(eventForm, data, {
         width: 450,
         height: 420,
+        scrollWithPage: false
     });
 
     if (modal.canceled) return null;
