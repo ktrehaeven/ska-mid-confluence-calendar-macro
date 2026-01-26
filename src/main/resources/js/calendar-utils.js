@@ -81,6 +81,7 @@ window.SkaLow.confluenceEventToDayPilotEvents = function (event) {
         id: `${event.id}:${resourceId}`,
         parentId: event.id,
         text: event.title,
+        // who: event.who,
         start: window.SkaLow.applyTimezoneOffset(new Date(event.start)),
         end: window.SkaLow.applyTimezoneOffset(new Date(event.end)),
         description: event.description,

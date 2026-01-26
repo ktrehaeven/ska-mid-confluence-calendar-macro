@@ -33,6 +33,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
             const result = await showEventForm({
                 text: "",
                 start: args.start,
+                // who: args.who,
                 end: args.end,
                 station: args.resource,
                 description: ""
@@ -44,6 +45,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
             const newEvent = {
                 id: DayPilot.guid(),
                 text: result.text,
+                // who: result.who,
                 start: result.start,
                 end: result.end,
                 resource: result.station,
@@ -59,6 +61,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
 
             const result = await showEventForm({
                 text: e.text(),
+                // who: e.data.who || "",
                 start: e.start(),
                 end: e.end(),
                 station: e.data.resource || "",
@@ -70,6 +73,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
             Object.assign(e.data,
                 {
                     text: result.text,
+                    // who: result.who,
                     start: result.start,
                     end: result.end,
                     resource: result.station,
@@ -141,7 +145,6 @@ window.SkaLow.initCalendar = async function (wrapper) {
     });
     nav.init()
 
-
     calendar.events.list = await window.SkaLow.getCalEvents();
     window.SkaLow.updateVisibleResources()
     calendar.update();
@@ -149,6 +152,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
 
 const eventForm = [
     { name: "Title", id: "text", type: "text" },
+    // { name: "Who", id: "who", type: "text" },
     { name: "Start", id: "start", type: "datetime", timeInterval: 5 },
     { name: "End", id: "end", type: "datetime", timeInterval: 5 },
     { name: "Station", id: "station", type: "text" },
