@@ -55,14 +55,5 @@
         <category name="formatting"/>
         <parameters/>
     </xhtml-macro>
-
-    <rest name="Calendar Save REST"
-        key="calendar-save-rest"
-        path="/ska-low"
-        version="1.0">
-        <package>com.skao.confluence.plugins.macro.rest</package>
-        <description>Save calendar events back to Team Calendar</description>
-    </rest>
-
     
 </atlassian-plugin>
