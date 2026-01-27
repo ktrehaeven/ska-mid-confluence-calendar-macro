@@ -23,8 +23,6 @@ window.SkaLow.getCalEvents = async function () {
         }
 
         const data = await response.json();
-        console.log(data.events)
-        console.log(AJS.contextPath())
         return (data.events || []).flatMap(window.SkaLow.confluenceEventToDayPilotEvents);
     });
 

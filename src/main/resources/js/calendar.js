@@ -85,18 +85,19 @@ window.SkaLow.initCalendar = async function (wrapper) {
 
             calendar.events.add(newEvent);
             const testEvent = {
-                subCalendarId: "049f32ea-10db-463c-b2db-ab58dd91c316",
+                // childSubCalendarId: "e58288be-0d03-4665-b5f8-526401cce4f6",
+                subCalendarId: "9182d8de-2a71-43a5-8daf-8fa8b102d4f6",
                 what: "Test Event",
-                startDate: "2026-01-28",
-                endDate: "2026-01-28",
-                startTime: "10:00",
-                endTime: "11:00",
-                allDayEvent: "false",
-                editAllInRecurrenceSeries: "true",
-                rruleStr: "",
+                startDate: "January 27, 2026",
+                endDate: "January 27, 2026",
+                startTime: "10:00 AM",
+                endTime: "11:50 AM",
+                // allDayEvent: "false",
+                // editAllInRecurrenceSeries: "true",
+                // rruleStr: "",
                 eventType: "other",
-                confirmRemoveInvalidUsers: "false",
-                userTimeZoneId: "Australia/Sydney"
+                // confirmRemoveInvalidUsers: "false",
+                // userTimeZoneId: "Australia/Sydney"
             };
 
             createEvent(testEvent)
