@@ -53,6 +53,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
             };
 
             calendar.events.add(newEvent);
+            window.SkaLow.saveCalendarToConfluence(calendar.events.list)
         },
 
         onEventClick: async function (args) {
@@ -80,6 +81,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
                     description: result.description
                 });
             calendar.events.update(e);
+            window.SkaLow.saveCalendarToConfluence(calendar.events.list)
         },
         eventMoveHandling: "Update",
         onEventMoved: (args) => {

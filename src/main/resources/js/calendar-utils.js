@@ -108,3 +108,27 @@ window.SkaLow.extractResourcesFromEvent = function (event) {
 window.SkaLow.applyTimezoneOffset = function (dt) {
     return dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
 }
+
+window.SkaLow.saveCalendarToConfluence = async function (events) {
+
+    // Convert DayPilot events to plain JSON the calendar macro expects
+    const calendarEvents = events.map(e => ({
+        id: e.id,
+        text: e.text,
+        start: e.start.toString(),
+        end: e.end.toString(),
+        resource: e.resource,
+        description: e.description || ""
+    }));
+
+    await fetch(AJS.contextPath() + "/rest/ska-low/1.0/calendar/save", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            pageId: AJS.Meta.get("page-id"),
+            events: calendarEvents
+        })
+    });
+}
