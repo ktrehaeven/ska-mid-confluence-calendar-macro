@@ -1,5 +1,36 @@
 window.SkaLow = window.SkaLow || {};
 
+
+
+async function createEvent(body) {
+    const url = AJS.contextPath() + "/rest/calendar-services/1.0/calendar/events.json";
+
+    // Convert object to URL-encoded form data
+    const formData = new URLSearchParams();
+    for (const [key, value] of Object.entries(body)) {
+        if (value !== undefined && value !== null) {
+            formData.append(key, value);
+        }
+    }
+
+    const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: formData.toString()
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to create event: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+
+
 window.SkaLow.initCalendar = async function (wrapper) {
     // function for initialising and displaying daypilot scheduler 
     // async awaits the confluence events
@@ -53,7 +84,24 @@ window.SkaLow.initCalendar = async function (wrapper) {
             };
 
             calendar.events.add(newEvent);
-            window.SkaLow.saveCalendarToConfluence(calendar.events.list)
+            const testEvent = {
+                subCalendarId: "049f32ea-10db-463c-b2db-ab58dd91c316",
+                what: "Test Event",
+                startDate: "2026-01-28",
+                endDate: "2026-01-28",
+                startTime: "10:00",
+                endTime: "11:00",
+                allDayEvent: "false",
+                editAllInRecurrenceSeries: "true",
+                rruleStr: "",
+                eventType: "other",
+                confirmRemoveInvalidUsers: "false",
+                userTimeZoneId: "Australia/Sydney"
+            };
+
+            createEvent(testEvent)
+                .then(event => console.log("Created event:", event))
+                .catch(err => console.error(err));
         },
 
         onEventClick: async function (args) {

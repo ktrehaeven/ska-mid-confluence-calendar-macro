@@ -6,8 +6,8 @@ window.SkaLow.getCalEvents = async function () {
 
     const childSubCalendarIds = await window.SkaLow.getCalendars()
     const today = new DayPilot.Date().getDatePart()
-    const start = today.addDays(-365).toString().replace(/Z?$/, "Z");
-    const end = today.addDays(365).toString().replace(/Z?$/, "Z");
+    const start = ensureZulu(today.addDays(-365).toString())
+    const end = ensureZulu(today.addDays(365).toString())
     const fetchPromises = childSubCalendarIds.map(async (id) => {
         const response = await fetch(
             AJS.contextPath() +
@@ -23,6 +23,8 @@ window.SkaLow.getCalEvents = async function () {
         }
 
         const data = await response.json();
+        console.log(data.events)
+        console.log(AJS.contextPath())
         return (data.events || []).flatMap(window.SkaLow.confluenceEventToDayPilotEvents);
     });
 
@@ -86,7 +88,10 @@ window.SkaLow.confluenceEventToDayPilotEvents = function (event) {
         end: window.SkaLow.applyTimezoneOffset(new Date(event.end)),
         description: event.description,
         resource: resourceId,
-        barColor: "#070068"
+        barColor: "#070068",
+        confirmRemoveInvalidUsers: "false",
+        eventType: "other",
+        subCalendarId: self.subCalendarId,
     }));
 }
 
@@ -109,26 +114,6 @@ window.SkaLow.applyTimezoneOffset = function (dt) {
     return dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
 }
 
-window.SkaLow.saveCalendarToConfluence = async function (events) {
-
-    // Convert DayPilot events to plain JSON the calendar macro expects
-    const calendarEvents = events.map(e => ({
-        id: e.id,
-        text: e.text,
-        start: e.start.toString(),
-        end: e.end.toString(),
-        resource: e.resource,
-        description: e.description || ""
-    }));
-
-    await fetch(AJS.contextPath() + "/rest/ska-low/1.0/calendar/save", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            pageId: AJS.Meta.get("page-id"),
-            events: calendarEvents
-        })
-    });
+function ensureZulu(s) {
+    return s.replace(/Z?$/, "Z");
 }
