@@ -37,11 +37,7 @@ window.SkaLow.getCalendars = async function () {
     // requests confluence for all child calendars of the ska construction calendar
     // returns list of child calendar ids
 
-    // public id
-    // const skaConstructionCalId = "4cc239ae-8b4d-4d6d-b852-0aa439fd4dbb"
-
-    // test id
-    const skaConstructionCalId = "9182d8de-2a71-43a5-8daf-8fa8b102d4f6"
+    const skaConstructionCalName = "SKA-Low Telescope Construction"
 
     const response = await fetch(
         AJS.contextPath() +
@@ -56,7 +52,7 @@ window.SkaLow.getCalendars = async function () {
 
     // filter to skaConstructionCal
     const targetPayload = data.payload.find(
-        entry => entry.subCalendar && entry.subCalendar.id === skaConstructionCalId
+        entry => entry.subCalendar && entry.subCalendar.name === skaConstructionCalName
     );
 
     // create list of child calendars
