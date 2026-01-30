@@ -85,6 +85,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
 
             const result = await window.SkaLow.showEventForm({
                 text: e.text(),
+                type: e.data.eventType,
                 // who: e.data.who || "",
                 start: e.start(),
                 end: e.end(),

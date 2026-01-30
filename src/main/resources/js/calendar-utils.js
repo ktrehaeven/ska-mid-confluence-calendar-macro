@@ -107,9 +107,9 @@ window.SkaLow.confluenceEventToDayPilotEvents = function (event) {
         description: event.description,
         resource: resourceId,
         barColor: "#070068",
-        confirmRemoveInvalidUsers: "false",
-        eventType: "other",
-        subCalendarId: self.subCalendarId,
+        // confirmRemoveInvalidUsers: "false",
+        eventType: event.customEventTypeId,
+        // subCalendarId: self.subCalendarId,
     }));
 }
 
