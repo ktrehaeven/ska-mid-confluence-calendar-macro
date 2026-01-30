@@ -56,7 +56,7 @@ window.SkaLow.getCalendars = async function () {
         entry => entry.subCalendar && entry.subCalendar.name === skaConstructionCalName
     );
 
-    // create list of child calendars
+    // create dictionary of child calendars
     const childSubCalendarIds = Object.fromEntries(
         targetPayload.childSubCalendars.flatMap(child => {
             const sub = child.subCalendar;
@@ -69,8 +69,22 @@ window.SkaLow.getCalendars = async function () {
         })
     );
 
+    // create dictionary of event types
+    const customEventTypeIds = Object.fromEntries(
+        targetPayload.childSubCalendars.flatMap(child => {
+            const sub = child.subCalendar;
+            if (!sub?.customEventTypes?.length) return [];
+
+            return sub.customEventTypes.map(type => [
+                type.title,
+                type.customEventTypeId
+            ]);
+        })
+    );
+
     window.SkaLow.skaConstructionCalId = targetPayload.subCalendar.id
     window.SkaLow.childSubCalendarIds = childSubCalendarIds
+    window.SkaLow.customEventTypeIds = customEventTypeIds
 
     return childSubCalendarIds
 }

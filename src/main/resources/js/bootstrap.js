@@ -6,6 +6,10 @@ AJS.toInit(function () {
     window.SkaLow.calendar = null;
     window.SkaLow.stationData = {};
     window.SkaLow.stationList = [];
+    window.SkaLow.skaConstructionCalName = null;
+    window.SkaLow.childSubCalendarIds = {};
+    window.SkaLow.customEventTypeIds = {};
+
 
     // read stationLocations.json
     fetch(AJS.contextPath() + '/download/resources/com.skao.confluence.plugins.ska-low-confluence-calendar-macro:'

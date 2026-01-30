@@ -64,7 +64,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
             const result = await showEventForm({
                 text: "",
                 start: args.start,
-                // who: args.who,
+                // who: "",
                 end: args.end,
                 station: args.resource,
                 description: ""
@@ -84,23 +84,25 @@ window.SkaLow.initCalendar = async function (wrapper) {
             };
 
             calendar.events.add(newEvent);
+
             const testEvent = {
-                // childSubCalendarId: "e58288be-0d03-4665-b5f8-526401cce4f6",
-                subCalendarId: "9182d8de-2a71-43a5-8daf-8fa8b102d4f6",
-                what: "Test Event",
-                startDate: "January 27, 2026",
-                endDate: "January 27, 2026",
-                startTime: "10:00 AM",
-                endTime: "11:50 AM",
+                customEventTypeId: "8f7288b8-0eec-4dcd-a5a7-99fa30c47983",
+                subCalendarId: window.SkaLow.skaConstructionCalId,
+                what: result.text,
+                startDate: window.SkaLow.convertToConfluenceDate(result.start.value),
+                endDate: window.SkaLow.convertToConfluenceDate(result.end.value),
+                startTime: window.SkaLow.convertToConfluenceTime(result.start.value),
+                endTime: window.SkaLow.convertToConfluenceTime(result.end.value),
+                // invitees: [{ name: result.who }],
                 // allDayEvent: "false",
                 // editAllInRecurrenceSeries: "true",
                 // rruleStr: "",
-                eventType: "other",
                 // confirmRemoveInvalidUsers: "false",
-                // userTimeZoneId: "Australia/Sydney"
+                eventType: "custom",
+                userTimeZoneId: "Australia/Perth",
             };
 
-            createEvent(testEvent)
+            await createEvent(testEvent)
                 .then(event => console.log("Created event:", event))
                 .catch(err => console.error(err));
         },
@@ -130,7 +132,6 @@ window.SkaLow.initCalendar = async function (wrapper) {
                     description: result.description
                 });
             calendar.events.update(e);
-            window.SkaLow.saveCalendarToConfluence(calendar.events.list)
         },
         eventMoveHandling: "Update",
         onEventMoved: (args) => {
