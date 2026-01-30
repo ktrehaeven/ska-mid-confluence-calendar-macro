@@ -42,22 +42,24 @@ window.SkaLow.initCalendar = async function (wrapper) {
             calendar.clearSelection();
             if (!result) return;
 
-            const newEvent = {
+            const newDayPilotEvent = new DayPilot.Event({
                 id: DayPilot.guid(),
                 text: result.text,
                 // who: result.who,
-                start: result.start,
-                end: result.end,
+                start: result.start.getTime(),
+                end: result.end.getTime(),
                 resource: result.resource,
                 description: result.description
-            };
+            });
 
-            calendar.events.add(newEvent);
+            calendar.events.add(newDayPilotEvent);
+            window.SkaLow.updateVisibleResources()
+            calendar.update();
 
-            const testEvent = {
+            const newConfluenceEvent = {
+                what: result.text,
                 customEventTypeId: result.type,
                 subCalendarId: window.SkaLow.skaConstructionCalId,
-                what: result.text,
                 startDate: window.SkaLow.convertToConfluenceDate(result.start.value),
                 endDate: window.SkaLow.convertToConfluenceDate(result.end.value),
                 startTime: window.SkaLow.convertToConfluenceTime(result.start.value),
@@ -71,9 +73,10 @@ window.SkaLow.initCalendar = async function (wrapper) {
                 userTimeZoneId: "Australia/Perth",
             };
 
-            await window.SkaLow.createEvent(testEvent)
+            await window.SkaLow.createEvent(newConfluenceEvent)
                 .then(event => console.log("Created event:", event))
                 .catch(err => console.error(err));
+
         },
 
         onEventClick: async function (args) {
