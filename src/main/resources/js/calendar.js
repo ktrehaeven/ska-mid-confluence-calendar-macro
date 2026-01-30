@@ -35,7 +35,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
                 start: args.start,
                 // who: "",
                 end: args.end,
-                station: args.resource,
+                resource: args.resource,
                 description: ""
             });
 
@@ -48,7 +48,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
                 // who: result.who,
                 start: result.start,
                 end: result.end,
-                resource: result.station,
+                resource: result.resource,
                 description: result.description
             };
 
@@ -85,7 +85,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
                 // who: e.data.who || "",
                 start: e.start(),
                 end: e.end(),
-                station: e.data.resource || "",
+                resource: e.data.resource || "",
                 description: e.data.description || ""
             });
 
@@ -97,7 +97,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
                     // who: result.who,
                     start: result.start,
                     end: result.end,
-                    resource: result.station,
+                    resource: result.resource,
                     description: result.description
                 });
             calendar.events.update(e);

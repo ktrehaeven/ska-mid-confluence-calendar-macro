@@ -187,7 +187,7 @@ window.SkaLow.showEventForm = async function (data) {
         // { name: "Who", id: "who", type: "text" },
         { name: "Start", id: "start", type: "datetime", timeInterval: 5 },
         { name: "End", id: "end", type: "datetime", timeInterval: 5 },
-        { name: "Station", id: "station", type: "text" },
+        { name: "Station", id: "resource", options: window.SkaLow.stationList, type: "searchable" },
         { name: "Description", id: "description", type: "textarea" }
     ];
 
@@ -199,4 +199,25 @@ window.SkaLow.showEventForm = async function (data) {
 
     if (modal.canceled) return null;
     return modal.result;
+}
+
+window.SkaLow.updateVisibleResources = function () {
+    // filters calender resources to only those that have events
+    // in visible time window
+
+    const calendar = window.SkaLow.calendar
+    if (!calendar.visibleStart || !calendar.visibleEnd) return;
+
+    const viewStart = calendar.visibleStart().getTime();
+    const viewEnd = calendar.visibleEnd().getTime();
+
+    const resourcesInView = window.SkaLow.stationList.filter(r =>
+        calendar.events.list.some(e =>
+            e.resource === r.id &&
+            e.start < viewEnd &&
+            e.end > viewStart
+        )
+    );
+
+    calendar.resources = resourcesInView;
 }
