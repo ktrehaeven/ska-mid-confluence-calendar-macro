@@ -153,3 +153,41 @@ window.SkaLow.convertToConfluenceTime = function (dateString) {
 
     return (formattedDate);
 }
+
+window.SkaLow.createEvent = async function (body) {
+    const url = AJS.contextPath() + "/rest/calendar-services/1.0/calendar/events.json";
+
+    // Convert object to URL-encoded form data
+    const formData = new URLSearchParams();
+    for (const [key, value] of Object.entries(body)) {
+        if (value !== undefined && value !== null) {
+            formData.append(key, value);
+        }
+    }
+
+    const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: formData.toString()
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to create event: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+window.SkaLow.showEventForm = async function (data) {
+    const modal = await DayPilot.Modal.form(eventForm, data, {
+        width: 450,
+        height: 420,
+        scrollWithPage: false
+    });
+
+    if (modal.canceled) return null;
+    return modal.result;
+}

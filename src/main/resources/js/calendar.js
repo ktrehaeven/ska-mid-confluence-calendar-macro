@@ -1,36 +1,5 @@
 window.SkaLow = window.SkaLow || {};
 
-
-
-async function createEvent(body) {
-    const url = AJS.contextPath() + "/rest/calendar-services/1.0/calendar/events.json";
-
-    // Convert object to URL-encoded form data
-    const formData = new URLSearchParams();
-    for (const [key, value] of Object.entries(body)) {
-        if (value !== undefined && value !== null) {
-            formData.append(key, value);
-        }
-    }
-
-    const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "X-Requested-With": "XMLHttpRequest"
-        },
-        body: formData.toString()
-    });
-
-    if (!response.ok) {
-        throw new Error(`Failed to create event: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-}
-
-
-
 window.SkaLow.initCalendar = async function (wrapper) {
     // function for initialising and displaying daypilot scheduler 
     // async awaits the confluence events
@@ -61,7 +30,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
         timeRangeSelectedHandling: "Enabled",
         onTimeRangeSelected: async function (args) {
 
-            const result = await showEventForm({
+            const result = await window.SkaLow.showEventForm({
                 text: "",
                 start: args.start,
                 // who: "",
@@ -102,7 +71,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
                 userTimeZoneId: "Australia/Perth",
             };
 
-            await createEvent(testEvent)
+            await window.SkaLow.createEvent(testEvent)
                 .then(event => console.log("Created event:", event))
                 .catch(err => console.error(err));
         },
@@ -111,7 +80,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
 
             const e = args.e;
 
-            const result = await showEventForm({
+            const result = await window.SkaLow.showEventForm({
                 text: e.text(),
                 // who: e.data.who || "",
                 start: e.start(),
@@ -210,14 +179,3 @@ const eventForm = [
     { name: "Station", id: "station", type: "text" },
     { name: "Description", id: "description", type: "textarea" }
 ];
-
-async function showEventForm(data) {
-    const modal = await DayPilot.Modal.form(eventForm, data, {
-        width: 450,
-        height: 420,
-        scrollWithPage: false
-    });
-
-    if (modal.canceled) return null;
-    return modal.result;
-}
