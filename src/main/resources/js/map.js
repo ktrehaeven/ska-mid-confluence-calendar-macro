@@ -70,27 +70,6 @@ window.SkaLow.resetTooltips = function (map) {
     });
 }
 
-window.SkaLow.updateVisibleResources = function () {
-    // filters calender resources to only those that have events
-    // in visible time window
-
-    const calendar = window.SkaLow.calendar
-    if (!calendar.visibleStart || !calendar.visibleEnd) return;
-
-    const viewStart = calendar.visibleStart().getTime();
-    const viewEnd = calendar.visibleEnd().getTime();
-
-    const resourcesInView = window.SkaLow.stationList.filter(r =>
-        calendar.events.list.some(e =>
-            e.resource === r.id &&
-            e.start < viewEnd &&
-            e.end > viewStart
-        )
-    );
-
-    calendar.resources = resourcesInView;
-}
-
 window.SkaLow.resetView = function (map) {
     map.flyTo([window.SkaLow.stationData.Centre.Latitude,
     window.SkaLow.stationData.Centre.Longitude], 10,
