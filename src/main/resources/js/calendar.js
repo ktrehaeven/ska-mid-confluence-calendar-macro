@@ -30,12 +30,12 @@ window.SkaLow.initCalendar = async function (wrapper) {
         timeRangeSelectedHandling: "Enabled",
         onTimeRangeSelected: async function (args) {
 
-            const result = await showEventForm({
+            const result = await window.SkaLow.showEventForm({
                 text: "",
                 start: args.start,
-                // who: args.who,
+                // who: "",
                 end: args.end,
-                station: args.resource,
+                resource: args.resource,
                 description: ""
             });
 
@@ -48,23 +48,44 @@ window.SkaLow.initCalendar = async function (wrapper) {
                 // who: result.who,
                 start: result.start,
                 end: result.end,
-                resource: result.station,
+                resource: result.resource,
                 description: result.description
             };
 
             calendar.events.add(newEvent);
+
+            const testEvent = {
+                customEventTypeId: result.type,
+                subCalendarId: window.SkaLow.skaConstructionCalId,
+                what: result.text,
+                startDate: window.SkaLow.convertToConfluenceDate(result.start.value),
+                endDate: window.SkaLow.convertToConfluenceDate(result.end.value),
+                startTime: window.SkaLow.convertToConfluenceTime(result.start.value),
+                endTime: window.SkaLow.convertToConfluenceTime(result.end.value),
+                // invitees: [{ name: result.who }],
+                // allDayEvent: "false",
+                // editAllInRecurrenceSeries: "true",
+                // rruleStr: "",
+                // confirmRemoveInvalidUsers: "false",
+                eventType: "custom",
+                userTimeZoneId: "Australia/Perth",
+            };
+
+            await window.SkaLow.createEvent(testEvent)
+                .then(event => console.log("Created event:", event))
+                .catch(err => console.error(err));
         },
 
         onEventClick: async function (args) {
 
             const e = args.e;
 
-            const result = await showEventForm({
+            const result = await window.SkaLow.showEventForm({
                 text: e.text(),
                 // who: e.data.who || "",
                 start: e.start(),
                 end: e.end(),
-                station: e.data.resource || "",
+                resource: e.data.resource || "",
                 description: e.data.description || ""
             });
 
@@ -76,7 +97,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
                     // who: result.who,
                     start: result.start,
                     end: result.end,
-                    resource: result.station,
+                    resource: result.resource,
                     description: result.description
                 });
             calendar.events.update(e);
@@ -148,24 +169,4 @@ window.SkaLow.initCalendar = async function (wrapper) {
     calendar.events.list = await window.SkaLow.getCalEvents();
     window.SkaLow.updateVisibleResources()
     calendar.update();
-}
-
-const eventForm = [
-    { name: "Title", id: "text", type: "text" },
-    // { name: "Who", id: "who", type: "text" },
-    { name: "Start", id: "start", type: "datetime", timeInterval: 5 },
-    { name: "End", id: "end", type: "datetime", timeInterval: 5 },
-    { name: "Station", id: "station", type: "text" },
-    { name: "Description", id: "description", type: "textarea" }
-];
-
-async function showEventForm(data) {
-    const modal = await DayPilot.Modal.form(eventForm, data, {
-        width: 450,
-        height: 420,
-        scrollWithPage: false
-    });
-
-    if (modal.canceled) return null;
-    return modal.result;
 }

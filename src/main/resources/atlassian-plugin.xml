@@ -6,6 +6,9 @@
         <param name="plugin-icon">images/pluginIcon.png</param>
         <param name="plugin-logo">images/pluginLogo.png</param>
     </plugin-info>
+
+    <!-- add our i18n resource -->
+    <resource type="i18n" name="i18n" location="ska-low-confluence-calendar-macro"/>
     
     <!-- add our web resources -->
     <web-resource key="leaflet-resources" name="Leaflet Resources">
@@ -44,13 +47,15 @@
         <context>atl.general</context>
     </web-resource>
 
-    <xhtml-macro name="SKA-Low Map" class="com.skao.confluence.plugins.macro.SkaLowMap" key='ska-low-map-macro'>
+    <xhtml-macro name="ska-low-map-macro" class="com.skao.confluence.plugins.macro.SkaLowMap" key='ska-low-map-macro'
+        icon = "/download/resources/com.skao.confluence.plugins.ska-low-confluence-calendar-macro:ska-low-confluence-calendar-macro-resources/images/leafletLogo.jpeg">
         <description key="skalowmap.macro.desc"/>
         <category name="formatting"/>
         <parameters/>
     </xhtml-macro>
 
-    <xhtml-macro name="SKA-Low Station Bookings" class="com.skao.confluence.plugins.macro.SkaLowStationBookings" key='ska-low-station-bookings-macro'>
+    <xhtml-macro name="ska-low-station-bookings-macro" class="com.skao.confluence.plugins.macro.SkaLowStationBookings" key='ska-low-station-bookings-macro'
+        icon = "/download/resources/com.skao.confluence.plugins.ska-low-confluence-calendar-macro:ska-low-confluence-calendar-macro-resources/images/daypilotLogo.png">
         <description key="skalowstationbookings.macro.desc"/>
         <category name="formatting"/>
         <parameters/>

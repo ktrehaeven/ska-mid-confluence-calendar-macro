@@ -6,25 +6,26 @@ window.SkaLow.getCalEvents = async function () {
 
     const childSubCalendarIds = await window.SkaLow.getCalendars()
     const today = new DayPilot.Date().getDatePart()
-    const start = today.addDays(-365).toString().replace(/Z?$/, "Z");
-    const end = today.addDays(365).toString().replace(/Z?$/, "Z");
-    const fetchPromises = childSubCalendarIds.map(async (id) => {
-        const response = await fetch(
-            AJS.contextPath() +
-            `/rest/calendar-services/1.0/calendar/events.json` +
-            `?subCalendarId=${id}` +
-            `&start=${start}` +
-            `&end=${end}`
-        );
+    const start = ensureZulu(today.addDays(-365).toString())
+    const end = ensureZulu(today.addDays(365).toString())
+    const fetchPromises = Object.entries(childSubCalendarIds).map(
+        async ([name, id]) => {
+            const response = await fetch(
+                AJS.contextPath() +
+                `/rest/calendar-services/1.0/calendar/events.json` +
+                `?subCalendarId=${id}` +
+                `&start=${start}` +
+                `&end=${end}`
+            );
 
-        if (!response.ok) {
-            console.warn(`Failed to fetch events for ${id}`);
-            return []; // return empty array on failure to avoid breaking Promise.all
-        }
+            if (!response.ok) {
+                console.warn(`Failed to fetch events for ${id}`);
+                return []; // return empty array on failure to avoid breaking Promise.all
+            }
 
-        const data = await response.json();
-        return (data.events || []).flatMap(window.SkaLow.confluenceEventToDayPilotEvents);
-    });
+            const data = await response.json();
+            return (data.events || []).flatMap(window.SkaLow.confluenceEventToDayPilotEvents);
+        });
 
     // Wait for all requests to complete
     const allEventsArrays = await Promise.all(fetchPromises);
@@ -37,11 +38,7 @@ window.SkaLow.getCalendars = async function () {
     // requests confluence for all child calendars of the ska construction calendar
     // returns list of child calendar ids
 
-    // public id
-    // const skaConstructionCalId = "4cc239ae-8b4d-4d6d-b852-0aa439fd4dbb"
-
-    // test id
-    const skaConstructionCalId = "9182d8de-2a71-43a5-8daf-8fa8b102d4f6"
+    const skaConstructionCalName = "SKA-Low Telescope Construction"
 
     const response = await fetch(
         AJS.contextPath() +
@@ -56,13 +53,36 @@ window.SkaLow.getCalendars = async function () {
 
     // filter to skaConstructionCal
     const targetPayload = data.payload.find(
-        entry => entry.subCalendar && entry.subCalendar.id === skaConstructionCalId
+        entry => entry.subCalendar && entry.subCalendar.name === skaConstructionCalName
     );
 
-    // create list of child calendars
-    const childSubCalendarIds = targetPayload
-        ? targetPayload.childSubCalendars.map(child => child.subCalendar.id)
-        : [];
+    // create dictionary of child calendars
+    const childSubCalendarIds = Object.fromEntries(
+        targetPayload.childSubCalendars.flatMap(child => {
+            const sub = child.subCalendar;
+            if (!sub?.customEventTypes?.length) return [];
+
+            return sub.customEventTypes.map(type => [
+                type.title,
+                sub.id
+            ]);
+        })
+    );
+
+    // create dictionary of event types
+    const customEventTypes = targetPayload.childSubCalendars.flatMap(child => {
+        const sub = child.subCalendar;
+        if (!sub?.customEventTypes?.length) return [];
+
+        return sub.customEventTypes.map(type => ({
+            name: type.title,
+            id: type.customEventTypeId
+        }));
+    });
+
+    window.SkaLow.skaConstructionCalId = targetPayload.subCalendar.id
+    window.SkaLow.childSubCalendarIds = childSubCalendarIds
+    window.SkaLow.customEventTypes = customEventTypes
 
     return childSubCalendarIds
 }
@@ -86,7 +106,10 @@ window.SkaLow.confluenceEventToDayPilotEvents = function (event) {
         end: window.SkaLow.applyTimezoneOffset(new Date(event.end)),
         description: event.description,
         resource: resourceId,
-        barColor: "#070068"
+        barColor: "#070068",
+        confirmRemoveInvalidUsers: "false",
+        eventType: "other",
+        subCalendarId: self.subCalendarId,
     }));
 }
 
@@ -107,4 +130,94 @@ window.SkaLow.extractResourcesFromEvent = function (event) {
 
 window.SkaLow.applyTimezoneOffset = function (dt) {
     return dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+}
+
+function ensureZulu(s) {
+    return s.replace(/Z?$/, "Z");
+}
+
+window.SkaLow.convertToConfluenceDate = function (dateString) {
+    const dateObject = new Date(dateString);
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = new Intl.DateTimeFormat('en-US', options).format(dateObject);
+
+    return (formattedDate);
+}
+
+window.SkaLow.convertToConfluenceTime = function (dateString) {
+    const dateObject = new Date(dateString);
+    const options = { hour: 'numeric', minute: '2-digit', hour12: true };
+    const formattedDate = new Intl.DateTimeFormat('en-US', options).format(dateObject);
+
+    return (formattedDate);
+}
+
+window.SkaLow.createEvent = async function (body) {
+    const url = AJS.contextPath() + "/rest/calendar-services/1.0/calendar/events.json";
+
+    // Convert object to URL-encoded form data
+    const formData = new URLSearchParams();
+    for (const [key, value] of Object.entries(body)) {
+        if (value !== undefined && value !== null) {
+            formData.append(key, value);
+        }
+    }
+
+    const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: formData.toString()
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to create event: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+window.SkaLow.showEventForm = async function (data) {
+
+    const eventForm = [
+        { name: "Title", id: "text", type: "text" },
+        { name: "Event Type", id: "type", options: window.SkaLow.customEventTypes, type: "select" },
+        // { name: "Who", id: "who", type: "text" },
+        { name: "Start", id: "start", type: "datetime", timeInterval: 5 },
+        { name: "End", id: "end", type: "datetime", timeInterval: 5 },
+        { name: "Station", id: "resource", options: window.SkaLow.stationList, type: "searchable" },
+        { name: "Description", id: "description", type: "textarea" }
+    ];
+
+    const modal = await DayPilot.Modal.form(eventForm, data, {
+        width: 450,
+        height: 420,
+        scrollWithPage: false
+    });
+
+    if (modal.canceled) return null;
+    return modal.result;
+}
+
+window.SkaLow.updateVisibleResources = function () {
+    // filters calender resources to only those that have events
+    // in visible time window
+
+    const calendar = window.SkaLow.calendar
+    if (!calendar.visibleStart || !calendar.visibleEnd) return;
+
+    const viewStart = calendar.visibleStart().getTime();
+    const viewEnd = calendar.visibleEnd().getTime();
+
+    const resourcesInView = window.SkaLow.stationList.filter(r =>
+        calendar.events.list.some(e =>
+            e.resource === r.id &&
+            e.start < viewEnd &&
+            e.end > viewStart
+        )
+    );
+
+    calendar.resources = resourcesInView;
 }
