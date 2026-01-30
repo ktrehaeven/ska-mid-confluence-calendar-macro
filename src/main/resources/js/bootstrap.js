@@ -8,7 +8,7 @@ AJS.toInit(function () {
     window.SkaLow.stationList = [];
     window.SkaLow.skaConstructionCalName = null;
     window.SkaLow.childSubCalendarIds = {};
-    window.SkaLow.customEventTypeIds = {};
+    window.SkaLow.customEventTypes = {};
 
 
     // read stationLocations.json

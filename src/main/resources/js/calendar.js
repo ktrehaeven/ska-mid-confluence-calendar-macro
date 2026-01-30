@@ -55,7 +55,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
             calendar.events.add(newEvent);
 
             const testEvent = {
-                customEventTypeId: "8f7288b8-0eec-4dcd-a5a7-99fa30c47983",
+                customEventTypeId: result.type,
                 subCalendarId: window.SkaLow.skaConstructionCalId,
                 what: result.text,
                 startDate: window.SkaLow.convertToConfluenceDate(result.start.value),
@@ -170,12 +170,3 @@ window.SkaLow.initCalendar = async function (wrapper) {
     window.SkaLow.updateVisibleResources()
     calendar.update();
 }
-
-const eventForm = [
-    { name: "Title", id: "text", type: "text" },
-    // { name: "Who", id: "who", type: "text" },
-    { name: "Start", id: "start", type: "datetime", timeInterval: 5 },
-    { name: "End", id: "end", type: "datetime", timeInterval: 5 },
-    { name: "Station", id: "station", type: "text" },
-    { name: "Description", id: "description", type: "textarea" }
-];

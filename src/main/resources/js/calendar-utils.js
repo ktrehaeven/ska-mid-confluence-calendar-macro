@@ -70,21 +70,19 @@ window.SkaLow.getCalendars = async function () {
     );
 
     // create dictionary of event types
-    const customEventTypeIds = Object.fromEntries(
-        targetPayload.childSubCalendars.flatMap(child => {
-            const sub = child.subCalendar;
-            if (!sub?.customEventTypes?.length) return [];
+    const customEventTypes = targetPayload.childSubCalendars.flatMap(child => {
+        const sub = child.subCalendar;
+        if (!sub?.customEventTypes?.length) return [];
 
-            return sub.customEventTypes.map(type => [
-                type.title,
-                type.customEventTypeId
-            ]);
-        })
-    );
+        return sub.customEventTypes.map(type => ({
+            name: type.title,
+            id: type.customEventTypeId
+        }));
+    });
 
     window.SkaLow.skaConstructionCalId = targetPayload.subCalendar.id
     window.SkaLow.childSubCalendarIds = childSubCalendarIds
-    window.SkaLow.customEventTypeIds = customEventTypeIds
+    window.SkaLow.customEventTypes = customEventTypes
 
     return childSubCalendarIds
 }
@@ -182,6 +180,17 @@ window.SkaLow.createEvent = async function (body) {
 }
 
 window.SkaLow.showEventForm = async function (data) {
+
+    const eventForm = [
+        { name: "Title", id: "text", type: "text" },
+        { name: "Event Type", id: "type", options: window.SkaLow.customEventTypes, type: "select" },
+        // { name: "Who", id: "who", type: "text" },
+        { name: "Start", id: "start", type: "datetime", timeInterval: 5 },
+        { name: "End", id: "end", type: "datetime", timeInterval: 5 },
+        { name: "Station", id: "station", type: "text" },
+        { name: "Description", id: "description", type: "textarea" }
+    ];
+
     const modal = await DayPilot.Modal.form(eventForm, data, {
         width: 450,
         height: 420,
