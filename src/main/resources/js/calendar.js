@@ -64,6 +64,8 @@ window.SkaLow.initCalendar = async function (wrapper) {
                 endDate: window.SkaLow.convertToConfluenceDate(result.end.value),
                 startTime: window.SkaLow.convertToConfluenceTime(result.start.value),
                 endTime: window.SkaLow.convertToConfluenceTime(result.end.value),
+                description: result.description.includes(result.resource) ?
+                    result.description : result.resource + "\n\n" + result.description,
                 // invitees: [{ name: result.who }],
                 // allDayEvent: "false",
                 // editAllInRecurrenceSeries: "true",
@@ -99,12 +101,14 @@ window.SkaLow.initCalendar = async function (wrapper) {
                 {
                     text: result.text,
                     // who: result.who,
-                    start: result.start,
-                    end: result.end,
+                    start: result.start.getTime(),
+                    end: result.end.getTime(),
                     resource: result.resource,
                     description: result.description
                 });
             calendar.events.update(e);
+            window.SkaLow.updateVisibleResources()
+            calendar.update();
         },
         eventMoveHandling: "Update",
         onEventMoved: (args) => {

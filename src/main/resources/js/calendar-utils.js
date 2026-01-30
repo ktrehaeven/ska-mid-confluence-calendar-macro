@@ -185,8 +185,8 @@ window.SkaLow.showEventForm = async function (data) {
         { name: "Title", id: "text", type: "text" },
         { name: "Event Type", id: "type", options: window.SkaLow.customEventTypes, type: "select" },
         // { name: "Who", id: "who", type: "text" },
-        { name: "Start", id: "start", type: "datetime", timeInterval: 5 },
-        { name: "End", id: "end", type: "datetime", timeInterval: 5 },
+        { name: "Start", id: "start", type: "datetime", timeInterval: 1 },
+        { name: "End", id: "end", type: "datetime", timeInterval: 1 },
         { name: "Station", id: "resource", options: window.SkaLow.stationList, type: "searchable" },
         { name: "Description", id: "description", type: "textarea" }
     ];
