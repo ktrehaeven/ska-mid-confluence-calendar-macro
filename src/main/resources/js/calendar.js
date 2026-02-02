@@ -42,17 +42,21 @@ window.SkaLow.initCalendar = async function (wrapper) {
             calendar.clearSelection();
             if (!result) return;
 
-            const newDayPilotEvent = new DayPilot.Event({
-                id: DayPilot.guid(),
-                text: result.text,
-                // who: result.who,
-                start: result.start.getTime(),
-                end: result.end.getTime(),
-                resource: result.resource,
-                description: result.description
-            });
+            result.resource.forEach((r) => {
 
-            calendar.events.add(newDayPilotEvent);
+                const newDayPilotEvent = new DayPilot.Event({
+                    id: DayPilot.guid(),
+                    text: result.text,
+                    // who: result.who,
+                    start: result.start.getTime(),
+                    end: result.end.getTime(),
+                    resource: r,
+                    description: result.description
+                });
+
+                calendar.events.add(newDayPilotEvent);
+            })
+
             window.SkaLow.updateVisibleResources()
             calendar.update();
 
@@ -106,6 +110,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
                     resource: result.resource,
                     description: result.description
                 });
+
             calendar.events.update(e);
             window.SkaLow.updateVisibleResources()
             calendar.update();
