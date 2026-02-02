@@ -26,7 +26,8 @@ AJS.toInit(function () {
                 window.SkaLow.stationData[station.Label] = {
                     Label: station.Label,
                     Latitude: station.Latitude,
-                    Longitude: station.Longitude
+                    Longitude: station.Longitude,
+                    Phase: station["Project Stage"]
                 };
             });
             // list of stations for easy access
