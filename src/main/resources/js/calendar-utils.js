@@ -187,14 +187,32 @@ window.SkaLow.showEventForm = async function (data) {
         // { name: "Who", id: "who", type: "text" },
         { name: "Start", id: "start", type: "datetime", timeInterval: 1 },
         { name: "End", id: "end", type: "datetime", timeInterval: 1 },
-        { name: "Station", id: "resource", options: window.SkaLow.stationList, type: "searchable" },
-        { name: "Description", id: "description", type: "textarea" }
+        {
+            name: "Stations",
+            id: "text",
+            type: "html",
+            // custom html to allow multi station selection
+            html: `<select id="station-multiselect" multiple size="17" style="width:100%;">
+                ${Object.entries(window.SkaLow.stationData)
+                    .filter(([, value]) => ["AA1", "AA0.5"].includes(value.Phase))
+                    .map(([, station]) => `<option value="${station.Label}">${station.Label}</option>`)
+                    .join("")}
+                </select>`},
+        { name: "Description", id: "description", type: "textarea", height: 70 }
     ];
 
     const modal = await DayPilot.Modal.form(eventForm, data, {
         width: 450,
-        height: 420,
-        scrollWithPage: false
+        scrollWithPage: true,
+        autoStretch: true,
+        zIndex: 100,
+        // force return station selection to result
+        onClose: function (modal) {
+            const selectEl = document.getElementById("station-multiselect");
+            if (selectEl && modal.result) {
+                modal.result.resource = Array.from(selectEl.selectedOptions).map(opt => opt.value);
+            }
+        }
     });
 
     if (modal.canceled) return null;
