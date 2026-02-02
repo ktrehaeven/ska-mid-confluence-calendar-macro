@@ -181,6 +181,8 @@ window.SkaLow.createEvent = async function (body) {
 
 window.SkaLow.showEventForm = async function (data) {
 
+    const preSelectedStations = Array.isArray(data.resource) ? data.resource : [data.resource].filter(Boolean);
+
     const eventForm = [
         { name: "Title", id: "text", type: "text" },
         { name: "Event Type", id: "type", options: window.SkaLow.customEventTypes, type: "select" },
@@ -195,9 +197,13 @@ window.SkaLow.showEventForm = async function (data) {
             html: `<select id="station-multiselect" multiple size="17" style="width:100%;">
                 ${Object.entries(window.SkaLow.stationData)
                     .filter(([, value]) => ["AA1", "AA0.5"].includes(value.Phase))
-                    .map(([, station]) => `<option value="${station.Label}">${station.Label}</option>`)
+                    .map(([, station]) => {
+                        const selected = preSelectedStations.includes(station.Label) ? 'selected' : '';
+                        return `<option value="${station.Label}" ${selected}>${station.Label}</option>`;
+                    })
                     .join("")}
-                </select>`},
+                </select>`
+        },
         { name: "Description", id: "description", type: "textarea", height: 70 }
     ];
 
