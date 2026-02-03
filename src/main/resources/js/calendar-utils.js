@@ -98,8 +98,8 @@ window.SkaLow.confluenceEventToDayPilotEvents = function (event) {
     }
 
     return matchedResources.map(resourceId => ({
-        id: `${event.id}:${resourceId}`,
-        parentId: event.id,
+        id: window.SkaLow.makeEventId(event.id, resourceId),
+        confluenceId: event.id,
         text: event.title,
         // who: event.who,
         start: window.SkaLow.applyTimezoneOffset(new Date(event.start)),
@@ -152,7 +152,7 @@ window.SkaLow.convertToConfluenceTime = function (dateString) {
     return (formattedDate);
 }
 
-window.SkaLow.createEvent = async function (body) {
+window.SkaLow.postEvent = async function (body) {
     const url = AJS.contextPath() + "/rest/calendar-services/1.0/calendar/events.json";
 
     // Convert object to URL-encoded form data
@@ -246,7 +246,7 @@ window.SkaLow.updateVisibleResources = function () {
     calendar.resources = resourcesInView;
 }
 
-window.SkaLow.createNewConfluenceEvent = async function (eventForm) {
+window.SkaLow.createConfluenceEvent = async function (eventForm) {
     const newConfluenceEvent = {
         what: eventForm.text,
         customEventTypeId: eventForm.type,
@@ -266,8 +266,41 @@ window.SkaLow.createNewConfluenceEvent = async function (eventForm) {
         userTimeZoneId: "Australia/Perth",
     };
 
-    let postedConfluenceEvent = await window.SkaLow.createEvent(newConfluenceEvent)
+    let postedConfluenceEvent = await window.SkaLow.postEvent(newConfluenceEvent)
         .catch(err => { console.error(err); return null });
 
     return postedConfluenceEvent
 }
+
+window.SkaLow.updateConfluenceEvent = async function (eventForm, event) {
+    console.log(event)
+    const updatedConfluenceEvent = {
+        uid: event.confluenceId,
+        what: eventForm.text,
+        customEventTypeId: eventForm.type,
+        subCalendarId: window.SkaLow.skaConstructionCalId,
+        startDate: window.SkaLow.convertToConfluenceDate(eventForm.start.value),
+        endDate: window.SkaLow.convertToConfluenceDate(eventForm.end.value),
+        startTime: window.SkaLow.convertToConfluenceTime(eventForm.start.value),
+        endTime: window.SkaLow.convertToConfluenceTime(eventForm.end.value),
+        description: eventForm.description.includes(eventForm.resource) ?
+            eventForm.description : eventForm.resource + "\n\n" + eventForm.description,
+        // invitees: [{ name: result.who }],
+        // allDayEvent: "false",
+        // editAllInRecurrenceSeries: "true",
+        // rruleStr: "",
+        // confirmRemoveInvalidUsers: "false",
+        eventType: "custom",
+        userTimeZoneId: "Australia/Perth",
+    };
+    console.log(updatedConfluenceEvent)
+    const posted = await window.SkaLow.postEvent(updatedConfluenceEvent)
+        .catch(err => { console.error(err); return null });
+    console.log(posted)
+}
+
+window.SkaLow.makeEventId = function (confluenceId, resourceId) {
+    return `${confluenceId}:${resourceId}`
+}
+
+window.SkaLow.refresh = function () { this.updateVisibleResources(); this.calendar.update(); }

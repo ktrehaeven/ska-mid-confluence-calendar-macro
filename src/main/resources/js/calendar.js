@@ -42,15 +42,15 @@ window.SkaLow.initCalendar = async function (wrapper) {
             calendar.clearSelection();
             if (!result) return;
 
-            const postedConfluenceEvent = await window.SkaLow.createNewConfluenceEvent(result)
+            const postedConfluenceEvent = await window.SkaLow.createConfluenceEvent(result)
 
             if (!postedConfluenceEvent.success) return
 
             result.resource.forEach((r) => {
 
                 const newDayPilotEvent = new DayPilot.Event({
-                    id: `${postedConfluenceEvent.event.id}:${r}`,
-                    parentId: postedConfluenceEvent.event.id,
+                    id: window.SkaLow.makeEventId(postedConfluenceEvent.event.id, r),
+                    confluenceId: postedConfluenceEvent.event.id,
                     text: result.text,
                     // who: result.who,
                     start: result.start.getTime(),
@@ -62,15 +62,14 @@ window.SkaLow.initCalendar = async function (wrapper) {
                 calendar.events.add(newDayPilotEvent);
             })
 
-            window.SkaLow.updateVisibleResources()
-            calendar.update();
+            window.SkaLow.refresh()
 
         },
 
         onEventClick: async function (args) {
 
             const e = args.e.data;
-            const siblings = calendar.events.list.filter(ev => (ev.parentId) === e.parentId);
+            const siblings = calendar.events.list.filter(ev => (ev.confluenceId) === e.confluenceId);
             const currentResources = [...new Set(siblings.map(ev => String(ev.resource)).filter(Boolean))];
 
             const result = await window.SkaLow.showEventForm({
@@ -79,11 +78,13 @@ window.SkaLow.initCalendar = async function (wrapper) {
                 // who: e.who || "",
                 start: e.start,
                 end: e.end,
-                resource: currentResources || "",
+                resource: currentResources || [],
                 description: e.description || ""
             });
 
             if (!result) return;
+
+            await window.SkaLow.updateConfluenceEvent(result, e)
 
             const selectedResources = Array.isArray(result.resource)
                 ? result.resource.map(r => String(r))
@@ -98,7 +99,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
 
             // update instances toKeep
             for (const r of toKeep) {
-                const id = `${e.parentId}:${r}`;
+                const id = window.SkaLow.makeEventId(e.confluenceId, r)
                 const ev = calendar.events.find(id);
                 if (!ev) continue;
 
@@ -110,12 +111,11 @@ window.SkaLow.initCalendar = async function (wrapper) {
                         resource: r,
                         description: result.description
                     })
-
             }
 
             // delete instances toRemove
             for (const r of toRemove) {
-                const id = `${e.parentId}:${r}`;
+                const id = window.SkaLow.makeEventId(e.confluenceId, r)
                 const ev = calendar.events.find(id);
                 if (ev) {
                     calendar.events.remove(ev);
@@ -124,14 +124,14 @@ window.SkaLow.initCalendar = async function (wrapper) {
 
             // create instances toAdd
             for (const r of toAdd) {
-                const id = `${e.parentId}:${r}`;
+                const id = window.SkaLow.makeEventId(e.confluenceId, r)
 
                 // Safety: avoid "already loaded" error if something unexpected exists
                 if (calendar.events.find(id)) continue;
 
                 const newDayPilotEvent = new DayPilot.Event({
                     id: id,
-                    parentId: e.parentId,
+                    confluenceId: e.confluenceId,
                     text: result.text,
                     start: result.start.getTime(),
                     end: result.end.getTime(),
@@ -142,8 +142,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
                 calendar.events.add(newDayPilotEvent);
             }
 
-            window.SkaLow.updateVisibleResources()
-            calendar.update();
+            window.SkaLow.refresh()
         },
         eventMoveHandling: "Update",
         onEventMoved: (args) => {
@@ -174,7 +173,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
                     station.marker.openTooltip();
                 }
                 selectedResourceId = args.row.id;
-                calendar.update();
+                window.SkaLow.refresh()
             }
             //clicking same row: reset view
             else {
@@ -183,7 +182,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
                     window.SkaLow.resetTooltips(map)
                 }
                 selectedResourceId = null
-                calendar.update();
+                window.SkaLow.refresh()
             }
         },
         onBeforeRowHeaderRender: (args) => {
@@ -205,13 +204,11 @@ window.SkaLow.initCalendar = async function (wrapper) {
         onTimeRangeSelected: args => {
             calendar.startDate = args.start;
             calendar.days = args.days;
-            window.SkaLow.updateVisibleResources();
-            calendar.update();
+            window.SkaLow.refresh()
         }
     });
     nav.init()
 
     calendar.events.list = await window.SkaLow.getCalEvents();
-    window.SkaLow.updateVisibleResources()
-    calendar.update();
+    window.SkaLow.refresh()
 }
