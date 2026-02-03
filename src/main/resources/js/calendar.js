@@ -12,7 +12,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
     if (!calendarEl || calendarEl.dataset.initialised) return;
     calendarEl.dataset.initialised = "true";
 
-    window.SkaLow.calendar = new DayPilot.Scheduler(calendarEl, {
+    const calendar = window.SkaLow.calendar = new DayPilot.Scheduler(calendarEl, {
         timeHeaders: [
             { groupBy: "Day", },
             { groupBy: "Hour", },
@@ -42,24 +42,6 @@ window.SkaLow.initCalendar = async function (wrapper) {
             calendar.clearSelection();
             if (!result) return;
 
-            result.resource.forEach((r) => {
-
-                const newDayPilotEvent = new DayPilot.Event({
-                    id: DayPilot.guid(),
-                    text: result.text,
-                    // who: result.who,
-                    start: result.start.getTime(),
-                    end: result.end.getTime(),
-                    resource: r,
-                    description: result.description
-                });
-
-                calendar.events.add(newDayPilotEvent);
-            })
-
-            window.SkaLow.updateVisibleResources()
-            calendar.update();
-
             const newConfluenceEvent = {
                 what: result.text,
                 customEventTypeId: result.type,
@@ -79,9 +61,30 @@ window.SkaLow.initCalendar = async function (wrapper) {
                 userTimeZoneId: "Australia/Perth",
             };
 
-            await window.SkaLow.createEvent(newConfluenceEvent)
-                .then(event => console.log("Created event:", event))
-                .catch(err => console.error(err));
+            let postedConfluenceEvent = await window.SkaLow.createEvent(newConfluenceEvent)
+                .catch(err => { console.error(err); return null });
+
+            if (!postedConfluenceEvent.success) return
+
+            result.resource.forEach((r) => {
+
+                const newDayPilotEvent = new DayPilot.Event({
+                    id: `${postedConfluenceEvent.event.id}:${r}`,
+                    parentId: postedConfluenceEvent.event.id,
+                    text: result.text,
+                    // who: result.who,
+                    start: result.start.getTime(),
+                    end: result.end.getTime(),
+                    resource: r,
+                    description: result.description
+                });
+
+                calendar.events.add(newDayPilotEvent);
+                console.log(newDayPilotEvent)
+            })
+
+            window.SkaLow.updateVisibleResources()
+            calendar.update();
 
         },
 
@@ -101,6 +104,8 @@ window.SkaLow.initCalendar = async function (wrapper) {
 
             if (!result) return;
 
+            // TODO: handle if resource changes or if more resources are selected
+            // or for editing should it by per resource? or multi select all resources? 
             Object.assign(e.data,
                 {
                     text: result.text,
@@ -162,7 +167,6 @@ window.SkaLow.initCalendar = async function (wrapper) {
             }
         },
     });
-    const calendar = window.SkaLow.calendar
     calendar.init();
 
     const nav = new DayPilot.Navigator(navEl, {
