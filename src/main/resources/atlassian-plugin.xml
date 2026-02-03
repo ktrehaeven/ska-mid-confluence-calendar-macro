@@ -24,9 +24,12 @@
         
         <resource type="download" name="stationLocations.json" location="/data/stationLocations.json"/>
         <resource type="download" name="ska-low-confluence-calendar-macro.css" location="/css/ska-low-confluence-calendar-macro.css"/>
-        <resource type="download" name="map.js" location="/js/map.js"/>
-        <resource type="download" name="calendar.js" location="/js/calendar.js"/>
-        <resource type="download" name="calendar-utils.js" location="/js/calendar-utils.js"/>
+        <resource type="download" name="station-data-manager.js" location="/js/station-data-manager.js"/>
+        <resource type="download" name="event-service.js" location="/js/event-service.js"/>
+        <resource type="download" name="map-renderer.js" location="/js/map-renderer.js"/>
+        <resource type="download" name="event-form-manager.js" location="/js/event-form-manager.js"/>
+        <resource type="download" name="calendar-renderer.js" location="/js/calendar-renderer.js"/>
+        <resource type="download" name="ska-low-calendar-macro.js" location="/js/ska-low-calendar-macro.js"/>
         <resource type="download" name="images/" location="/images"/>
 
         <context>atl.general</context>

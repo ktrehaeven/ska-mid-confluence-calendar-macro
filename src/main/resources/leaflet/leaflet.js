@@ -48,7 +48,9 @@
         _resetView: function (t) {
             e.DomEvent.stop(t);
 
-            SkaLow.resetView(this._map);
+            if (window.SkaLow?.macro?.getMapRenderer()) {
+                window.SkaLow.macro.getMapRenderer().resetView();
+            }
         }
 
     }),
