@@ -200,6 +200,8 @@ class EventService {
      * @returns {Object} Event payload object
      */
     _buildEventPayload(eventData, confluenceId = null) {
+        const eventExists = (confluenceId != null);
+
         const payload = {
             what: eventData.text,
             customEventTypeId: eventData.type,
@@ -208,12 +210,12 @@ class EventService {
             endDate: this.convertToConfluenceDate(eventData.end.value),
             startTime: this.convertToConfluenceTime(eventData.start.value),
             endTime: this.convertToConfluenceTime(eventData.end.value),
-            description: this._buildDescription(eventData),
+            description: eventExists ? eventData.description : this.buildDescription(eventData),
             eventType: "custom",
             userTimeZoneId: "Australia/Perth",
         };
 
-        if (confluenceId) {
+        if (eventExists) {
             payload.uid = confluenceId;
         }
 
@@ -259,7 +261,7 @@ class EventService {
      * @param {Object} eventData - Event data
      * @returns {string} Description with stations
      */
-    _buildDescription(eventData) {
+    buildDescription(eventData) {
         const resources = Array.isArray(eventData.resource) ? eventData.resource : [eventData.resource];
         const resourceStr = resources.filter(Boolean).join(", ");
         return eventData.description.includes(resourceStr) ?

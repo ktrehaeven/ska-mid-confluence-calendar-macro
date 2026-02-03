@@ -111,7 +111,7 @@ class CalendarRenderer {
             start: eventData.start.getTime?.() || eventData.start,
             end: eventData.end.getTime?.() || eventData.end,
             resource: station,
-            description: eventData.description
+            description: this.eventService.buildDescription(eventData)
         });
     }
 
