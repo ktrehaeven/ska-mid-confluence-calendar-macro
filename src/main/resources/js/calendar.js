@@ -85,19 +85,63 @@ window.SkaLow.initCalendar = async function (wrapper) {
 
             if (!result) return;
 
-            // TODO: handle if resource changes or if more resources are selected
-            // or for editing should it by per resource? or multi select all resources? 
-            Object.assign(e.data,
-                {
+            const selectedResources = Array.isArray(result.resource)
+                ? result.resource.map(r => String(r))
+                : [String(result.resource)];
+
+            const nextResources = [...new Set(selectedResources)].filter(Boolean);
+
+            // compute diff
+            const toAdd = nextResources.filter(r => !currentResources.includes(r));
+            const toRemove = currentResources.filter(r => !nextResources.includes(r));
+            const toKeep = nextResources.filter(r => currentResources.includes(r));
+
+            // update instances toKeep
+            for (const r of toKeep) {
+                const id = `${e.parentId}:${r}`;
+                const ev = calendar.events.find(id);
+                if (!ev) continue;
+
+                Object.assign(ev.data,
+                    {
+                        text: result.text,
+                        start: result.start.getTime(),
+                        end: result.end.getTime(),
+                        resource: r,
+                        description: result.description
+                    })
+
+            }
+
+            // delete instances toRemove
+            for (const r of toRemove) {
+                const id = `${e.parentId}:${r}`;
+                const ev = calendar.events.find(id);
+                if (ev) {
+                    calendar.events.remove(ev);
+                }
+            }
+
+            // create instances toAdd
+            for (const r of toAdd) {
+                const id = `${e.parentId}:${r}`;
+
+                // Safety: avoid "already loaded" error if something unexpected exists
+                if (calendar.events.find(id)) continue;
+
+                const newDayPilotEvent = new DayPilot.Event({
+                    id: id,
+                    parentId: e.parentId,
                     text: result.text,
-                    // who: result.who,
                     start: result.start.getTime(),
                     end: result.end.getTime(),
-                    resource: result.resource,
+                    resource: r,
                     description: result.description
                 });
 
-            calendar.events.update(e);
+                calendar.events.add(newDayPilotEvent);
+            }
+
             window.SkaLow.updateVisibleResources()
             calendar.update();
         },
