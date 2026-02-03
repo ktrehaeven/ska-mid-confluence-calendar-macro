@@ -42,27 +42,7 @@ window.SkaLow.initCalendar = async function (wrapper) {
             calendar.clearSelection();
             if (!result) return;
 
-            const newConfluenceEvent = {
-                what: result.text,
-                customEventTypeId: result.type,
-                subCalendarId: window.SkaLow.skaConstructionCalId,
-                startDate: window.SkaLow.convertToConfluenceDate(result.start.value),
-                endDate: window.SkaLow.convertToConfluenceDate(result.end.value),
-                startTime: window.SkaLow.convertToConfluenceTime(result.start.value),
-                endTime: window.SkaLow.convertToConfluenceTime(result.end.value),
-                description: result.description.includes(result.resource) ?
-                    result.description : result.resource + "\n\n" + result.description,
-                // invitees: [{ name: result.who }],
-                // allDayEvent: "false",
-                // editAllInRecurrenceSeries: "true",
-                // rruleStr: "",
-                // confirmRemoveInvalidUsers: "false",
-                eventType: "custom",
-                userTimeZoneId: "Australia/Perth",
-            };
-
-            let postedConfluenceEvent = await window.SkaLow.createEvent(newConfluenceEvent)
-                .catch(err => { console.error(err); return null });
+            const postedConfluenceEvent = await window.SkaLow.createNewConfluenceEvent(result)
 
             if (!postedConfluenceEvent.success) return
 
@@ -80,7 +60,6 @@ window.SkaLow.initCalendar = async function (wrapper) {
                 });
 
                 calendar.events.add(newDayPilotEvent);
-                console.log(newDayPilotEvent)
             })
 
             window.SkaLow.updateVisibleResources()
@@ -90,16 +69,18 @@ window.SkaLow.initCalendar = async function (wrapper) {
 
         onEventClick: async function (args) {
 
-            const e = args.e;
+            const e = args.e.data;
+            const siblings = calendar.events.list.filter(ev => (ev.parentId) === e.parentId);
+            const currentResources = [...new Set(siblings.map(ev => String(ev.resource)).filter(Boolean))];
 
             const result = await window.SkaLow.showEventForm({
-                text: e.text(),
-                type: e.data.eventType,
-                // who: e.data.who || "",
-                start: e.start(),
-                end: e.end(),
-                resource: e.data.resource || "",
-                description: e.data.description || ""
+                text: e.text,
+                type: e.eventType,
+                // who: e.who || "",
+                start: e.start,
+                end: e.end,
+                resource: currentResources || "",
+                description: e.description || ""
             });
 
             if (!result) return;
@@ -131,6 +112,9 @@ window.SkaLow.initCalendar = async function (wrapper) {
         eventDeleteHandling: "Update",
         onEventDeleted: (args) => {
             console.log("Event deleted: " + args.e.text());
+        },
+        onHeaderClick: (args) => {
+            console.log("header clicked: " + args.e.text());
         },
         onRowClick: (args) => {
             //clicking new row: zoom and tooltip station

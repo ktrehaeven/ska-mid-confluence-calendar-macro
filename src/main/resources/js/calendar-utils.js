@@ -245,3 +245,29 @@ window.SkaLow.updateVisibleResources = function () {
 
     calendar.resources = resourcesInView;
 }
+
+window.SkaLow.createNewConfluenceEvent = async function (eventForm) {
+    const newConfluenceEvent = {
+        what: eventForm.text,
+        customEventTypeId: eventForm.type,
+        subCalendarId: window.SkaLow.skaConstructionCalId,
+        startDate: window.SkaLow.convertToConfluenceDate(eventForm.start.value),
+        endDate: window.SkaLow.convertToConfluenceDate(eventForm.end.value),
+        startTime: window.SkaLow.convertToConfluenceTime(eventForm.start.value),
+        endTime: window.SkaLow.convertToConfluenceTime(eventForm.end.value),
+        description: eventForm.description.includes(eventForm.resource) ?
+            eventForm.description : eventForm.resource + "\n\n" + eventForm.description,
+        // invitees: [{ name: result.who }],
+        // allDayEvent: "false",
+        // editAllInRecurrenceSeries: "true",
+        // rruleStr: "",
+        // confirmRemoveInvalidUsers: "false",
+        eventType: "custom",
+        userTimeZoneId: "Australia/Perth",
+    };
+
+    let postedConfluenceEvent = await window.SkaLow.createEvent(newConfluenceEvent)
+        .catch(err => { console.error(err); return null });
+
+    return postedConfluenceEvent
+}
