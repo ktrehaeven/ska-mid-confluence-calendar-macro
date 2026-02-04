@@ -65,7 +65,7 @@ class CalendarRenderer {
             onTimeRangeSelected: (args) => this._handleTimeRangeSelected(args),
             onEventClick: (args) => this._handleEventClick(args),
             eventMoveHandling: "Update",
-            onEventMoved: (args) => console.log("Event moved: " + args.e.text()),
+            onEventMoved: (args) => this._handleEventMove(args),
             eventResizeHandling: "Update",
             onEventResized: (args) => this._handleEventResize(args),
             eventDeleteHandling: "Update",
@@ -111,6 +111,7 @@ class CalendarRenderer {
             start: eventData.start.getTime?.() || eventData.start,
             end: eventData.end.getTime?.() || eventData.end,
             resource: station,
+            customEventTypeId: eventData.customEventTypeId,
             description: this.eventService.buildDescription(eventData)
         });
     }
@@ -202,6 +203,24 @@ class CalendarRenderer {
     }
 
     /**
+     * Handles event moving
+     * @private
+     * @param {Object} args - Event arguments
+     */
+    async _handleEventMove(args) {
+        const events = this.getSiblings(args.e.data);
+        const updatedData = {
+            start: args.e.data.start.getTime?.() || args.e.data.start,
+            end: args.e.data.end.getTime?.() || args.e.data.end
+        };
+        events.forEach(ev => {
+            this._updateEventInstance(ev.confluenceId, ev.resource, updatedData);
+        });
+        this.refresh();
+        await this.eventService.updateEvent(args.e.data, args.e.data);
+    }
+
+    /**
      * Handles time range selection (new event creation)
      * @private
      * @param {Object} args - Event arguments
@@ -217,13 +236,12 @@ class CalendarRenderer {
 
         this.calendar.clearSelection();
         if (!result) return;
-
         const postedEvent = await this.eventService.createEvent(result);
         if (!postedEvent?.success) return;
 
         // Add new DayPilot events for each selected station
         const stations = this.eventService.normalizeResources(result.resource);
-        stations.forEach(station => {
+        await stations.forEach(station => {
             this._addEventInstance(postedEvent.event.id, station, result);
         });
 

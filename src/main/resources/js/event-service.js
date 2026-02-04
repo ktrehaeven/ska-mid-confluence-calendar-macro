@@ -295,7 +295,7 @@ class EventService {
      * @param {Object} options - Intl.DateTimeFormat options
      * @returns {string} Formatted date/time
      */
-    _formatDateWithIntl(dateString, options, timeZone = "UTC") {
+    _formatDateWithIntl(dateString, options, timeZone = "Australia/Perth") {
         const dateObject = new Date(dateString);
         return new Intl.DateTimeFormat('en-US', { ...options, timeZone }).format(dateObject);
     }
