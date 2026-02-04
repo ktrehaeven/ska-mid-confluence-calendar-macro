@@ -67,7 +67,7 @@ class CalendarRenderer {
             eventMoveHandling: "Update",
             onEventMoved: (args) => console.log("Event moved: " + args.e.text()),
             eventResizeHandling: "Update",
-            onEventResized: (args) => console.log("Event resized: " + args.e.text()),
+            onEventResized: (args) => this._handleEventResize(args),
             eventDeleteHandling: "Update",
             onEventDelete: (args) => this._handleEventDelete(args),
             onRowClick: (args) => this._handleRowClick(args),
@@ -184,6 +184,24 @@ class CalendarRenderer {
     }
 
     /**
+     * Handles event resizing
+     * @private
+     * @param {Object} args - Event arguments
+     */
+    async _handleEventResize(args) {
+        const events = this.getSiblings(args.e.data);
+        const updatedData = {
+            start: args.e.data.start.getTime?.() || args.e.data.start,
+            end: args.e.data.end.getTime?.() || args.e.data.end
+        };
+        events.forEach(ev => {
+            this._updateEventInstance(ev.confluenceId, ev.resource, updatedData);
+        });
+        this.refresh();
+        await this.eventService.updateEvent(args.e.data, args.e.data);
+    }
+
+    /**
      * Handles time range selection (new event creation)
      * @private
      * @param {Object} args - Event arguments
@@ -226,7 +244,7 @@ class CalendarRenderer {
 
         const result = await this.eventFormManager.show({
             text: event.text,
-            type: event.eventType,
+            customEventTypeId: event.customEventTypeId,
             start: event.start,
             end: event.end,
             resource: currentResources || [],
@@ -315,8 +333,8 @@ class CalendarRenderer {
         const resourcesInView = this.stationDataManager.stationList.filter(resource =>
             this.calendar.events.list.some(event =>
                 event.resource === resource.id &&
-                event.start < viewEnd &&
-                event.end > viewStart
+                Date.parse(event.start) < viewEnd &&
+                Date.parse(event.end) > viewStart
             )
         );
 
