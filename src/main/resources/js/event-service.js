@@ -130,6 +130,7 @@ class EventService {
             resource: resourceId,
             barColor: "#070068",
             eventType: event.customEventTypeId,
+            subCalendarId: event.subCalendarId
         }));
     }
 
@@ -159,9 +160,10 @@ class EventService {
     /**
      * Posts a new event or updates an existing one
      * @param {Object} body - Event data to post
+     * @param {string} method - HTTP method ('PUT' for create/update, 'DELETE' for delete)
      * @returns {Promise<Object>} Response from server
      */
-    async postEvent(body) {
+    async requestEvent(body, method = 'PUT') {
         const url = AJS.contextPath() + "/rest/calendar-services/1.0/calendar/events.json";
         const formData = new URLSearchParams();
 
@@ -173,7 +175,7 @@ class EventService {
 
         try {
             const response = await fetch(url, {
-                method: 'PUT',
+                method: method,
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
                     "X-Requested-With": "XMLHttpRequest"
@@ -195,22 +197,22 @@ class EventService {
     /**
      * Builds event payload for create/update operations
      * @private
-     * @param {Object} eventData - Event form data
+     * @param {Object} formData - Event form data
      * @param {string|null} confluenceId - Confluence event ID (null for new events)
      * @returns {Object} Event payload object
      */
-    _buildEventPayload(eventData, confluenceId = null) {
+    _buildEventPayload(formData, confluenceId = null) {
         const eventExists = (confluenceId != null);
 
         const payload = {
-            what: eventData.text,
-            customEventTypeId: eventData.type,
+            what: formData.text,
+            customEventTypeId: formData.type,
             subCalendarId: this.skaConstructionCalId,
-            startDate: this.convertToConfluenceDate(eventData.start.value),
-            endDate: this.convertToConfluenceDate(eventData.end.value),
-            startTime: this.convertToConfluenceTime(eventData.start.value),
-            endTime: this.convertToConfluenceTime(eventData.end.value),
-            description: eventExists ? eventData.description : this.buildDescription(eventData),
+            startDate: this.convertToConfluenceDate(formData.start.value),
+            endDate: this.convertToConfluenceDate(formData.end.value),
+            startTime: this.convertToConfluenceTime(formData.start.value),
+            endTime: this.convertToConfluenceTime(formData.end.value),
+            description: eventExists ? formData.description : this.buildDescription(formData),
             eventType: "custom",
             userTimeZoneId: "Australia/Perth",
         };
@@ -224,14 +226,14 @@ class EventService {
 
     /**
      * Creates a new Confluence event
-     * @param {Object} eventData - Event form data
+     * @param {Object} formData - Event form data
      * @returns {Promise<Object>} Created event or null on error
      */
-    async createEvent(eventData) {
-        const confluenceEvent = this._buildEventPayload(eventData);
+    async createEvent(formData) {
+        const confluenceEvent = this._buildEventPayload(formData);
 
         try {
-            return await this.postEvent(confluenceEvent);
+            return await this.requestEvent(confluenceEvent);
         } catch (err) {
             console.error("Create event error:", err);
             return null;
@@ -240,17 +242,36 @@ class EventService {
 
     /**
      * Updates an existing Confluence event
-     * @param {Object} eventData - Event form data
+     * @param {Object} formData - Event form data
      * @param {Object} existingEvent - Existing event object
      * @returns {Promise<Object>} Updated event response
      */
-    async updateEvent(eventData, existingEvent) {
-        const confluenceEvent = this._buildEventPayload(eventData, existingEvent.confluenceId);
+    async updateEvent(formData, existingEvent) {
+        const confluenceEvent = this._buildEventPayload(formData, existingEvent.confluenceId);
 
         try {
-            return await this.postEvent(confluenceEvent);
+            return await this.requestEvent(confluenceEvent);
         } catch (err) {
             console.error("Update event error:", err);
+            throw err;
+        }
+    }
+
+    /**
+     * Deletes an existing Confluence event
+     * @param {Object} existingEvent - Existing event object
+     * @returns {Promise<Object>} Updated event response
+     */
+    async deleteEvent(existingEvent) {
+        // const confluenceEvent = this._buildEventPayload(existingEvent, existingEvent.confluenceId);
+
+        try {
+            return await this.requestEvent({
+                subCalendarId: existingEvent.subCalendarId,
+                uid: existingEvent.confluenceId
+            }, 'DELETE');
+        } catch (err) {
+            console.error("Delete event error:", err);
             throw err;
         }
     }

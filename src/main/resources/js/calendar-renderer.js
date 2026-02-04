@@ -69,7 +69,7 @@ class CalendarRenderer {
             eventResizeHandling: "Update",
             onEventResized: (args) => console.log("Event resized: " + args.e.text()),
             eventDeleteHandling: "Update",
-            onEventDeleted: (args) => console.log("Event deleted: " + args.e.text()),
+            onEventDelete: (args) => this._handleEventDelete(args),
             onRowClick: (args) => this._handleRowClick(args),
             onBeforeRowHeaderRender: (args) => this._handleRowHeaderRender(args),
         });
@@ -162,6 +162,28 @@ class CalendarRenderer {
     }
 
     /**
+     * Handles event deletion
+     * @private
+     * @param {Object} args - Event arguments
+     */
+    async _handleEventDelete(args) {
+
+        if (!confirm("Do you really want to delete this booking?\n\n"
+            + "This will remove all associated bookings in the same time slot.\n\n"
+            + "This action cannot be undone.")) {
+            args.preventDefault();
+            return;
+        }
+
+        const events = this.getSiblings(args.e.data);
+        events.forEach(ev => {
+            this._removeEventInstance(ev.confluenceId, ev.resource);
+        });
+        this.refresh();
+        await this.eventService.deleteEvent(args.e.data);
+    }
+
+    /**
      * Handles time range selection (new event creation)
      * @private
      * @param {Object} args - Event arguments
@@ -197,9 +219,7 @@ class CalendarRenderer {
      */
     async _handleEventClick(args) {
         const event = args.e.data;
-        const siblings = this.calendar.events.list.filter(
-            ev => ev.confluenceId === event.confluenceId
-        );
+        const siblings = this.getSiblings(event)
         const currentResources = [...new Set(
             siblings.map(ev => String(ev.resource)).filter(Boolean)
         )];
@@ -312,10 +332,14 @@ class CalendarRenderer {
     }
 
     /**
-     * Gets the calendar instance
-     * @returns {DayPilot.Scheduler} Calendar scheduler instance
+     * Gets siblings of a given event (events with the same Confluence ID)
+     * @param {DayPilot.Event} event - The event to find siblings for
+     * @returns {Array} Array of sibling events
      */
-    getCalendar() {
-        return this.calendar;
+    getSiblings(event) {
+        return this.calendar.events.list.filter(
+            ev => ev.confluenceId === event.confluenceId
+        );
     }
+
 }
