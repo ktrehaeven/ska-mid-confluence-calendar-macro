@@ -124,12 +124,12 @@ class EventService {
             id: this.makeEventId(event.id, resourceId),
             confluenceId: event.id,
             text: event.title,
-            start: this.applyTimezoneOffset(new Date(event.start)),
-            end: this.applyTimezoneOffset(new Date(event.end)),
+            start: this.removeTZ(event.start),
+            end: this.removeTZ(event.end),
             description: event.description,
             resource: resourceId,
             barColor: "#070068",
-            eventType: event.customEventTypeId,
+            customEventTypeId: event.customEventTypeId,
             subCalendarId: event.subCalendarId
         }));
     }
@@ -153,8 +153,8 @@ class EventService {
      * @param {Date} dt - Date object
      * @returns {Date} Adjusted date
      */
-    applyTimezoneOffset(dt) {
-        return new Date(dt.getTime() - dt.getTimezoneOffset() * 60000);
+    removeTZ(dateString) {
+        return new DayPilot.Date(dateString.split("+")[0])
     }
 
     /**
@@ -203,15 +203,14 @@ class EventService {
      */
     _buildEventPayload(formData, confluenceId = null) {
         const eventExists = (confluenceId != null);
-
         const payload = {
             what: formData.text,
-            customEventTypeId: formData.type,
+            customEventTypeId: formData.customEventTypeId,
             subCalendarId: this.skaConstructionCalId,
-            startDate: this.convertToConfluenceDate(formData.start.value),
-            endDate: this.convertToConfluenceDate(formData.end.value),
-            startTime: this.convertToConfluenceTime(formData.start.value),
-            endTime: this.convertToConfluenceTime(formData.end.value),
+            startDate: this.convertToConfluenceDate(formData.start),
+            endDate: this.convertToConfluenceDate(formData.end),
+            startTime: this.convertToConfluenceTime(formData.start),
+            endTime: this.convertToConfluenceTime(formData.end),
             description: eventExists ? formData.description : this.buildDescription(formData),
             eventType: "custom",
             userTimeZoneId: "Australia/Perth",
@@ -296,9 +295,9 @@ class EventService {
      * @param {Object} options - Intl.DateTimeFormat options
      * @returns {string} Formatted date/time
      */
-    _formatDateWithIntl(dateString, options) {
+    _formatDateWithIntl(dateString, options, timeZone = "UTC") {
         const dateObject = new Date(dateString);
-        return new Intl.DateTimeFormat('en-US', options).format(dateObject);
+        return new Intl.DateTimeFormat('en-US', { ...options, timeZone }).format(dateObject);
     }
 
     /**
@@ -307,6 +306,11 @@ class EventService {
      * @returns {string} Formatted date
      */
     convertToConfluenceDate(dateString) {
+        // catch for if dateString is a DatePicker object
+        if (dateString.value) {
+            dateString = dateString.value;
+        }
+
         return this._formatDateWithIntl(dateString, {
             year: 'numeric',
             month: 'long',
