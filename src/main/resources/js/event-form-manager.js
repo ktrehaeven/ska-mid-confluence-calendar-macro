@@ -41,7 +41,7 @@ class EventFormManager {
             { name: "Title", id: "text", type: "text" },
             {
                 name: "Event Type",
-                id: "type",
+                id: "customEventTypeId",
                 options: this.eventService.customEventTypes,
                 type: "select"
             },
