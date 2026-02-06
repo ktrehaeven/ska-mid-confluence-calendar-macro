@@ -199,6 +199,8 @@ class CalendarRenderer {
             this._updateEventInstance(ev.confluenceId, ev.resource, updatedData);
         });
         this.refresh();
+        // ensure the update payload contains all sibling resources
+        args.e.data.resource = [...new Set(events.map(ev => String(ev.resource)).filter(Boolean))];
         await this.eventService.updateEvent(args.e.data, args.e.data);
     }
 
@@ -209,6 +211,9 @@ class CalendarRenderer {
      */
     async _handleEventMove(args) {
         const events = this.getSiblings(args.e.data);
+        const currentResources = [...new Set(
+            events.map(ev => String(ev.resource)).filter(Boolean)
+        )];
         const updatedData = {
             start: args.newStart,
             end: args.newEnd
@@ -217,6 +222,9 @@ class CalendarRenderer {
             this._updateEventInstance(ev.confluenceId, ev.resource, updatedData);
         });
         this.refresh();
+        args.e.data.resource = [...new Set(events.map(ev => String(ev.resource)).filter(Boolean))];
+        const nextResources = this.eventService.normalizeResources(args.e.data.resource);
+        const toRemove = currentResources.filter(r => !nextResources.includes(r));
         await this.eventService.updateEvent(args.e.data, args.e.data);
     }
 
@@ -353,8 +361,8 @@ class CalendarRenderer {
         const resourcesInView = this.stationDataManager.stationList.filter(resource =>
             this.calendar.events.list.some(event =>
                 event.resource === resource.id &&
-                Date.parse(event.start) < viewEnd &&
-                Date.parse(event.end) > viewStart
+                event.start.getTime() < viewEnd &&
+                event.end.getTime() > viewStart
             )
         );
 
