@@ -64,7 +64,7 @@ class CalendarRenderer {
             timeRangeSelectedHandling: "Enabled",
             onTimeRangeSelected: (args) => this._handleTimeRangeSelected(args),
             onEventClick: (args) => this._handleEventClick(args),
-            eventMoveHandling: "Update",
+            eventMoveHandling: "Disabled",
             onEventMoved: (args) => this._handleEventMove(args),
             eventResizeHandling: "Update",
             onEventResized: (args) => this._handleEventResize(args),
@@ -108,11 +108,11 @@ class CalendarRenderer {
             id: this.eventService.makeEventId(confluenceId, station),
             confluenceId: confluenceId,
             text: eventData.text,
-            start: eventData.start.getTime?.() || eventData.start,
-            end: eventData.end.getTime?.() || eventData.end,
+            start: eventData.start,
+            end: eventData.end,
             resource: station,
             customEventTypeId: eventData.customEventTypeId,
-            description: this.eventService.buildDescription(eventData)
+            description: this.eventService.buildDescription(eventData),
         });
     }
 
@@ -208,7 +208,6 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     async _handleEventMove(args) {
-        console.log(args.e.data.start, args);
         const events = this.getSiblings(args.e.data);
         const updatedData = {
             start: args.newStart,
@@ -278,6 +277,8 @@ class CalendarRenderer {
         const toKeep = nextResources.filter(r => currentResources.includes(r));
 
         result.description = this.eventService.buildDescription(result);
+        // ensure station name is not in title to avoid incorrect assigning
+        result.text = this.eventService.cleanTextOfStations(result.text, toRemove);
         await this.eventService.updateEvent(result, event);
 
         // Update kept instances
@@ -378,5 +379,4 @@ class CalendarRenderer {
             ev => ev.confluenceId === event.confluenceId
         );
     }
-
 }

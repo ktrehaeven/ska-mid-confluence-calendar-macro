@@ -112,8 +112,6 @@ class EventService {
                 }
             }
         );
-        console.log(this.childSubCalendarIds);
-        console.log(this.customEventTypes)
         const allEventsArrays = await Promise.all(fetchPromises);
         return allEventsArrays.flat();
     }
@@ -289,9 +287,6 @@ class EventService {
      * Builds description including station information
      * @private
      * @param {Object} eventData - Event data
-     * @param {Array} [toAdd=[]] - Stations being added
-     * @param {Array} [toRemove=[]] - Stations being removed
-     * @param {Array} [toKeep=[]] - Stations being kept
      * @returns {string} Description with updated stations
      */
     buildDescription(eventData) {
@@ -302,7 +297,7 @@ class EventService {
         const otherContent = parts.slice(1).join('\n\n');
 
         // Build new station line from kept + added
-        const allResources = eventData.resource.filter(Boolean);
+        const allResources = this.normalizeResources(eventData.resource).filter(Boolean);
         const newStationLine = allResources.join(", ");
 
         // Reconstruct: new stations at top, everything else below
@@ -313,6 +308,31 @@ class EventService {
         }
 
         return otherContent || description;
+    }
+
+    /**
+     * Removes specified station names from a text string
+     * @param {string} text - Text to clean
+     * @param {Array} [toRemove=null] - Stations to remove (if null, removes all stations)
+     * @returns {string} Cleaned text
+     */
+    cleanTextOfStations(text, toRemove = null) {
+        if (!text) return "";
+        // If toRemove is provided, only remove those; otherwise remove all stations
+        const stationIds = toRemove || this.stationDataManager.getAllStationLabels();
+        let cleaned = String(text);
+
+        stationIds.forEach(stationId => {
+            const regex = new RegExp(`\\b${stationId}\\b`, 'gi');
+            cleaned = cleaned.replace(regex, '');
+        });
+
+        // Normalize whitespace and leftover separators
+        cleaned = cleaned.replace(/[\s]{2,}/g, ' ')
+            .replace(/^[,;:\-\s]+|[,;:\-\s]+$/g, '')
+            .trim();
+
+        return cleaned;
     }
 
     /**
