@@ -192,8 +192,8 @@ class CalendarRenderer {
     async _handleEventResize(args) {
         const events = this.getSiblings(args.e.data);
         const updatedData = {
-            start: args.e.data.start.getTime?.() || args.e.data.start,
-            end: args.e.data.end.getTime?.() || args.e.data.end
+            start: args.newStart,
+            end: args.newEnd
         };
         events.forEach(ev => {
             this._updateEventInstance(ev.confluenceId, ev.resource, updatedData);
@@ -208,10 +208,11 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     async _handleEventMove(args) {
+        console.log(args.e.data.start, args);
         const events = this.getSiblings(args.e.data);
         const updatedData = {
-            start: args.e.data.start.getTime?.() || args.e.data.start,
-            end: args.e.data.end.getTime?.() || args.e.data.end
+            start: args.newStart,
+            end: args.newEnd
         };
         events.forEach(ev => {
             this._updateEventInstance(ev.confluenceId, ev.resource, updatedData);
