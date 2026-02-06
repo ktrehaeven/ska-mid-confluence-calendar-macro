@@ -45,7 +45,8 @@ class EventService {
     }
 
     /**
-     * Parses child calendar data
+     * Parses child calendar data into a dictionary of calendar ids named by their custom event type
+     * and an array of custom event types for dropdown population
      * @private
      * @param {Array} childSubCalendars - Array of child calendar objects
      */
@@ -53,8 +54,16 @@ class EventService {
         this.childSubCalendarIds = Object.fromEntries(
             childSubCalendars.flatMap(child => {
                 const sub = child.subCalendar;
-                if (!sub?.customEventTypes?.length) return [];
-                return sub.customEventTypes.map(type => [type.title, sub.id]);
+                const entries = [];
+
+                if (sub?.customEventTypes?.length) {
+                    entries.push(...sub.customEventTypes.map(type => [type.title, sub.id]));
+                } else if (sub?.type) {
+                    // if no customEventTypes, include an entry using sub.type
+                    entries.push([sub.type, sub.id]);
+                }
+
+                return entries;
             })
         );
 
@@ -103,7 +112,8 @@ class EventService {
                 }
             }
         );
-
+        console.log(this.childSubCalendarIds);
+        console.log(this.customEventTypes)
         const allEventsArrays = await Promise.all(fetchPromises);
         return allEventsArrays.flat();
     }
