@@ -292,19 +292,19 @@ class EventService {
     buildDescription(eventData) {
         let description = eventData.description || "";
 
-        // Split on first \n\n to separate station line from other content
-        const parts = description.split(/\n\n/);
-        const otherContent = parts.slice(1).join('\n\n');
+        // Split on ** to separate station line from other content
+        const parts = description.split(/\*\*/);
+        const otherContent = parts.slice(2).join('**');
 
-        // Build new station line from kept + added
+        // Build new station line from kept + added, surrounded by **
         const allResources = this.normalizeResources(eventData.resource).filter(Boolean);
         const newStationLine = allResources.join(", ");
 
-        // Reconstruct: new stations at top, everything else below
+        // Reconstruct: new stations at top surrounded by **, everything else below
         if (newStationLine) {
             return otherContent
-                ? newStationLine + "\n\n" + otherContent
-                : newStationLine;
+                ? `**${newStationLine}**\n${otherContent}`
+                : `**${newStationLine}**`;
         }
 
         return otherContent || description;
