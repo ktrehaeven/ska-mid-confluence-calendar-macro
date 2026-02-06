@@ -272,20 +272,20 @@ class CalendarRenderer {
 
         if (!result) return;
 
-        await this.eventService.updateEvent(result, event);
-
         const nextResources = this.eventService.normalizeResources(result.resource);
-
         const toAdd = nextResources.filter(r => !currentResources.includes(r));
         const toRemove = currentResources.filter(r => !nextResources.includes(r));
         const toKeep = nextResources.filter(r => currentResources.includes(r));
+
+        result.description = this.eventService.buildDescription(result);
+        await this.eventService.updateEvent(result, event);
 
         // Update kept instances
         toKeep.forEach(resource => {
             this._updateEventInstance(event.confluenceId, resource, {
                 text: result.text,
-                start: result.start.getTime(),
-                end: result.end.getTime(),
+                start: result.start,
+                end: result.end,
                 resource: resource,
                 description: result.description
             });

@@ -221,7 +221,7 @@ class EventService {
             endDate: this.convertToConfluenceDate(formData.end),
             startTime: this.convertToConfluenceTime(formData.start),
             endTime: this.convertToConfluenceTime(formData.end),
-            description: eventExists ? formData.description : this.buildDescription(formData),
+            description: this.buildDescription(formData),
             eventType: "custom",
             userTimeZoneId: "Australia/Perth",
         };
@@ -289,13 +289,30 @@ class EventService {
      * Builds description including station information
      * @private
      * @param {Object} eventData - Event data
-     * @returns {string} Description with stations
+     * @param {Array} [toAdd=[]] - Stations being added
+     * @param {Array} [toRemove=[]] - Stations being removed
+     * @param {Array} [toKeep=[]] - Stations being kept
+     * @returns {string} Description with updated stations
      */
     buildDescription(eventData) {
-        const resources = Array.isArray(eventData.resource) ? eventData.resource : [eventData.resource];
-        const resourceStr = resources.filter(Boolean).join(", ");
-        return eventData.description.includes(resourceStr) ?
-            eventData.description : resourceStr + "\n\n" + eventData.description;
+        let description = eventData.description || "";
+
+        // Split on first \n\n to separate station line from other content
+        const parts = description.split(/\n\n/);
+        const otherContent = parts.slice(1).join('\n\n');
+
+        // Build new station line from kept + added
+        const allResources = eventData.resource.filter(Boolean);
+        const newStationLine = allResources.join(", ");
+
+        // Reconstruct: new stations at top, everything else below
+        if (newStationLine) {
+            return otherContent
+                ? newStationLine + "\n\n" + otherContent
+                : newStationLine;
+        }
+
+        return otherContent || description;
     }
 
     /**
