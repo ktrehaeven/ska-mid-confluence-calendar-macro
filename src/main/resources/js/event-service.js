@@ -138,7 +138,8 @@ class EventService {
             resource: resourceId,
             barColor: "#070068",
             customEventTypeId: event.customEventTypeId,
-            subCalendarId: event.subCalendarId
+            childSubCalendarId: event.subCalendarId,
+            rruleStr: event.rruleStr,
         }));
     }
 
@@ -209,8 +210,7 @@ class EventService {
      * @param {string|null} confluenceId - Confluence event ID (null for new events)
      * @returns {Object} Event payload object
      */
-    _buildEventPayload(formData, confluenceId = null) {
-        const eventExists = (confluenceId != null);
+    _buildEventPayload(formData, existingEvent = null) {
         const payload = {
             what: formData.text,
             customEventTypeId: formData.customEventTypeId,
@@ -224,8 +224,18 @@ class EventService {
             userTimeZoneId: "Australia/Perth",
         };
 
-        if (eventExists) {
-            payload.uid = confluenceId;
+        if (existingEvent) {
+            payload.uid = existingEvent.confluenceId;
+
+            if (existingEvent.rruleStr) {
+                payload.originalSubCalendarId = this.skaConstructionCalId;
+                payload.originalEventSubCalendarId = existingEvent.childSubCalendarId;
+                payload.childSubCalendarId = existingEvent.childSubCalendarId;
+                payload.originalCustomEventTypeId = existingEvent.customEventTypeId;
+                payload.originalStartDate = existingEvent.confluenceId.split("/")[0];
+                payload.originalEventType = existingEvent.eventType;
+                payload.rruleStr = existingEvent.rruleStr;
+            }
         }
 
         return payload;
@@ -254,7 +264,7 @@ class EventService {
      * @returns {Promise<Object>} Updated event response
      */
     async updateEvent(formData, existingEvent) {
-        const confluenceEvent = this._buildEventPayload(formData, existingEvent.confluenceId);
+        const confluenceEvent = this._buildEventPayload(formData, existingEvent);
 
         try {
             return await this.requestEvent(confluenceEvent);
@@ -270,11 +280,10 @@ class EventService {
      * @returns {Promise<Object>} Updated event response
      */
     async deleteEvent(existingEvent) {
-        // const confluenceEvent = this._buildEventPayload(existingEvent, existingEvent.confluenceId);
 
         try {
             return await this.requestEvent({
-                subCalendarId: existingEvent.subCalendarId,
+                subCalendarId: existingEvent.childSubCalendarId,
                 uid: existingEvent.confluenceId
             }, 'DELETE');
         } catch (err) {
@@ -294,7 +303,7 @@ class EventService {
 
         // Split on ** to separate station line from other content
         const parts = description.split(/\*\*/);
-        const otherContent = parts.slice(2).join('**');
+        const otherContent = parts.slice(parts.length - 1).join('**').trim();
 
         // Build new station line from kept + added, surrounded by **
         const allResources = this.normalizeResources(eventData.resource).filter(Boolean);
@@ -303,7 +312,7 @@ class EventService {
         // Reconstruct: new stations at top surrounded by **, everything else below
         if (newStationLine) {
             return otherContent
-                ? `**${newStationLine}**\n${otherContent}`
+                ? `**${newStationLine}**\n\n${otherContent}`
                 : `**${newStationLine}**`;
         }
 
