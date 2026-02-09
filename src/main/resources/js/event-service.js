@@ -145,12 +145,12 @@ class EventService {
 
     /**
      * Extracts station IDs mentioned in event title or description
-     * @param {Object} event - Event object
+     * @param {Object} event - Confluence Event object
      * @returns {Array<string>} Array of matching station IDs
      */
     extractResourcesFromEvent(event) {
         const stationIds = this.stationDataManager.getAllStationLabels();
-        const haystack = (event.title || "") + " " + (event.description || "");
+        const haystack = event.where ? event.where : (event.title) + (event.description);
 
         return stationIds.filter(stationId =>
             haystack.toUpperCase().includes(stationId.toUpperCase())
@@ -219,7 +219,8 @@ class EventService {
             endDate: this.convertToConfluenceDate(formData.end),
             startTime: this.convertToConfluenceTime(formData.start),
             endTime: this.convertToConfluenceTime(formData.end),
-            description: this.buildDescription(formData),
+            where: formData.resource,
+            description: formData.description,
             eventType: "custom",
             userTimeZoneId: "Australia/Perth",
         };
@@ -290,58 +291,6 @@ class EventService {
             console.error("Delete event error:", err);
             throw err;
         }
-    }
-
-    /**
-     * Builds description including station information
-     * @private
-     * @param {Object} eventData - Event data
-     * @returns {string} Description with updated stations
-     */
-    buildDescription(eventData) {
-        let description = eventData.description || "";
-
-        // Split on ** to separate station line from other content
-        const parts = description.split(/\*\*/);
-        const otherContent = parts.slice(parts.length - 1).join('**').trim();
-
-        // Build new station line from kept + added, surrounded by **
-        const allResources = this.normalizeResources(eventData.resource).filter(Boolean);
-        const newStationLine = allResources.join(", ");
-
-        // Reconstruct: new stations at top surrounded by **, everything else below
-        if (newStationLine) {
-            return otherContent
-                ? `**${newStationLine}**\n\n${otherContent}`
-                : `**${newStationLine}**`;
-        }
-
-        return otherContent || description;
-    }
-
-    /**
-     * Removes specified station names from a text string
-     * @param {string} text - Text to clean
-     * @param {Array} [toRemove=null] - Stations to remove (if null, removes all stations)
-     * @returns {string} Cleaned text
-     */
-    cleanTextOfStations(text, toRemove = null) {
-        if (!text) return "";
-        // If toRemove is provided, only remove those; otherwise remove all stations
-        const stationIds = toRemove || this.stationDataManager.getAllStationLabels();
-        let cleaned = String(text);
-
-        stationIds.forEach(stationId => {
-            const regex = new RegExp(`\\b${stationId}\\b`, 'gi');
-            cleaned = cleaned.replace(regex, '');
-        });
-
-        // Normalize whitespace and leftover separators
-        cleaned = cleaned.replace(/[\s]{2,}/g, ' ')
-            .replace(/^[,;:\-\s]+|[,;:\-\s]+$/g, '')
-            .trim();
-
-        return cleaned;
     }
 
     /**

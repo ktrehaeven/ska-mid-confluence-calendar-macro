@@ -112,7 +112,7 @@ class CalendarRenderer {
             end: eventData.end,
             resource: station,
             customEventTypeId: eventData.customEventTypeId,
-            description: this.eventService.buildDescription(eventData),
+            description: eventData.description,
         });
     }
 
@@ -283,11 +283,6 @@ class CalendarRenderer {
         const toAdd = nextResources.filter(r => !currentResources.includes(r));
         const toRemove = currentResources.filter(r => !nextResources.includes(r));
         const toKeep = nextResources.filter(r => currentResources.includes(r));
-
-        // ensure station name is not in title or description to avoid incorrect assigning
-        result.text = this.eventService.cleanTextOfStations(result.text, toRemove);
-        result.description = this.eventService.cleanTextOfStations(result.description, toRemove);
-        result.description = this.eventService.buildDescription(result);
 
         await this.eventService.updateEvent(result, event);
 
