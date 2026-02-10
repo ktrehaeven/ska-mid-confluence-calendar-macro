@@ -203,6 +203,34 @@ class EventService {
         }
     }
 
+    async deleteHiddenEvents(event, method = 'DELETE') {
+        const url = AJS.contextPath() + "/rest/calendar-services/1.0/calendar/preferences/events/hidden.json";
+        const formData = new URLSearchParams();
+
+        formData.append("subCalendarId", event.childSubCalendarId);
+        formData.append("subCalendarId", this.skaConstructionCalId);
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: formData.toString()
+            });
+            console.log(response)
+            if (!response.ok) {
+                throw new Error(`Failed to post event: ${response.status} ${response.statusText}`);
+            }
+
+            return response;
+        } catch (err) {
+            console.error("Event posting error:", err);
+            throw err;
+        }
+    }
+
     /**
      * Builds event payload for create/update operations
      * @private
@@ -231,11 +259,12 @@ class EventService {
             if (existingEvent.rruleStr) {
                 payload.originalSubCalendarId = this.skaConstructionCalId;
                 payload.originalEventSubCalendarId = existingEvent.childSubCalendarId;
-                payload.childSubCalendarId = existingEvent.childSubCalendarId;
                 payload.originalCustomEventTypeId = existingEvent.customEventTypeId;
                 payload.originalStartDate = existingEvent.confluenceId.split("/")[0];
                 payload.originalEventType = existingEvent.eventType;
+                payload.childSubCalendarId = existingEvent.childSubCalendarId;
                 payload.rruleStr = existingEvent.rruleStr;
+                payload.editAllInRecurrenceSeries = "false";
             }
         }
 
@@ -268,7 +297,10 @@ class EventService {
         const confluenceEvent = this._buildEventPayload(formData, existingEvent);
 
         try {
-            return await this.requestEvent(confluenceEvent);
+            await this.requestEvent(confluenceEvent);
+            if (existingEvent.rruleStr) {
+                await this.deleteHiddenEvents(confluenceEvent);
+            }
         } catch (err) {
             console.error("Update event error:", err);
             throw err;
