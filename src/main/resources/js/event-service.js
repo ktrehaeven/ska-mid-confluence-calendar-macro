@@ -5,14 +5,19 @@ class EventService {
     constructor(stationDataManager) {
         this.stationDataManager = stationDataManager;
         this.skaConstructionCalId = null;
-        this.childSubCalendarIds = {};
-        this.customEventTypes = [];
+        this.childSubCalendarsByEventId = {};
     }
 
     /**
-     * Fetches all child calendars and event types
-     * @returns {Promise<Object>} Dictionary of child calendar IDs
+     * Getter for customEventTypes in the format needed by event-form-manager
+     * @returns {Array} Array of event types with {name, id} format
      */
+    get customEventTypes() {
+        return Object.entries(this.childSubCalendarsByEventId).map(([id, eventType]) => ({
+            name: eventType.title,
+            id: id
+        }));
+    }
     async loadCalendars() {
         const skaConstructionCalName = "SKA-Low Telescope Construction";
 
@@ -37,7 +42,7 @@ class EventService {
             this.skaConstructionCalId = targetPayload.subCalendar.id;
             this._parseChildCalendars(targetPayload.childSubCalendars);
 
-            return this.childSubCalendarIds;
+            return this.customEventTypes;
         } catch (err) {
             console.error("Calendar loading error:", err);
             throw err;
@@ -45,35 +50,29 @@ class EventService {
     }
 
     /**
-     * Parses child calendar data into a dictionary of calendar ids named by their custom event type
-     * and an array of custom event types for dropdown population
+     * Parses child calendar data into a consolidated object with title, childSubCalendarId, and customEventTypeId
      * @private
      * @param {Array} childSubCalendars - Array of child calendar objects
      */
     _parseChildCalendars(childSubCalendars) {
-        this.childSubCalendarIds = Object.fromEntries(
-            childSubCalendars.flatMap(child => {
-                const sub = child.subCalendar;
-                const entries = [];
-
-                if (sub?.customEventTypes?.length) {
-                    entries.push(...sub.customEventTypes.map(type => [type.title, sub.id]));
-                } else if (sub?.type) {
-                    // if no customEventTypes, include an entry using sub.type
-                    entries.push([sub.type, sub.id]);
-                }
-
-                return entries;
-            })
-        );
-
-        this.customEventTypes = childSubCalendars.flatMap(child => {
+        childSubCalendars.forEach(child => {
             const sub = child.subCalendar;
-            if (!sub?.customEventTypes?.length) return [];
-            return sub.customEventTypes.map(type => ({
-                name: type.title,
-                id: type.customEventTypeId
-            }));
+
+            if (sub?.customEventTypes?.length) {
+                sub.customEventTypes.forEach(type => {
+                    this.childSubCalendarsByEventId[type.customEventTypeId] = {
+                        title: type.title,
+                        childSubCalendarId: sub.id,
+                    };
+                });
+            } else if (sub?.type) {
+                // if no customEventTypes, include an entry using sub.type
+                // Note: we need a custom event type ID in this case - using type as fallback
+                this.childSubCalendarsByEventId[sub.type] = {
+                    title: sub.type,
+                    childSubCalendarId: sub.id,
+                };
+            }
         });
     }
 
@@ -86,13 +85,13 @@ class EventService {
         const start = this._ensureZulu(today.addDays(-365).toString());
         const end = this._ensureZulu(today.addDays(365).toString());
 
-        const fetchPromises = Object.entries(this.childSubCalendarIds).map(
-            async ([name, id]) => {
+        const fetchPromises = Object.values(this.childSubCalendarsByEventId).map(
+            async (eventType) => {
                 try {
                     const response = await fetch(
                         AJS.contextPath() +
                         `/rest/calendar-services/1.0/calendar/events.json` +
-                        `?subCalendarId=${id}` +
+                        `?subCalendarId=${eventType.childSubCalendarId}` +
                         `&start=${start}` +
                         `&end=${end}`
                     );
@@ -107,7 +106,7 @@ class EventService {
                         this.confluenceEventToDayPilotEvents(event)
                     );
                 } catch (err) {
-                    console.error(`Error fetching events for ${name}:`, err);
+                    console.error(`Error fetching events for ${eventType.title}:`, err);
                     return [];
                 }
             }
@@ -262,7 +261,8 @@ class EventService {
                 payload.originalCustomEventTypeId = existingEvent.customEventTypeId;
                 payload.originalStartDate = existingEvent.confluenceId.split("/")[0];
                 payload.originalEventType = existingEvent.eventType;
-                payload.childSubCalendarId = existingEvent.childSubCalendarId;
+                payload.childSubCalendarId = (this.childSubCalendarsByEventId
+                [formData.customEventTypeId].childSubCalendarId);
                 payload.rruleStr = existingEvent.rruleStr;
                 payload.editAllInRecurrenceSeries = "false";
             }
