@@ -10,6 +10,7 @@ class CalendarRenderer {
         this.calendar = null;
         this.navigator = null;
         this.selectedResourceId = null;
+        this.selectedTime = { start: null, end: null };
         this.isInitialized = false;
     }
 
@@ -60,6 +61,7 @@ class CalendarRenderer {
             businessBeginsHour: 9,
             businessEndsHour: 17,
             dynamicEventRendering: "Disabled",
+            useEventBoxes: "Never",
             startDate: DayPilot.Date.today(),
             timeRangeSelectedHandling: "Enabled",
             onTimeRangeSelected: (args) => this._handleTimeRangeSelected(args),
@@ -72,6 +74,9 @@ class CalendarRenderer {
             onEventDelete: (args) => this._handleEventDelete(args),
             onRowClick: (args) => this._handleRowClick(args),
             onBeforeRowHeaderRender: (args) => this._handleRowHeaderRender(args),
+            timeHeaderClickHandling: "Update",
+            onTimeHeaderClick: (args) => this._handleTimeHeaderClick(args),
+            onBeforeTimeHeaderRender: (args) => this._handleTimeHeaderRender(args),
         });
     }
 
@@ -350,6 +355,42 @@ class CalendarRenderer {
             args.row.backColor = "#e0e0e0";
         } else {
             args.row.backColor = null;
+        }
+    }
+
+    /**
+     * Handles time header click
+     * @private
+     * @param {Object} args - Header arguments
+     */
+    _handleTimeHeaderClick(args) {
+        if (args.header.start === this.selectedTime.start &&
+            args.header.end === this.selectedTime.end) {
+
+            this.selectedTime = { start: null, end: null };
+
+        } else {
+            console.log(this.calendar.events.list.filter(
+                ev => ev.start.getTime() < args.header.end.getTime() &&
+                    ev.end.getTime() > args.header.start.getTime()
+            ))
+            this.selectedTime = { start: args.header.start, end: args.header.end };
+        }
+        this.refresh();
+        console.log("click!", args)
+    }
+
+    /**
+     * Handles time header rendering (highlight selected time header)
+     * @private
+     * @param {Object} args - Event arguments
+     */
+    _handleTimeHeaderRender(args) {
+        if (args.header.start === this.selectedTime.start &&
+            args.header.end === this.selectedTime.end) {
+            args.header.backColor = "#e0e0e0";
+        } else {
+            args.header.backColor = null;
         }
     }
 
