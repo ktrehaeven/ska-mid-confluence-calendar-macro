@@ -218,7 +218,6 @@ class EventService {
                 },
                 body: formData.toString()
             });
-            console.log(response)
             if (!response.ok) {
                 throw new Error(`Failed to post event: ${response.status} ${response.statusText}`);
             }

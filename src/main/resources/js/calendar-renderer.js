@@ -64,7 +64,7 @@ class CalendarRenderer {
             timeRangeSelectedHandling: "Enabled",
             onTimeRangeSelected: (args) => this._handleTimeRangeSelected(args),
             onEventClick: (args) => this._handleEventClick(args),
-            eventMoveHandling: "Disabled",
+            eventMoveHandling: "Update",
             onEventMoved: (args) => this._handleEventMove(args),
             eventResizeHandling: "Update",
             onEventResized: (args) => this._handleEventResize(args),
@@ -215,6 +215,7 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     async _handleEventMove(args) {
+        args.e.data.id = this.eventService.makeEventId(args.e.data.confluenceId, args.newResource);
         const events = this.getSiblings(args.e.data);
         const updatedData = {
             start: args.newStart,

@@ -73,7 +73,7 @@ class EventFormManager {
             name: "Stations",
             id: "text",
             type: "html",
-            html: `<select id="station-multiselect" multiple size="17" style="width:100%;">
+            html: `<select id="station-multiselect" multiple size="18" style="width:100%;">
                 ${optionsHtml}
                 </select>`
         };
