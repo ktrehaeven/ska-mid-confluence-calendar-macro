@@ -199,9 +199,14 @@ class CalendarRenderer {
             this._updateEventInstance(ev.confluenceId, ev.resource, updatedData);
         });
         this.refresh();
-        // ensure the update payload contains all sibling resources
-        args.e.data.resource = [...new Set(events.map(ev => String(ev.resource)).filter(Boolean))];
-        await this.eventService.updateEvent(args.e.data, args.e.data);
+        // Prepare form data with all sibling resources for the Confluence API
+        const formData = {
+            ...args.e.data,
+            start: args.newStart,
+            end: args.newEnd,
+            resource: events.map(ev => String(ev.resource)).filter(Boolean)
+        };
+        await this.eventService.updateEvent(formData, args.e.data);
     }
 
     /**
@@ -211,9 +216,6 @@ class CalendarRenderer {
      */
     async _handleEventMove(args) {
         const events = this.getSiblings(args.e.data);
-        const currentResources = [...new Set(
-            events.map(ev => String(ev.resource)).filter(Boolean)
-        )];
         const updatedData = {
             start: args.newStart,
             end: args.newEnd
@@ -222,10 +224,14 @@ class CalendarRenderer {
             this._updateEventInstance(ev.confluenceId, ev.resource, updatedData);
         });
         this.refresh();
-        args.e.data.resource = [...new Set(events.map(ev => String(ev.resource)).filter(Boolean))];
-        const nextResources = this.eventService.normalizeResources(args.e.data.resource);
-        const toRemove = currentResources.filter(r => !nextResources.includes(r));
-        await this.eventService.updateEvent(args.e.data, args.e.data);
+        // Prepare form data with all sibling resources for the Confluence API
+        const formData = {
+            ...args.e.data,
+            start: args.newStart,
+            end: args.newEnd,
+            resource: events.map(ev => String(ev.resource)).filter(Boolean)
+        };
+        await this.eventService.updateEvent(formData, args.e.data);
     }
 
     /**
