@@ -58,3 +58,12 @@
     position: absolute;
     z-index: 1;
 }
+
+.scheduler_default_cell:hover,
+.scheduler_default_timeheadercol:hover,
+.scheduler_default_timeheadergroup:hover,
+.scheduler_default_rowheader:hover,
+.navigator_default_cell:hover {
+    background-color: #ccc;
+    transition: background-color 0.1s ease-in;
+}
