@@ -18,11 +18,11 @@ class MapRenderer {
         this.isInitialized = true;
 
         // Initialize Leaflet map
-        const centreStation = this.stationDataManager.getStation('Centre');
+        const centreStation = this.stationDataManager.getStation('S8-1');
         this.map = L.map(mapEl).setView([
             centreStation.Latitude,
             centreStation.Longitude
-        ], 10);
+        ], 13);
 
         this._addControls();
         this._addTileLayer();
@@ -90,8 +90,8 @@ class MapRenderer {
                 {
                     radius: 8,
                     color: '#070068',
-                    fillColor: '#E70068',
-                    fillOpacity: 0.9
+                    fillColor: '#ffffff',
+                    fillOpacity: 0.8
                 }
             ).bindTooltip(station.Label, {
                 permanent: false,
@@ -125,11 +125,11 @@ class MapRenderer {
      */
     resetView() {
         if (!this.map) return;
-        const centreStation = this.stationDataManager.getStation('Centre');
+        const centreStation = this.stationDataManager.getStation('S8-1');
         this.map.flyTo([
             centreStation.Latitude,
             centreStation.Longitude
-        ], 10, { animate: true, duration: 0.5 });
+        ], 13, { animate: true, duration: 0.5 });
     }
 
     /**
@@ -143,23 +143,33 @@ class MapRenderer {
 
         this.map.flyTo(
             [station.Latitude, station.Longitude],
-            13,
+            14,
             { animate: true, duration: 0.5 }
         );
-
-        if (station.marker) {
-            this.resetTooltips();
-            if (station.marker.openTooltip) {
-                station.marker.openTooltip();
-            }
-        }
     }
 
-    /**
-     * Gets the map instance
-     * @returns {L.Map} Leaflet map instance
-     */
-    getMap() {
-        return this.map;
+    highlightStations(resources) {
+        this.stationDataManager.stationList.forEach(station => {
+            const marker = this.stationDataManager.getStation(station.id)?.marker;
+            if (!marker) return;
+            if (resources.some(r => r === station.id)) {
+                marker.setStyle({ fillColor: '#E70068' });
+                marker.openTooltip();
+            } else if (marker.options.fillColor !== '#ffffff') {
+                marker.setStyle({ fillColor: '#ffffff' });
+            }
+        });
+    }
+
+    openTooltips(stations) {
+        console.log(stations);
+        if (!stations) return;
+        this.stationDataManager.stationList.forEach(station => {
+            const marker = this.stationDataManager.getStation(station.id)?.marker;
+            if (!marker) return;
+            if (stations.some(s => s === station.id)) {
+                marker.openTooltip();
+            }
+        });
     }
 }

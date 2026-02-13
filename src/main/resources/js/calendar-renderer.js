@@ -9,8 +9,7 @@ class CalendarRenderer {
         this.mapRenderer = mapRenderer;
         this.calendar = null;
         this.navigator = null;
-        this.selectedResourceId = null;
-        this.selectedTime = { start: null, end: null };
+        this.selection = { value: null, type: null };
         this.isInitialized = false;
     }
 
@@ -328,19 +327,29 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     _handleRowClick(args) {
-        if (args.row.id !== this.selectedResourceId) {
-            // Zoom to station
+        this.mapRenderer.resetTooltips();
+
+        if (this.selection.type === 'time') {
+            this.mapRenderer.highlightStations([]);
+        }
+
+        if (args.row.id !== this.selection.value) {
+
+            this.selection = { value: args.row.id, type: 'resource' }
+
             if (this.mapRenderer) {
                 this.mapRenderer.zoomToStation(args.row.id);
+                this.mapRenderer.openTooltips([args.row.id]);
             }
-            this.selectedResourceId = args.row.id;
+
         } else {
-            // Reset view
+
+            this.selection = { value: null, type: null };
+
             if (this.mapRenderer) {
                 this.mapRenderer.resetView();
-                this.mapRenderer.resetTooltips();
             }
-            this.selectedResourceId = null;
+
         }
         this.refresh();
     }
@@ -351,11 +360,13 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     _handleRowHeaderRender(args) {
-        if (args.row.id === this.selectedResourceId) {
-            args.row.backColor = "#e0e0e0";
+
+        if (args.row.id === this.selection.value) {
+            args.row.backColor = "#ccc";
         } else {
             args.row.backColor = null;
         }
+
     }
 
     /**
@@ -364,20 +375,28 @@ class CalendarRenderer {
      * @param {Object} args - Header arguments
      */
     _handleTimeHeaderClick(args) {
-        if (args.header.start === this.selectedTime.start &&
-            args.header.end === this.selectedTime.end) {
+        this.mapRenderer.resetTooltips();
+        if (this.selection.type === 'time' &&
+            args.header.start === this.selection.value.start &&
+            args.header.end === this.selection.value.end) {
 
-            this.selectedTime = { start: null, end: null };
+            this.selection = { value: null, type: null };
+            this.mapRenderer.highlightStations([]);
 
         } else {
-            console.log(this.calendar.events.list.filter(
-                ev => ev.start.getTime() < args.header.end.getTime() &&
-                    ev.end.getTime() > args.header.start.getTime()
-            ))
-            this.selectedTime = { start: args.header.start, end: args.header.end };
+            this.selection.value = { start: args.header.start, end: args.header.end };
+            this.selection.type = 'time';
+
+            const resourcesInSelection = this.stationDataManager.stationList.filter(r =>
+                this.calendar.events.list.some(ev =>
+                    ev.resource === r.id &&
+                    ev.start.getTime() < this.selection.value.end.getTime() &&
+                    ev.end.getTime() > this.selection.value.start.getTime()
+                )).map(r => r.id)
+            this.mapRenderer.highlightStations(resourcesInSelection);
+            this.mapRenderer.openTooltips(resourcesInSelection);
         }
         this.refresh();
-        console.log("click!", args)
     }
 
     /**
@@ -386,9 +405,10 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     _handleTimeHeaderRender(args) {
-        if (args.header.start === this.selectedTime.start &&
-            args.header.end === this.selectedTime.end) {
-            args.header.backColor = "#e0e0e0";
+        if (this.selection.type === 'time' &&
+            args.header.start === this.selection.value.start &&
+            args.header.end === this.selection.value.end) {
+            args.header.backColor = "#ccc";
         } else {
             args.header.backColor = null;
         }
