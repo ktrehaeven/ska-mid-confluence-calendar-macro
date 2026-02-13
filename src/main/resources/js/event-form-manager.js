@@ -39,6 +39,7 @@ class EventFormManager {
     _buildFormDefinition(preSelectedStations) {
         return [
             { name: "Title", id: "text", type: "text" },
+            { name: "Creator", id: "creator", type: "text", disabled: true },
             {
                 name: "Event Type",
                 id: "customEventTypeId",

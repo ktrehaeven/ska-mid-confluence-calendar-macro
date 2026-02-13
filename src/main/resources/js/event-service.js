@@ -18,6 +18,7 @@ class EventService {
             id: id
         }));
     }
+
     async loadCalendars() {
         const skaConstructionCalName = "SKA-Low Telescope Construction";
 
@@ -130,6 +131,7 @@ class EventService {
         return matchedResources.map(resourceId => ({
             id: this.makeEventId(event.id, resourceId),
             confluenceId: event.id,
+            creator: event.invitees ? event.invitees[0].displayName : null,
             text: event.title,
             start: this.removeTZ(event.start),
             end: this.removeTZ(event.end),
@@ -202,6 +204,34 @@ class EventService {
         }
     }
 
+    /**
+     * get confluence user
+     * @returns {Promise<Object>} Response from server
+     */
+    async getCurrentUser() {
+        //rest/api/user/list?start=2000&limit=200
+
+        const url = AJS.contextPath() + "/rest/api/user/current";
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Failed to post event: ${response.status} ${response.statusText}`);
+            }
+
+            return response.json();
+        } catch (err) {
+            console.error("Event getting user:", err);
+            throw err;
+        }
+    }
+
+    /**
+     * required to push through edits to recurring event updates
+     * @param {Object} event - Event just edited
+     * @param {string} method - HTTP method ('PUT' for create/update, 'DELETE' for delete)
+     * @returns {Promise<Object>} Response from server
+     */
     async deleteHiddenEvents(event, method = 'DELETE') {
         const url = AJS.contextPath() + "/rest/calendar-services/1.0/calendar/preferences/events/hidden.json";
         const formData = new URLSearchParams();
@@ -239,6 +269,7 @@ class EventService {
     _buildEventPayload(formData, existingEvent = null) {
         const payload = {
             what: formData.text,
+            // creator
             customEventTypeId: formData.customEventTypeId,
             subCalendarId: this.skaConstructionCalId,
             startDate: this.convertToConfluenceDate(formData.start),
@@ -365,16 +396,6 @@ class EventService {
             minute: '2-digit',
             hour12: true
         });
-    }
-
-    /**
-     * Normalizes resource/station identifiers into a consistent array format
-     * @param {string|Array<string>} resource - Single resource or array of resources
-     * @returns {Array<string>} Normalized array of resource IDs
-     */
-    normalizeResources(resource) {
-        const resources = Array.isArray(resource) ? resource : [resource];
-        return resources.map(r => String(r)).filter(Boolean);
     }
 
     /**

@@ -11,6 +11,7 @@ class CalendarRenderer {
         this.navigator = null;
         this.selection = { value: null, type: null };
         this.isInitialized = false;
+        this.user = null;
     }
 
     /**
@@ -246,11 +247,10 @@ class CalendarRenderer {
      */
     async _handleTimeRangeSelected(args) {
         const result = await this.eventFormManager.show({
-            text: "",
             start: args.start,
+            creator: this.user.displayName,
             end: args.end,
             resource: args.resource,
-            description: ""
         });
 
         this.calendar.clearSelection();
@@ -259,8 +259,8 @@ class CalendarRenderer {
         if (!postedEvent?.success) return;
 
         // Add new DayPilot events for each selected station
-        const stations = this.eventService.normalizeResources(result.resource);
-        await stations.forEach(station => {
+        const stations = this.normalizeResources(result.resource);
+        stations.forEach(station => {
             this._addEventInstance(postedEvent.event.id, station, result);
         });
 
@@ -281,6 +281,7 @@ class CalendarRenderer {
 
         const result = await this.eventFormManager.show({
             text: event.text,
+            creator: event.creator,
             customEventTypeId: event.customEventTypeId,
             start: event.start,
             end: event.end,
@@ -290,7 +291,7 @@ class CalendarRenderer {
 
         if (!result) return;
 
-        const nextResources = this.eventService.normalizeResources(result.resource);
+        const nextResources = this.normalizeResources(result.resource);
         const toAdd = nextResources.filter(r => !currentResources.includes(r));
         const toRemove = currentResources.filter(r => !nextResources.includes(r));
         const toKeep = nextResources.filter(r => currentResources.includes(r));
@@ -451,5 +452,15 @@ class CalendarRenderer {
         return this.calendar.events.list.filter(
             ev => ev.confluenceId === event.confluenceId
         );
+    }
+
+    /**
+     * Normalizes resource/station identifiers into a consistent array format
+     * @param {string|Array<string>} resource - Single resource or array of resources
+     * @returns {Array<string>} Normalized array of resource IDs
+     */
+    normalizeResources(resource) {
+        const resources = Array.isArray(resource) ? resource : [resource];
+        return resources.map(r => String(r)).filter(Boolean);
     }
 }
