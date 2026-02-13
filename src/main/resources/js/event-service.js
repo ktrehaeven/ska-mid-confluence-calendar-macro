@@ -344,11 +344,18 @@ class EventService {
      */
     async deleteEvent(existingEvent) {
 
+        const payload = {
+            subCalendarId: existingEvent.childSubCalendarId,
+            uid: existingEvent.confluenceId,
+        };
+        if (existingEvent.rruleStr) {
+            payload.originalStart = existingEvent.confluenceId.split("/")[0],
+                payload.singleInstance = true,
+                payload.recurrenceId = ""
+        }
+
         try {
-            return await this.requestEvent({
-                subCalendarId: existingEvent.childSubCalendarId,
-                uid: existingEvent.confluenceId
-            }, 'DELETE');
+            return await this.requestEvent(payload, 'DELETE');
         } catch (err) {
             console.error("Delete event error:", err);
             throw err;
