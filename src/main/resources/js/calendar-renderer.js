@@ -175,22 +175,31 @@ class CalendarRenderer {
     async _handleEventDelete(args) {
         args.preventDefault();
 
+        const name = args.e.data.text || "Untitled booking";
+        const start = new DayPilot.Date(args.e.data.start).toString("dd/MM/yyyy HH:mm");
+        const end = new DayPilot.Date(args.e.data.end).toString("dd/MM/yyyy HH:mm");
+        const resource = args.e.data.resource
+
         const modal = await DayPilot.Modal.confirm(`
-            <div style="text-align:left; line-height:1.6;">
-                <div style="font-size:16px; font-weight:600;">
-                    Do you want to delete this booking?
-                </div>
-                <br>
-                <div>
-                    This will remove the associated bookings for all stations in the same time slot for this day.
-                </div>
-                <br>
-                <div>
-                    This action cannot be undone.
-                </div>
+        <div style="text-align:left; line-height:1.6;">
+            <div style="font-size:16px; font-weight:600;">
+                Delete booking?
             </div>
-        `,
-            { scrollWithPage: false });
+            <br>
+            <div>
+                <strong>${name}</strong><br>
+                ${start} - ${end}
+            </div>
+            <br>
+            <div>
+                This will remove the booking for all stations.
+            </div>
+            <br>
+            <div>
+                This action cannot be undone.
+            </div>
+        </div>
+    `, { scrollWithPage: false });
 
         if (modal.canceled) {
             return;
@@ -240,7 +249,7 @@ class CalendarRenderer {
 
         if (args.e.data.id != newId && this.calendar.events.find(newId)) {
             args.preventDefault();
-            DayPilot.Modal.alert("This event is already assigned to that station.");
+            DayPilot.Modal.alert("This booking is already assigned to that station.");
             return;
         }
         args.e.data.id = newId;
