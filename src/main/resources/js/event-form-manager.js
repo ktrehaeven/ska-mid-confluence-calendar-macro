@@ -43,7 +43,8 @@ class EventFormManager {
             {
                 name: "Event Type",
                 id: "customEventTypeId",
-                options: this.eventService.customEventTypes,
+                //filter out default event types in form (e.g. travel)
+                options: this.eventService.customEventTypes.filter(type => type.name !== type.id),
                 type: "select"
             },
             { name: "Start", id: "start", type: "datetime", timeInterval: 1 },

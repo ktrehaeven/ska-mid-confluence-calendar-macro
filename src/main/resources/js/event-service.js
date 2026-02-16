@@ -14,10 +14,16 @@ class EventService {
      * @returns {Array} Array of event types with {name, id} format
      */
     get customEventTypes() {
-        return Object.entries(this.childSubCalendarsByEventId).map(([id, eventType]) => ({
+        const events = Object.entries(this.childSubCalendarsByEventId).map(([id, eventType]) => ({
             name: eventType.title,
             id: id
         }));
+
+        const sortedEvents = events.sort((a, b) => {
+            return a.name.localeCompare(b.name);
+        })
+
+        return sortedEvents
     }
 
     async loadCalendars() {
