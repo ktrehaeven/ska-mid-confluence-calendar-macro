@@ -67,7 +67,7 @@ class CalendarRenderer {
             onTimeRangeSelected: (args) => this._handleTimeRangeSelected(args),
             onEventClick: (args) => this._handleEventClick(args),
             eventMoveHandling: "Update",
-            onEventMoved: (args) => this._handleEventMove(args),
+            onEventMove: (args) => this._handleEventMove(args),
             eventResizeHandling: "Update",
             onEventResized: (args) => this._handleEventResize(args),
             eventDeleteHandling: "Update",
@@ -173,20 +173,36 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     async _handleEventDelete(args) {
+        args.preventDefault();
 
-        if (!confirm("Do you really want to delete this booking?\n\n"
-            + "This will remove all associated bookings in the same time slot.\n\n"
-            + "This action cannot be undone.")) {
-            args.preventDefault();
+        const modal = await DayPilot.Modal.confirm(`
+            <div style="text-align:left; line-height:1.6;">
+                <div style="font-size:16px; font-weight:600;">
+                    Do you want to delete this booking?
+                </div>
+                <br>
+                <div>
+                    This will remove the associated bookings for all stations in the same time slot for this day.
+                </div>
+                <br>
+                <div>
+                    This action cannot be undone.
+                </div>
+            </div>
+        `,
+            { scrollWithPage: false });
+
+        if (modal.canceled) {
             return;
         }
-
-        const events = this.getSiblings(args.e.data);
-        events.forEach(ev => {
-            this._removeEventInstance(ev.confluenceId, ev.resource);
-        });
-        this.refresh();
-        await this.eventService.deleteEvent(args.e.data);
+        else if (modal.result) {
+            const events = this.getSiblings(args.e.data);
+            events.forEach(ev => {
+                this._removeEventInstance(ev.confluenceId, ev.resource);
+            });
+            this.refresh();
+            await this.eventService.deleteEvent(args.e.data);
+        }
     }
 
     /**
@@ -220,7 +236,16 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     async _handleEventMove(args) {
-        args.e.data.id = this.eventService.makeEventId(args.e.data.confluenceId, args.newResource);
+        const newId = this.eventService.makeEventId(args.e.data.confluenceId, args.newResource);
+
+        if (args.e.data.id != newId && this.calendar.events.find(newId)) {
+            args.preventDefault();
+            DayPilot.Modal.alert("This event is already assigned to that station.");
+            return;
+        }
+        args.e.data.id = newId;
+        args.e.data.resource = args.newResource
+
         const events = this.getSiblings(args.e.data);
         const updatedData = {
             start: args.newStart,
@@ -231,7 +256,7 @@ class CalendarRenderer {
         });
         this.refresh();
         // Prepare form data with all sibling resources for the Confluence API
-        const formData = {
+        const formData = await {
             ...args.e.data,
             start: args.newStart,
             end: args.newEnd,

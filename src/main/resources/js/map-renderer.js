@@ -162,7 +162,6 @@ class MapRenderer {
     }
 
     openTooltips(stations) {
-        console.log(stations);
         if (!stations) return;
         this.stationDataManager.stationList.forEach(station => {
             const marker = this.stationDataManager.getStation(station.id)?.marker;
