@@ -6,6 +6,7 @@ class EventService {
         this.stationDataManager = stationDataManager;
         this.skaConstructionCalId = null;
         this.childSubCalendarsByEventId = {};
+        this.user = null;
     }
 
     /**
@@ -219,7 +220,8 @@ class EventService {
                 throw new Error(`Failed to post event: ${response.status} ${response.statusText}`);
             }
 
-            return response.json();
+            this.user = await response.json();
+            return
         } catch (err) {
             console.error("Event getting user:", err);
             throw err;
@@ -269,7 +271,7 @@ class EventService {
     _buildEventPayload(formData, existingEvent = null) {
         const payload = {
             what: formData.text,
-            // creator
+            person: this.user.userKey,
             customEventTypeId: formData.customEventTypeId,
             subCalendarId: this.skaConstructionCalId,
             startDate: this.convertToConfluenceDate(formData.start),

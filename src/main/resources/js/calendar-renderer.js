@@ -11,7 +11,6 @@ class CalendarRenderer {
         this.navigator = null;
         this.selection = { value: null, type: null };
         this.isInitialized = false;
-        this.user = null;
     }
 
     /**
@@ -282,7 +281,7 @@ class CalendarRenderer {
     async _handleTimeRangeSelected(args) {
         const result = await this.eventFormManager.show({
             start: args.start,
-            creator: this.user.displayName,
+            creator: this.eventService.user.displayName,
             end: args.end,
             resource: args.resource,
         });

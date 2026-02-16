@@ -27,7 +27,7 @@ class SkaLowCalendarMacro {
 
             // Load calendar configuration
             await this.eventService.loadCalendars();
-            this.calendarRenderer.user = await this.eventService.getCurrentUser();
+            await this.eventService.getCurrentUser();
 
             // Initialize all macro instances on the page
             document.querySelectorAll('.ska-low-map-macro').forEach(wrapper =>
