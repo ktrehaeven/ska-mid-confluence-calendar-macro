@@ -1,11 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans
-        http://www.springframework.org/schema/beans/spring-beans.xsd
-        http://www.springframework.org/schema/context
-        http://www.springframework.org/schema/context/spring-context.xsd">
-    <!-- Package with Spring configuration -->
-    <context:component-scan base-package="com.skao.confluence.plugins.config" />
+       xmlns:osgi="http://www.springframework.org/schema/osgi"
+       xsi:schemaLocation="
+           http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/osgi
+           http://www.springframework.org/schema/osgi/spring-osgi.xsd">
+
+    <osgi:reference id="webResourceManager" 
+                    interface="com.atlassian.plugin.webresource.WebResourceManager"/>
+
+    <bean id="skaLowMap" class="com.skao.confluence.plugins.macro.SkaLowMap">
+        <constructor-arg ref="webResourceManager"/>
+    </bean>
+
+    <bean id="skaLowStationBookings" class="com.skao.confluence.plugins.macro.SkaLowStationBookings">
+        <constructor-arg ref="webResourceManager"/>
+    </bean>
+
 </beans>
