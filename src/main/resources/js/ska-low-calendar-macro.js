@@ -14,6 +14,8 @@ class SkaLowCalendarMacro {
             this.stationDataManager,
             this.mapRenderer
         );
+        // Set after both are created to avoid circular dependency
+        this.eventFormManager.calendarRenderer = this.calendarRenderer;
     }
 
     /**
