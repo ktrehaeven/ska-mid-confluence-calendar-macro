@@ -281,6 +281,7 @@ class CalendarRenderer {
     async _handleTimeRangeSelected(args) {
         const result = await this.eventFormManager.show({
             start: args.start,
+            customEventTypeId: this.eventService.customEventTypes.find(e => e.name === "Other").id,
             creator: this.eventService.user.displayName,
             end: args.end,
             resource: args.resource,
