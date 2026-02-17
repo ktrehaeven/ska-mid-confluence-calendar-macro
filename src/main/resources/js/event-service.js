@@ -144,7 +144,7 @@ class EventService {
             end: this.removeTZ(event.end),
             description: event.description,
             resource: resourceId,
-            barColor: "#070068",
+            barColor: event.borderColor,
             customEventTypeId: event.customEventTypeId,
             childSubCalendarId: event.subCalendarId,
             rruleStr: event.rruleStr,
