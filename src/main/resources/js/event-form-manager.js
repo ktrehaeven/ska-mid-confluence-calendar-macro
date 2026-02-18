@@ -6,9 +6,7 @@ class EventFormManager {
     }
 
     async show(data) {
-        const preSelectedStations = Array.isArray(data.resource) ?
-            data.resource : [data.resource].filter(Boolean);
-        const eventForm = this._buildFormDefinition(preSelectedStations, data);
+        const eventForm = this._buildFormDefinition(data);
         const modal = await DayPilot.Modal.form(eventForm, data, {
             width: 450,
             scrollWithPage: true,
@@ -20,19 +18,20 @@ class EventFormManager {
         return modal.result;
     }
 
-    _buildFormDefinition(preSelectedStations, data) {
+    _buildFormDefinition(data) {
         return [
-            { name: "Title (required)", id: "text", type: "text" },
-            { name: "Creator", id: "creator", type: "text", disabled: true },
             {
                 name: "Event Type",
                 id: "customEventTypeId",
                 options: this.eventService.customEventTypes.filter(type => type.name !== type.id),
                 type: "select"
             },
+            { name: "Title (required)", id: "text", type: "text" },
+            { name: "Creator", id: "creator", type: "text", disabled: true },
             { name: "Start", id: "start", type: "datetime", timeInterval: 1 },
             { name: "End", id: "end", type: "datetime", timeInterval: 1 },
-            this._buildStationSelect(preSelectedStations, data.start, data.end),
+            { name: "Edit entire series", id: "editAllInRecurrenceSeries", type: "checkbox", disabled: !(data.rruleStr) },
+            this._buildStationSelect(data),
             { name: "Description", id: "description", type: "textarea", height: 70 }
         ];
     }
@@ -57,7 +56,7 @@ class EventFormManager {
         });
     }
 
-    _buildStationSelect(preSelectedStations, start, end) {
+    _buildStationSelect(data) {
         const phaseFilters = ["Airstrip", "AAVS3", "AA0.5", "AA1"];
         const clusterFilters = ["S8", "S9", "S10"];
         const stations = this.stationDataManager.getStationsByPhase(phaseFilters);
@@ -71,8 +70,8 @@ class EventFormManager {
         ).join("");
 
         const stationOptionsHtml = stations.map(station => {
-            const selected = preSelectedStations.includes(station.Label) ? 'selected' : '';
-            const busy = start && end ? this._isStationBusy(station.Label, start, end) : false;
+            const selected = data.resource.includes(station.Label) ? 'selected' : '';
+            const busy = data.start && data.end ? this._isStationBusy(station.Label, data.start, data.end) : false;
             const dot = busy ? '🔴' : '🟢';
             const cluster = clusterFilters.find(c => station.Label.startsWith(c)) ?? '';
             return `<option value="${station.Label}" data-phase="${station.Phase}" data-cluster="${cluster}" ${selected}>${dot} ${station.Label}</option>`;

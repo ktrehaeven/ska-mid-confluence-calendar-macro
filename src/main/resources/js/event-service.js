@@ -152,7 +152,7 @@ class EventService {
     }
 
     /**
-     * Extracts station IDs mentioned in event title or description
+     * Extracts station IDs mentioned in event title, description or where field
      * @param {Object} event - Confluence Event object
      * @returns {Array<string>} Array of matching station IDs
      */
@@ -168,7 +168,7 @@ class EventService {
         // --- Rule 1: AA phase matching (AA0.5, AA1) ---
         const PHASE_MAP = {
             'AA0.5': ['AA0.5'],
-            'AA1': ['AA0.5', 'AA1'],
+            'AA1': ['AA1'],
         };
 
         const phaseMatches = haystackUpper.match(/\bAA(0\.5|1)\b/gi) ?? [];
@@ -330,6 +330,7 @@ class EventService {
         if (existingEvent) {
             payload.uid = existingEvent.confluenceId;
 
+            // required fields for editing recurring events 
             if (existingEvent.rruleStr) {
                 payload.originalSubCalendarId = this.skaConstructionCalId;
                 payload.originalEventSubCalendarId = existingEvent.childSubCalendarId;
@@ -339,7 +340,7 @@ class EventService {
                 payload.childSubCalendarId = (this.childSubCalendarsByEventId
                 [formData.customEventTypeId].childSubCalendarId);
                 payload.rruleStr = existingEvent.rruleStr;
-                payload.editAllInRecurrenceSeries = "false";
+                payload.editAllInRecurrenceSeries = formData.editAllInRecurrenceSeries;
             }
         }
 
@@ -373,6 +374,7 @@ class EventService {
 
         try {
             await this.requestEvent(confluenceEvent);
+            // if it is a recurring event, you must delete hidden events after updating ¯\_(ツ)_/¯
             if (existingEvent.rruleStr) {
                 await this.deleteHiddenEvents(confluenceEvent);
             }

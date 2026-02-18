@@ -310,32 +310,21 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     async _handleEventClick(args) {
-        const event = args.e.data;
-        const siblings = this.getSiblings(event)
-        const currentResources = [...new Set(
-            siblings.map(ev => String(ev.resource)).filter(Boolean)
+        let event = { ...args.e.data };
+        event.resource = [...new Set(
+            this.getSiblings(event).map(ev => String(ev.resource)).filter(Boolean)
         )];
-
-        const result = await this.eventFormManager.show({
-            text: event.text,
-            creator: event.creator,
-            customEventTypeId: event.customEventTypeId,
-            start: event.start,
-            end: event.end,
-            resource: currentResources || [],
-            description: event.description || ""
-        });
-
+        const result = await this.eventFormManager.show(event);
         if (!result) return;
 
+        await this.eventService.updateEvent(result, event);
+
+        const currentResources = event.resource
         const nextResources = result.resource;
         const toAdd = nextResources.filter(r => !currentResources.includes(r));
         const toRemove = currentResources.filter(r => !nextResources.includes(r));
         const toKeep = nextResources.filter(r => currentResources.includes(r));
 
-        await this.eventService.updateEvent(result, event);
-
-        // Update kept instances
         toKeep.forEach(resource => {
             this._updateEventInstance(event.confluenceId, resource, {
                 text: result.text,
@@ -346,12 +335,10 @@ class CalendarRenderer {
             });
         });
 
-        // Remove instances
         toRemove.forEach(resource => {
             this._removeEventInstance(event.confluenceId, resource);
         });
 
-        // Add new instances
         toAdd.forEach(resource => {
             this._addEventInstance(event.confluenceId, resource, result);
         });
