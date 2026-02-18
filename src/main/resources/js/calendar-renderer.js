@@ -34,6 +34,8 @@ class CalendarRenderer {
         }
 
         // Load events
+        await this.eventService.loadCalendars();
+        await this.eventService.getCurrentUser();
         const events = await this.eventService.fetchAllEvents();
         this.calendar.events.list = events;
         this.refresh();

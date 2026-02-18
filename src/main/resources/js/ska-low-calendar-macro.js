@@ -27,10 +27,6 @@ class SkaLowCalendarMacro {
             // Load station data first (required by other components)
             await this.stationDataManager.load();
 
-            // Load calendar configuration
-            await this.eventService.loadCalendars();
-            await this.eventService.getCurrentUser();
-
             // Initialize all macro instances on the page
             document.querySelectorAll('.ska-low-map-macro').forEach(wrapper =>
                 this.mapRenderer.init(wrapper)
