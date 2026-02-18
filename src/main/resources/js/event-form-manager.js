@@ -58,32 +58,79 @@ class EventFormManager {
     }
 
     _buildStationSelect(preSelectedStations, start, end) {
-        const phaseFilters = ["AA1", "AA0.5", "AAVS3", "Airstrip"];
+        const phaseFilters = ["Airstrip", "AAVS3", "AA0.5", "AA1"];
+        const clusterFilters = ["S8", "S9", "S10"];
         const stations = this.stationDataManager.getStationsByPhase(phaseFilters);
 
-        const optionsHtml = stations
-            .map(station => {
-                const selected = preSelectedStations.includes(station.Label) ? 'selected' : '';
-                const busy = start && end
-                    ? this._isStationBusy(station.Label, start, end)
-                    : false;
+        const phaseOptionsHtml = phaseFilters.map(phase =>
+            `<option value="${phase}">${phase}</option>`
+        ).join("");
 
-                const dot = busy ? '🔴' : '🟢';
+        const clusterOptionsHtml = clusterFilters.map(cluster =>
+            `<option value="${cluster}">${cluster}</option>`
+        ).join("");
 
-                return `<option
-                value="${station.Label}"
-                ${selected}
-            >${dot} ${station.Label}</option>`;
-            })
-            .join("");
+        const stationOptionsHtml = stations.map(station => {
+            const selected = preSelectedStations.includes(station.Label) ? 'selected' : '';
+            const busy = start && end ? this._isStationBusy(station.Label, start, end) : false;
+            const dot = busy ? '🔴' : '🟢';
+            const cluster = clusterFilters.find(c => station.Label.startsWith(c)) ?? '';
+            return `<option value="${station.Label}" data-phase="${station.Phase}" data-cluster="${cluster}" ${selected}>${dot} ${station.Label}</option>`;
+        }).join("");
+
+        const html = `
+        <div style="display:flex; gap:12px; width:100%;">
+            <div style="flex:0 0 100px;">
+                <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Phase</div>
+                <select id="phase-multiselect" multiple size="19" style="width:100%;">
+                    ${phaseOptionsHtml}
+                </select>
+            </div>
+            <div style="flex:0 0 100px;">
+                <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Cluster</div>
+                <select id="cluster-multiselect" multiple size="19" style="width:100%;">
+                    ${clusterOptionsHtml}
+                </select>
+            </div>
+            <div style="flex:1;">
+                <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Stations</div>
+                <select id="station-multiselect" multiple size="18" style="width:100%;">
+                    ${stationOptionsHtml}
+                </select>
+            </div>
+        </div>
+    `;
+
+        setTimeout(() => {
+            const phaseSelect = document.getElementById('phase-multiselect');
+            const clusterSelect = document.getElementById('cluster-multiselect');
+            const stationSelect = document.getElementById('station-multiselect');
+            if (!phaseSelect || !clusterSelect || !stationSelect) return;
+
+            phaseSelect.addEventListener('change', () => {
+                const selectedPhases = Array.from(phaseSelect.selectedOptions).map(o => o.value);
+                // Clear cluster selection when phase is used
+                Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
+                Array.from(stationSelect.options).forEach(opt => {
+                    opt.selected = selectedPhases.includes(opt.dataset.phase);
+                });
+            });
+
+            clusterSelect.addEventListener('change', () => {
+                const selectedClusters = Array.from(clusterSelect.selectedOptions).map(o => o.value);
+                // Clear phase selection when cluster is used
+                Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
+                Array.from(stationSelect.options).forEach(opt => {
+                    opt.selected = selectedClusters.includes(opt.dataset.cluster);
+                });
+            });
+        }, 0);
 
         return {
             name: "Stations",
             id: "text",
             type: "html",
-            html: `<select id="station-multiselect" multiple size="18" style="width:100%;">
-            ${optionsHtml}
-        </select>`
+            html
         };
     }
 
