@@ -22,7 +22,7 @@ class EventFormManager {
 
     _buildFormDefinition(preSelectedStations, data) {
         return [
-            { name: "Title", id: "text", type: "text" },
+            { name: "Title (required)", id: "text", type: "text" },
             { name: "Creator", id: "creator", type: "text", disabled: true },
             {
                 name: "Event Type",
@@ -123,6 +123,13 @@ class EventFormManager {
                 Array.from(stationSelect.options).forEach(opt => {
                     opt.selected = selectedClusters.includes(opt.dataset.cluster);
                 });
+            });
+
+            stationSelect.addEventListener('change', () => {
+                const selectedStations = Array.from(stationSelect.selectedOptions).map(o => o.value);
+                // Clear phase & cluster selection when station is used
+                Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
+                Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
             });
         }, 0);
 
