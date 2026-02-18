@@ -118,6 +118,8 @@ class CalendarRenderer {
             end: eventData.end,
             resource: station,
             customEventTypeId: eventData.customEventTypeId,
+            childSubCalendarId: (this.eventService.childSubCalendarsByEventId
+            [eventData.customEventTypeId].childSubCalendarId),
             description: eventData.description,
         });
     }
