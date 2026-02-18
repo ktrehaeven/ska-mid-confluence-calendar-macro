@@ -58,7 +58,7 @@ class EventFormManager {
     }
 
     _buildStationSelect(preSelectedStations, start, end) {
-        const phaseFilters = ["AA1", "AA0.5", "AAVS3"];
+        const phaseFilters = ["AA1", "AA0.5", "AAVS3", "Airstrip"];
         const stations = this.stationDataManager.getStationsByPhase(phaseFilters);
 
         const optionsHtml = stations

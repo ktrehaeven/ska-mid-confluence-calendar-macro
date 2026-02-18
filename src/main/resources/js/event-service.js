@@ -158,11 +158,48 @@ class EventService {
      */
     extractResourcesFromEvent(event) {
         const stationIds = this.stationDataManager.getAllStationLabels();
-        const haystack = event.where ? event.where : (event.title) + (event.description);
+        const haystack = event.where
+            ? event.where
+            : (event.title) + (event.description);
+        const haystackUpper = haystack.toUpperCase();
 
-        return stationIds.filter(stationId =>
-            haystack.toUpperCase().includes(stationId.toUpperCase())
-        );
+        const matched = new Set();
+
+        // --- Rule 1: AA phase matching (AA0.5, AA1) ---
+        const PHASE_MAP = {
+            'AA0.5': ['AA0.5'],
+            'AA1': ['AA0.5', 'AA1'],
+        };
+
+        const phaseMatches = haystackUpper.match(/\bAA(0\.5|1)\b/gi) ?? [];
+        for (const phase of phaseMatches) {
+            const phasesToInclude = PHASE_MAP[phase.toUpperCase()]
+                ?? PHASE_MAP[phase]
+                ?? [phase];
+            for (const p of phasesToInclude) {
+                const phaseStations = this.stationDataManager.getStationsByPhase(p);
+                for (const s of phaseStations) matched.add(s.Label);
+            }
+        }
+
+        // --- Rule 2: Bare S8 / S9 / S10 → wildcard to all S8-x, S9-x, S10-x ---
+        // Matches S8, S9, S10 only when NOT followed by a hyphen
+        const bareGroupMatches = haystackUpper.match(/\bS(10|[89])(?!-)\b/gi) ?? [];
+        for (const bare of bareGroupMatches) {
+            const prefix = bare.toUpperCase() + '-';
+            for (const id of stationIds) {
+                if (id.toUpperCase().startsWith(prefix)) matched.add(id);
+            }
+        }
+
+        // --- Rule 3: direct label matching ---
+        for (const stationId of stationIds) {
+            if (haystackUpper.includes(stationId.toUpperCase())) {
+                matched.add(stationId);
+            }
+        }
+
+        return [...matched];
     }
 
     /**
