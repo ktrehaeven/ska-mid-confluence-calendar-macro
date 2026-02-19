@@ -148,6 +148,8 @@ class EventService {
             customEventTypeId: event.customEventTypeId,
             childSubCalendarId: event.subCalendarId,
             rruleStr: event.rruleStr,
+            originalStartDateTime: this.removeTZ(event.originalStartDateTime),
+            originalEndDateTime: this.removeTZ(event.originalEndDateTime)
         }));
     }
 
@@ -312,6 +314,7 @@ class EventService {
      * @returns {Object} Event payload object
      */
     _buildEventPayload(formData, existingEvent = null) {
+        // essential fields
         const payload = {
             what: formData.text,
             person: this.user.userKey,
@@ -327,11 +330,12 @@ class EventService {
             userTimeZoneId: "Australia/Perth",
         };
 
+        // required field for editing existing events
         if (existingEvent) {
             payload.uid = existingEvent.confluenceId;
 
-            // required fields for editing recurring events 
-            if (existingEvent.rruleStr) {
+            // required fields for editing events in a series 
+            if (this.isRecurring(existingEvent)) {
                 payload.originalSubCalendarId = this.skaConstructionCalId;
                 payload.originalEventSubCalendarId = existingEvent.childSubCalendarId;
                 payload.originalCustomEventTypeId = existingEvent.customEventTypeId;
@@ -375,7 +379,7 @@ class EventService {
         try {
             await this.requestEvent(confluenceEvent);
             // if it is a recurring event, you must delete hidden events after updating ¯\_(ツ)_/¯
-            if (existingEvent.rruleStr) {
+            if (this.isRecurring(existingEvent)) {
                 await this.deleteHiddenEvents(confluenceEvent);
             }
         } catch (err) {
@@ -395,7 +399,7 @@ class EventService {
             subCalendarId: existingEvent.childSubCalendarId,
             uid: existingEvent.confluenceId,
         };
-        if (existingEvent.rruleStr) {
+        if (this.isRecurring(existingEvent)) {
             payload.originalStart = existingEvent.confluenceId.split("/")[0],
                 payload.singleInstance = true,
                 payload.recurrenceId = ""
@@ -470,5 +474,14 @@ class EventService {
      */
     _ensureZulu(s) {
         return s.replace(/Z?$/, "Z");
+    }
+
+    /**
+     * Checks if an event is part of a recurring series
+     * @param {object} event - event object
+     * @returns {boolean} true if it is recurring
+     */
+    isRecurring(event) {
+        return (event.rruleStr);
     }
 }

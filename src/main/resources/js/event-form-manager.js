@@ -7,11 +7,17 @@ class EventFormManager {
 
     async show(data) {
         const eventForm = this._buildFormDefinition(data);
+
+        setTimeout(() => {
+            this._setupStationListeners();
+            this._setupEditSeriesListener(data);
+        }, 0);
+
         const modal = await DayPilot.Modal.form(eventForm, data, {
             width: 450,
-            scrollWithPage: true,
+            scrollWithPage: false,
             autoStretch: true,
-            zIndex: 100,
+            zIndex: 1000,
             onClose: (modal) => this._handleFormClose(modal)
         });
         if (modal.canceled) return null;
@@ -28,9 +34,9 @@ class EventFormManager {
             },
             { name: "Title (required)", id: "text", type: "text" },
             { name: "Creator", id: "creator", type: "text", disabled: true },
-            { name: "Start", id: "start", type: "datetime", timeInterval: 1 },
-            { name: "End", id: "end", type: "datetime", timeInterval: 1 },
-            { name: "Edit entire series", id: "editAllInRecurrenceSeries", type: "checkbox", disabled: !(data.rruleStr) },
+            { name: "Start", id: "start", type: "datetime", timeInterval: 1, dateFormat: "dd/MM/yyyy" },
+            { name: "End", id: "end", type: "datetime", timeInterval: 1, dateFormat: "dd/MM/yyyy" },
+            { name: "Edit entire series", id: "editAllInRecurrenceSeries", type: "checkbox", disabled: !this.eventService.isRecurring(data) },
             this._buildStationSelect(data),
             { name: "Description", id: "description", type: "textarea", height: 70 }
         ];
@@ -38,7 +44,6 @@ class EventFormManager {
 
     /**
      * Checks if a station has a conflicting event in the given time range,
-     * ignoring siblings of the event currently being edited.
      */
     _isStationBusy(stationLabel, start, end) {
         const events = this.calendarRenderer.calendar.events.list;
@@ -100,38 +105,6 @@ class EventFormManager {
         </div>
     `;
 
-        setTimeout(() => {
-            const phaseSelect = document.getElementById('phase-multiselect');
-            const clusterSelect = document.getElementById('cluster-multiselect');
-            const stationSelect = document.getElementById('station-multiselect');
-            if (!phaseSelect || !clusterSelect || !stationSelect) return;
-
-            phaseSelect.addEventListener('change', () => {
-                const selectedPhases = Array.from(phaseSelect.selectedOptions).map(o => o.value);
-                // Clear cluster selection when phase is used
-                Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
-                Array.from(stationSelect.options).forEach(opt => {
-                    opt.selected = selectedPhases.includes(opt.dataset.phase);
-                });
-            });
-
-            clusterSelect.addEventListener('change', () => {
-                const selectedClusters = Array.from(clusterSelect.selectedOptions).map(o => o.value);
-                // Clear phase selection when cluster is used
-                Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
-                Array.from(stationSelect.options).forEach(opt => {
-                    opt.selected = selectedClusters.includes(opt.dataset.cluster);
-                });
-            });
-
-            stationSelect.addEventListener('change', () => {
-                const selectedStations = Array.from(stationSelect.selectedOptions).map(o => o.value);
-                // Clear phase & cluster selection when station is used
-                Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
-                Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
-            });
-        }, 0);
-
         return {
             name: "Stations",
             id: "text",
@@ -140,11 +113,72 @@ class EventFormManager {
         };
     }
 
+    _setupStationListeners() {
+        const phaseSelect = document.getElementById('phase-multiselect');
+        const clusterSelect = document.getElementById('cluster-multiselect');
+        const stationSelect = document.getElementById('station-multiselect');
+
+        // if select phase, clear cluster and set station selections
+        phaseSelect.addEventListener('change', () => {
+            const selectedPhases = Array.from(phaseSelect.selectedOptions).map(o => o.value);
+            Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
+            Array.from(stationSelect.options).forEach(opt => {
+                opt.selected = selectedPhases.includes(opt.dataset.phase);
+            });
+        });
+
+        // if select cluster, clear phase and set station selections
+        clusterSelect.addEventListener('change', () => {
+            const selectedClusters = Array.from(clusterSelect.selectedOptions).map(o => o.value);
+            Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
+            Array.from(stationSelect.options).forEach(opt => {
+                opt.selected = selectedClusters.includes(opt.dataset.cluster);
+            });
+        });
+
+        // if select station, clear phase and cluster selections
+        stationSelect.addEventListener('change', () => {
+            Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
+            Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
+        });
+    }
+
+    _setupEditSeriesListener(data) {
+        const editSeriesCheckbox = document.querySelector('input[name="editAllInRecurrenceSeries"]');
+        if (!editSeriesCheckbox) return;
+
+        // if select edit Series, set start and end date to series start and end date
+        editSeriesCheckbox.addEventListener('change', () => {
+            const startInput = document.querySelector('input[name="start"]');
+            const endInput = document.querySelector('input[name="end"]');
+            if (editSeriesCheckbox.checked) {
+                if (startInput) startInput.value = data.originalStartDateTime.toString("dd/MM/yyyy");
+                if (endInput) endInput.value = data.originalEndDateTime.toString("dd/MM/yyyy");
+            } else {
+                if (startInput) startInput.value = data.start.toString("dd/MM/yyyy");
+                if (endInput) endInput.value = data.end.toString("dd/MM/yyyy");
+            }
+        });
+    }
+
     _handleFormClose(modal) {
+        // ensures the selected stations are saved before closing form
         const selectEl = document.getElementById("station-multiselect");
         if (selectEl && modal.result) {
             modal.result.resource = Array.from(selectEl.selectedOptions)
                 .map(opt => opt.value);
+        }
+
+        // ensure datetimes are saved, since they may change with the edit series checkbox
+        if (modal.result) {
+            const dateItems = document.querySelectorAll('.modal_default_form_item_datetime');
+            const startDate = dateItems[0]?.querySelector('input.modal_default_input_date')?.value;
+            const startTime = dateItems[0]?.querySelector('input[type="hidden"]')?.value;
+            const endDate = dateItems[1]?.querySelector('input.modal_default_input_date')?.value;
+            const endTime = dateItems[1]?.querySelector('input[type="hidden"]')?.value;
+
+            modal.result.start = new DayPilot.Date.parse(`${startDate} ${startTime}`, "dd/MM/yyyy HH:mm");
+            modal.result.end = new DayPilot.Date.parse(`${endDate} ${endTime}`, "dd/MM/yyyy HH:mm");
         }
     }
 }

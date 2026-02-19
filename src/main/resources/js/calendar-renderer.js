@@ -36,8 +36,7 @@ class CalendarRenderer {
         // Load events
         await this.eventService.loadCalendars();
         await this.eventService.getCurrentUser();
-        const events = await this.eventService.fetchAllEvents();
-        this.calendar.events.list = events;
+        this.calendar.events.list = await this.eventService.fetchAllEvents();
         this.refresh();
     }
 
@@ -318,6 +317,12 @@ class CalendarRenderer {
         if (!result) return;
 
         await this.eventService.updateEvent(result, event);
+
+        if (result.editAllInRecurrenceSeries) {
+            this.calendar.events.list = await this.eventService.fetchAllEvents();
+            this.refresh();
+            return
+        }
 
         const currentResources = event.resource
         const nextResources = result.resource;
