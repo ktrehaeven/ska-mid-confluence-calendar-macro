@@ -68,7 +68,7 @@
     transition: background-color 0.1s ease-in;
 }
 
-.scheduler_default_modal {
-    top: 50% !important;
-    transform: translateY(-50%);
+.modal_default_inner {
+    max-height: 85vh;
+    overflow-y: auto;
 }
