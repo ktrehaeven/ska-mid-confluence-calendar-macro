@@ -26,6 +26,41 @@ class EventService {
         return sortedEvents
     }
 
+    /**
+     * Base HTTP request method for Confluence REST API calls.
+     * Sets form-encoded headers only when a body is present, avoiding
+     * Content-Type errors on GET requests.
+     * @private
+     * @param {string} url - API path relative to the Confluence context root
+     * @param {string} method - HTTP method (e.g. 'GET', 'PUT', 'DELETE')
+     * @param {URLSearchParams|null} body - Request body, or null for bodyless requests
+     * @returns {Promise<Object|null>} Parsed JSON response, or null if the response body is empty
+     * @throws {Error} If the response status is not ok
+     */
+    async _request(url, method = 'GET', body = null) {
+        const options = { method };
+
+        if (body) {
+            options.headers = {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest"
+            };
+            options.body = body.toString();
+        }
+
+        const response = await fetch(AJS.contextPath() + url, options);
+        if (!response.ok) {
+            throw new Error(`${method} ${url} failed: ${response.status} ${response.statusText}`);
+        }
+
+        const text = await response.text();
+        return text ? JSON.parse(text) : null;
+    }
+
+    /**
+     * Loads the SKA-Low construction calendar and parses its child calendars and event types
+     * @returns {Promise<Array>} Array of custom event types
+     */
     async loadCalendars() {
         const skaConstructionCalName = "SKA-Low Telescope Construction";
 
@@ -205,72 +240,35 @@ class EventService {
     }
 
     /**
-     * Applies timezone offset to a date
-     * @param {Date} dt - Date object
-     * @returns {Date} Adjusted date
+     * Removes the timezone component from a Confluence date string
+     * @param {string} dateString - ISO date string potentially containing a timezone offset
+     * @returns {DayPilot.Date} DayPilot date with timezone stripped
      */
     removeTZ(dateString) {
         return new DayPilot.Date(dateString.split("+")[0])
     }
 
+
     /**
-     * Posts a new event or updates an existing one
-     * @param {Object} body - Event data to post
-     * @param {string} method - HTTP method ('PUT' for create/update, 'DELETE' for delete)
-     * @returns {Promise<Object>} Response from server
+     * Sends a create, update, or delete request for a Confluence calendar event
+     * @param {Object} body - Event payload as key-value pairs
+     * @param {string} method - HTTP method, 'PUT' for create/update or 'DELETE' for delete
+     * @returns {Promise<Object>} Parsed JSON response from the server
      */
     async requestEvent(body, method = 'PUT') {
-        const url = AJS.contextPath() + "/rest/calendar-services/1.0/calendar/events.json";
         const formData = new URLSearchParams();
-
         for (const [key, value] of Object.entries(body)) {
-            if (value !== undefined && value !== null) {
-                formData.append(key, value);
-            }
+            if (value !== undefined && value !== null) formData.append(key, value);
         }
-
-        try {
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                    "X-Requested-With": "XMLHttpRequest"
-                },
-                body: formData.toString()
-            });
-
-            if (!response.ok) {
-                throw new Error(`Failed to post event: ${response.status} ${response.statusText}`);
-            }
-
-            return await response.json();
-        } catch (err) {
-            console.error("Event posting error:", err);
-            throw err;
-        }
+        return this._request('/rest/calendar-services/1.0/calendar/events.json', method, formData);
     }
 
     /**
-     * get confluence user
-     * @returns {Promise<Object>} Response from server
-     */
+     * Fetches and stores the current Confluence user
+     * @returns {Promise<void>}
+     */        //rest/api/user/list?start=2000&limit=200
     async getCurrentUser() {
-        //rest/api/user/list?start=2000&limit=200
-
-        const url = AJS.contextPath() + "/rest/api/user/current";
-
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`Failed to post event: ${response.status} ${response.statusText}`);
-            }
-
-            this.user = await response.json();
-            return
-        } catch (err) {
-            console.error("Event getting user:", err);
-            throw err;
-        }
+        this.user = await this._request('/rest/api/user/current');
     }
 
     /**
@@ -279,38 +277,18 @@ class EventService {
      * @param {string} method - HTTP method ('PUT' for create/update, 'DELETE' for delete)
      * @returns {Promise<Object>} Response from server
      */
-    async deleteHiddenEvents(event, method = 'DELETE') {
-        const url = AJS.contextPath() + "/rest/calendar-services/1.0/calendar/preferences/events/hidden.json";
+    async deleteHiddenEvents(event) {
         const formData = new URLSearchParams();
-
         formData.append("subCalendarId", event.childSubCalendarId);
         formData.append("subCalendarId", this.skaConstructionCalId);
-
-        try {
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                    "X-Requested-With": "XMLHttpRequest"
-                },
-                body: formData.toString()
-            });
-            if (!response.ok) {
-                throw new Error(`Failed to post event: ${response.status} ${response.statusText}`);
-            }
-
-            return response;
-        } catch (err) {
-            console.error("Event posting error:", err);
-            throw err;
-        }
+        return this._request('/rest/calendar-services/1.0/calendar/preferences/events/hidden.json', 'DELETE', formData);
     }
 
     /**
      * Builds event payload for create/update operations
      * @private
      * @param {Object} formData - Event form data
-     * @param {string|null} confluenceId - Confluence event ID (null for new events)
+     * @param {string|null} existingEvent - event from daypilot
      * @returns {Object} Event payload object
      */
     _buildEventPayload(formData, existingEvent = null) {
@@ -391,7 +369,7 @@ class EventService {
     /**
      * Deletes an existing Confluence event
      * @param {Object} existingEvent - Existing event object
-     * @returns {Promise<Object>} Updated event response
+     * @returns {Promise<Object>} Deleted event response
      */
     async deleteEvent(existingEvent) {
 
