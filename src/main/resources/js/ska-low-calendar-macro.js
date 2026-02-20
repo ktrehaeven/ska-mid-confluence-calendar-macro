@@ -14,8 +14,6 @@ class SkaLowCalendarMacro {
             this.stationDataManager,
             this.mapRenderer
         );
-        // Set after both are created to avoid circular dependency
-        this.eventFormManager.calendarRenderer = this.calendarRenderer;
     }
 
     /**
@@ -39,37 +37,5 @@ class SkaLowCalendarMacro {
             console.error("Macro initialization error:", err);
             throw err;
         }
-    }
-
-    /**
-     * Gets the station data manager
-     * @returns {StationDataManager}
-     */
-    getStationDataManager() {
-        return this.stationDataManager;
-    }
-
-    /**
-     * Gets the event service
-     * @returns {EventService}
-     */
-    getEventService() {
-        return this.eventService;
-    }
-
-    /**
-     * Gets the map renderer
-     * @returns {MapRenderer}
-     */
-    getMapRenderer() {
-        return this.mapRenderer;
-    }
-
-    /**
-     * Gets the calendar renderer
-     * @returns {CalendarRenderer}
-     */
-    getCalendarRenderer() {
-        return this.calendarRenderer;
     }
 }
