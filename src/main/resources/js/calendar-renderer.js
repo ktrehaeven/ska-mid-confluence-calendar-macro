@@ -101,30 +101,7 @@ class CalendarRenderer {
     }
 
     /**
-     * Creates a DayPilot event object with standard configuration
-     * @private
-     * @param {string} confluenceId - Confluence event ID
-     * @param {string} station - Station/resource identifier
-     * @param {Object} eventData - Event data object
-     * @returns {DayPilot.Event} Configured event instance
-     */
-    _createDayPilotEvent(confluenceId, station, eventData) {
-        return new DayPilot.Event({
-            id: this.eventService.makeEventId(confluenceId, station),
-            confluenceId: confluenceId,
-            text: eventData.text,
-            start: eventData.start,
-            end: eventData.end,
-            resource: station,
-            customEventTypeId: eventData.customEventTypeId,
-            childSubCalendarId: (this.eventService.childSubCalendarsByEventId
-            [eventData.customEventTypeId].childSubCalendarId),
-            description: eventData.description,
-        });
-    }
-
-    /**
-     * Updates an existing calendar event instance
+     * Updates an existing DayPilot calendar event instance
      * @private
      * @param {string} confluenceId - Confluence event ID
      * @param {string} resource - Resource/station ID
@@ -141,7 +118,7 @@ class CalendarRenderer {
     }
 
     /**
-     * Removes a calendar event instance
+     * Removes an existing DayPilot calendar event instance
      * @private
      * @param {string} confluenceId - Confluence event ID
      * @param {string} resource - Resource/station ID
@@ -155,7 +132,7 @@ class CalendarRenderer {
     }
 
     /**
-     * Adds a new calendar event instance
+     * Adds a new DayPilot calendar event instance
      * @private
      * @param {string} confluenceId - Confluence event ID
      * @param {string} station - Station/resource identifier
@@ -164,13 +141,27 @@ class CalendarRenderer {
     _addEventInstance(confluenceId, station, eventData) {
         const id = this.eventService.makeEventId(confluenceId, station);
         if (!this.calendar.events.find(id)) {
-            const newEvent = this._createDayPilotEvent(confluenceId, station, eventData);
+
+            const newEvent = new DayPilot.Event({
+                id: this.eventService.makeEventId(confluenceId, station),
+                confluenceId: confluenceId,
+                text: eventData.text,
+                start: eventData.start,
+                end: eventData.end,
+                resource: station,
+                customEventTypeId: eventData.customEventTypeId,
+                childSubCalendarId: (this.eventService.childSubCalendarsByEventId
+                [eventData.customEventTypeId].childSubCalendarId),
+                description: eventData.description,
+            });
+
             this.calendar.events.add(newEvent);
         }
     }
 
     /**
      * Handles event deletion
+     * Deletes the DayPilot event, all sibling events and correpsonding Confluence event
      * @private
      * @param {Object} args - Event arguments
      */
@@ -180,8 +171,8 @@ class CalendarRenderer {
         const name = args.e.data.text || "Untitled booking";
         const start = new DayPilot.Date(args.e.data.start).toString("dd/MM/yyyy HH:mm");
         const end = new DayPilot.Date(args.e.data.end).toString("dd/MM/yyyy HH:mm");
-        const resource = args.e.data.resource
 
+        // confirmation prompt
         const modal = await DayPilot.Modal.confirm(`
         <div style="text-align:left; line-height:1.6;">
             <div style="font-size:16px; font-weight:600;">
@@ -206,11 +197,10 @@ class CalendarRenderer {
         if (modal.canceled) {
             return;
         }
+
         else if (modal.result) {
             const events = this.getSiblings(args.e.data);
-            events.forEach(ev => {
-                this._removeEventInstance(ev.confluenceId, ev.resource);
-            });
+            events.forEach(ev => this._removeEventInstance(ev.confluenceId, ev.resource));
             this.refresh();
             await this.eventService.deleteEvent(args.e.data);
         }
@@ -218,10 +208,47 @@ class CalendarRenderer {
 
     /**
      * Handles event resizing
+     * Resizes all sibling events and updates confluence event
      * @private
      * @param {Object} args - Event arguments
      */
     async _handleEventResize(args) {
+        const events = this.getSiblings(args.e.data);
+        const updatedData = {
+            start: args.newStart,
+            end: args.newEnd
+        };
+        events.forEach(ev => this._updateEventInstance(ev.confluenceId, ev.resource, updatedData));
+        this.refresh();
+        // Prepare form data with all sibling resources for the Confluence API
+        const formData = {
+            ...args.e.data,
+            start: args.newStart,
+            end: args.newEnd,
+            resource: events.map(ev => String(ev.resource)).filter(Boolean)
+        };
+        await this.eventService.updateEvent(formData, args.e.data);
+    }
+
+    /**
+     * Handles event moving
+     * moves all sibling events and updates confluence event
+     * @private
+     * @param {Object} args - Event arguments
+     */
+    async _handleEventMove(args) {
+        const newId = this.eventService.makeEventId(args.e.data.confluenceId, args.newResource);
+
+        // catch for moving an event to a resource where a sibling exists
+        // (would result in duplicate id)
+        if (args.e.data.id != newId && this.calendar.events.find(newId)) {
+            args.preventDefault();
+            DayPilot.Modal.alert("This booking is already assigned to that station.");
+            return;
+        }
+        args.e.data.id = newId;
+        args.e.data.resource = args.newResource
+
         const events = this.getSiblings(args.e.data);
         const updatedData = {
             start: args.newStart,
@@ -242,42 +269,8 @@ class CalendarRenderer {
     }
 
     /**
-     * Handles event moving
-     * @private
-     * @param {Object} args - Event arguments
-     */
-    async _handleEventMove(args) {
-        const newId = this.eventService.makeEventId(args.e.data.confluenceId, args.newResource);
-
-        if (args.e.data.id != newId && this.calendar.events.find(newId)) {
-            args.preventDefault();
-            DayPilot.Modal.alert("This booking is already assigned to that station.");
-            return;
-        }
-        args.e.data.id = newId;
-        args.e.data.resource = args.newResource
-
-        const events = this.getSiblings(args.e.data);
-        const updatedData = {
-            start: args.newStart,
-            end: args.newEnd
-        };
-        events.forEach(ev => {
-            this._updateEventInstance(ev.confluenceId, ev.resource, updatedData);
-        });
-        this.refresh();
-        // Prepare form data with all sibling resources for the Confluence API
-        const formData = await {
-            ...args.e.data,
-            start: args.newStart,
-            end: args.newEnd,
-            resource: events.map(ev => String(ev.resource)).filter(Boolean)
-        };
-        await this.eventService.updateEvent(formData, args.e.data);
-    }
-
-    /**
-     * Handles time range selection (new event creation)
+     * Handles time range selection
+     * allows new DayPilot and confluence event creation
      * @private
      * @param {Object} args - Event arguments
      */
@@ -288,10 +281,12 @@ class CalendarRenderer {
             creator: this.eventService.user.displayName,
             end: args.end,
             resource: args.resource,
-        });
+        }, this.calendar.events.list);
 
         this.calendar.clearSelection();
         if (!result) return;
+
+        //retrieve confluence response so we can use the event id generated
         const postedEvent = await this.eventService.createEvent(result);
         if (!postedEvent?.success) return;
 
@@ -304,21 +299,22 @@ class CalendarRenderer {
     }
 
     /**
-     * Handles event click (event editing)
+     * Handles event click
+     * updates event, all siblings and corresponding confluence event
      * @private
      * @param {Object} args - Event arguments
      */
     async _handleEventClick(args) {
         let event = { ...args.e.data };
-        event.resource = [...new Set(
-            this.getSiblings(event).map(ev => String(ev.resource)).filter(Boolean)
-        )];
-        const result = await this.eventFormManager.show(event);
+        event.resource = this.getSiblings(event).map(ev => ev.resource);
+        const result = await this.eventFormManager.show(event, this.calendar.events.list);
         if (!result) return;
 
         await this.eventService.updateEvent(result, event);
 
         if (result.editAllInRecurrenceSeries) {
+            // must request all confluence events again since they handle the recurrence
+            // TODO: only request events from the subcalendar of updated event
             this.calendar.events.list = await this.eventService.fetchAllEvents();
             this.refresh();
             return
@@ -353,6 +349,7 @@ class CalendarRenderer {
 
     /**
      * Handles row/resource click
+     * zooms map and opens tooltips
      * @private
      * @param {Object} args - Event arguments
      */
@@ -385,7 +382,8 @@ class CalendarRenderer {
     }
 
     /**
-     * Handles row header rendering (highlight selected row)
+     * Handles row header rendering 
+     * highlights selected row
      * @private
      * @param {Object} args - Event arguments
      */
@@ -401,6 +399,7 @@ class CalendarRenderer {
 
     /**
      * Handles time header click
+     * changes colour and opens tooltips of busy stations in time range
      * @private
      * @param {Object} args - Header arguments
      */
@@ -430,7 +429,8 @@ class CalendarRenderer {
     }
 
     /**
-     * Handles time header rendering (highlight selected time header)
+     * Handles time header rendering
+     * highlights selected time header
      * @private
      * @param {Object} args - Event arguments
      */
@@ -445,7 +445,7 @@ class CalendarRenderer {
     }
 
     /**
-     * Updates visible resources based on events in the current view
+     * Updates visible resources (rows) based on events in the current view
      */
     updateVisibleResources() {
         if (!this.calendar.visibleStart || !this.calendar.visibleEnd) return;
@@ -473,7 +473,10 @@ class CalendarRenderer {
     }
 
     /**
-     * Gets siblings of a given event (events with the same Confluence ID)
+     * Finds siblings of a given event
+     * Events can only be assigned to one resource in DayPilot
+     * When a booking uses multiple stations, an event is made for each station
+     * These events are siblings and are related through identical confluenceId fields
      * @param {DayPilot.Event} event - The event to find siblings for
      * @returns {Array} Array of sibling events
      */
