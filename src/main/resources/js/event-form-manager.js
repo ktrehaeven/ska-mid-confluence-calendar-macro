@@ -1,12 +1,18 @@
 class EventFormManager {
-    constructor(eventService, stationDataManager, calendarRenderer) {
+    constructor(eventService, stationDataManager) {
         this.eventService = eventService;
         this.stationDataManager = stationDataManager;
-        this.calendarRenderer = calendarRenderer;
     }
 
-    async show(data) {
-        const eventForm = this._buildFormDefinition(data);
+    /**
+     * Opens the event form modal prepopulated with the given event data.
+     * Sets up station and series listeners after the DOM renders via setTimeout.
+     * @param {Object} data - Event data to prepopulate the form with
+     * @param {Array} eventsList - All calendar events, used to determine station availability
+     * @returns {Promise<Object|null>} The submitted form result, or null if the modal was canceled
+     */
+    async show(data, eventsList = []) {
+        const eventForm = this._buildFormDefinition(data, eventsList);
 
         setTimeout(() => {
             this._setupStationListeners();
@@ -24,11 +30,20 @@ class EventFormManager {
         return modal.result;
     }
 
-    _buildFormDefinition(data) {
+    /**
+     * Builds the DayPilot form field definitions for the event modal.
+     * Includes event type, title, creator, start/end datetimes, recurrence editing,
+     * station selection, and description.
+     * @param {Object} data - Event data used to prepopulate and configure fields
+     * @param {Array} eventsList - All calendar events, passed through to the station select for availability indicators
+     * @returns {Array} Array of DayPilot form field definition objects
+     */
+    _buildFormDefinition(data, eventsList = []) {
         return [
             {
                 name: "Event Type",
                 id: "customEventTypeId",
+                // filters all default confluence event types
                 options: this.eventService.customEventTypes.filter(type => type.name !== type.id),
                 type: "select"
             },
@@ -37,20 +52,24 @@ class EventFormManager {
             { name: "Start", id: "start", type: "datetime", timeInterval: 1, dateFormat: "dd/MM/yyyy" },
             { name: "End", id: "end", type: "datetime", timeInterval: 1, dateFormat: "dd/MM/yyyy" },
             { name: "Edit entire series", id: "editAllInRecurrenceSeries", type: "checkbox", disabled: !this.eventService.isRecurring(data) },
-            this._buildStationSelect(data),
+            this._buildStationSelect(data, eventsList),
             { name: "Description", id: "description", type: "textarea", height: 70 }
         ];
     }
 
     /**
-     * Checks if a station has a conflicting event in the given time range,
+     * Checks if a station has a conflicting event in the given time range.
+     * @param {string} stationLabel - The station identifier to check
+     * @param {DayPilot.Date|string} start - Start of the time range
+     * @param {DayPilot.Date|string} end - End of the time range
+     * @param {Array} eventsList - List of calendar events to check against
+     * @returns {boolean} True if the station has an overlapping event
      */
-    _isStationBusy(stationLabel, start, end) {
-        const events = this.calendarRenderer.calendar.events.list;
+    _isStationBusy(stationLabel, start, end, eventsList = []) {
         const startTime = new DayPilot.Date(start).getTime();
         const endTime = new DayPilot.Date(end).getTime();
 
-        return events.some(ev => {
+        return eventsList.some(ev => {
             if (ev.resource !== stationLabel) return false;
 
             const evStart = new DayPilot.Date(ev.start).getTime();
@@ -61,7 +80,14 @@ class EventFormManager {
         });
     }
 
-    _buildStationSelect(data) {
+    /**
+     * Builds the station selection HTML form field, including phase and cluster filters.
+     * Stations are marked with availability indicators based on the given time range.
+     * @param {Object} data - Event data containing resource, start, and end properties
+     * @param {Array} eventsList - List of calendar events used to determine station availability
+     * @returns {Object} DayPilot form field definition with type "html"
+     */
+    _buildStationSelect(data, eventsList = []) {
         const phaseFilters = ["Airstrip", "AAVS3", "AA0.5", "AA1"];
         const clusterFilters = ["S8", "S9", "S10"];
         const stations = this.stationDataManager.getStationsByPhase(phaseFilters);
@@ -76,7 +102,7 @@ class EventFormManager {
 
         const stationOptionsHtml = stations.map(station => {
             const selected = data.resource.includes(station.Label) ? 'selected' : '';
-            const busy = data.start && data.end ? this._isStationBusy(station.Label, data.start, data.end) : false;
+            const busy = data.start && data.end ? this._isStationBusy(station.Label, data.start, data.end, eventsList) : false;
             const dot = busy ? '🔴' : '🟢';
             const cluster = clusterFilters.find(c => station.Label.startsWith(c)) ?? '';
             return `<option value="${station.Label}" data-phase="${station.Phase}" data-cluster="${cluster}" ${selected}>${dot} ${station.Label}</option>`;
@@ -113,6 +139,11 @@ class EventFormManager {
         };
     }
 
+    /**
+     * Attaches change listeners to the phase, cluster, and station multiselects.
+     * Selecting a phase or cluster updates station selections accordingly and clears the other filter.
+     * Selecting a station directly clears both phase and cluster selections.
+     */
     _setupStationListeners() {
         const phaseSelect = document.getElementById('phase-multiselect');
         const clusterSelect = document.getElementById('cluster-multiselect');
@@ -143,6 +174,12 @@ class EventFormManager {
         });
     }
 
+    /**
+     * Attaches a change listener to the "Edit entire series" checkbox.
+     * When checked, updates the start and end date inputs to the series-level dates.
+     * When unchecked, restores them to the individual event dates.
+     * @param {Object} data - Event data containing start, end, originalStartDateTime, and originalEndDateTime
+     */
     _setupEditSeriesListener(data) {
         const editSeriesCheckbox = document.querySelector('input[name="editAllInRecurrenceSeries"]');
         if (!editSeriesCheckbox) return;
@@ -161,6 +198,13 @@ class EventFormManager {
         });
     }
 
+    /**
+     * Handles form close by extracting station selections and datetime values from the DOM
+     * and writing them back to modal.result before the form is finalized.
+     * Required because DayPilot does not natively capture custom HTML fields or
+     * datetime values modified outside its own inputs.
+     * @param {Object} modal - DayPilot modal instance with a result property
+     */
     _handleFormClose(modal) {
         // ensures the selected stations are saved before closing form
         const selectEl = document.getElementById("station-multiselect");
