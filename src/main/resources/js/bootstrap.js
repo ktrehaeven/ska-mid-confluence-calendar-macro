@@ -3,7 +3,8 @@ AJS.toInit(async function () {
         // Initialize the main macro orchestrator
         const macro = new SkaLowCalendarMacro();
 
-        // Make it available globally for debugging/cross-component access if needed
+        // Make it available globally for debugging/cross-component access
+        // can reference in browser console using this.SkaLow.macro
         window.SkaLow = window.SkaLow || {};
         window.SkaLow.macro = macro;
 
