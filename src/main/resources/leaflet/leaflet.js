@@ -48,8 +48,8 @@
         _resetView: function (t) {
             e.DomEvent.stop(t);
 
-            if (window.SkaLow?.macro?.getMapRenderer()) {
-                window.SkaLow.macro.getMapRenderer().resetView();
+            if (window.SkaLow?.macro?.mapRenderer) {
+                window.SkaLow.macro.mapRenderer.resetView();
             }
         }
 
