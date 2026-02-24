@@ -2,9 +2,10 @@
  * Manages the map display and interactions
  */
 class MapRenderer {
-    constructor(stationDataManager) {
+    constructor(stationDataManager, onMarkerClick = null) {
         this.stationDataManager = stationDataManager;
         this.map = null;
+        this.onMarkerClick = onMarkerClick;
         this.isInitialized = false;
     }
 
@@ -31,16 +32,16 @@ class MapRenderer {
     }
 
     /**
-     * Adds map controls
-     * @private
-     */
+         * Adds scale and reset view controls to the map
+         * @private
+         */
     _addControls() {
         L.control.scale({ maxWidth: 300 }).addTo(this.map);
         L.control.resetView({}).addTo(this.map);
     }
 
     /**
-     * Adds the tile layer (satellite imagery)
+     * Adds the Esri satellite imagery tile layer
      * @private
      */
     _addTileLayer() {
@@ -78,7 +79,8 @@ class MapRenderer {
     }
 
     /**
-     * Adds station markers to the map
+     * Adds a circle marker for each station (excluding Airstrip and Centre)
+     * Markers fire the onMarkerClick callback when clicked
      * @private
      */
     _addStationMarkers() {
@@ -100,6 +102,10 @@ class MapRenderer {
                 opacity: 0.8
             }).addTo(this.map);
 
+            marker.on('click', () => {
+                if (this.onMarkerClick) this.onMarkerClick(key);
+            });
+
             station.marker = marker;
         });
 
@@ -111,12 +117,20 @@ class MapRenderer {
     }
 
     /**
-     * Resets all tooltips on the map
+     * Resets all tooltips to non-permanent hover behaviour
      */
     resetTooltips() {
         if (!this.map) return;
-        this.map.eachLayer((layer) => {
-            if (layer.options.pane === "tooltipPane") layer.removeFrom(this.map);
+        this.stationDataManager.stationList.forEach(station => {
+            const marker = this.stationDataManager.getStation(station.id)?.marker;
+            if (!marker) return;
+            marker.unbindTooltip();
+            marker.bindTooltip(station.id, {
+                permanent: false,
+                direction: "right",
+                offset: [10, 0],
+                opacity: 0.8
+            });
         });
     }
 
@@ -133,7 +147,7 @@ class MapRenderer {
     }
 
     /**
-     * Zooms to a specific station
+     * Pans to a specific station
      * @param {string} stationId - Station label/ID
      */
     zoomToStation(stationId) {
@@ -143,11 +157,16 @@ class MapRenderer {
 
         this.map.flyTo(
             [station.Latitude, station.Longitude],
-            14,
+            this.map.getZoom(),
             { animate: true, duration: 0.5 }
         );
     }
 
+    /**
+     * Highlights the given stations in pink and opens their tooltips
+     * Resets all other highlighted stations back to white
+     * @param {string[]} resources - Station IDs to highlight
+     */
     highlightStations(resources) {
         this.stationDataManager.stationList.forEach(station => {
             const marker = this.stationDataManager.getStation(station.id)?.marker;
@@ -161,13 +180,23 @@ class MapRenderer {
         });
     }
 
+    /**
+     * Opens a station's tooltip permanently so it persists on hover
+     * @param {string[]} stations - Station IDs to make permanent
+     */
     openTooltips(stations) {
         if (!stations) return;
         this.stationDataManager.stationList.forEach(station => {
             const marker = this.stationDataManager.getStation(station.id)?.marker;
             if (!marker) return;
             if (stations.some(s => s === station.id)) {
-                marker.openTooltip();
+                marker.unbindTooltip();
+                marker.bindTooltip(station.id, {
+                    permanent: true,
+                    direction: "right",
+                    offset: [10, 0],
+                    opacity: 0.8
+                }).openTooltip();
             }
         });
     }

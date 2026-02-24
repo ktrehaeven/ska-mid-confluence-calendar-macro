@@ -6,8 +6,10 @@ class SkaLowCalendarMacro {
     constructor() {
         this.stationDataManager = new StationDataManager();
         this.eventService = new EventService(this.stationDataManager);
-        this.mapRenderer = new MapRenderer(this.stationDataManager);
         this.eventFormManager = new EventFormManager(this.eventService, this.stationDataManager);
+        this.mapRenderer = new MapRenderer(this.stationDataManager, (stationId) => {
+            this.calendarRenderer.selectStation(stationId);
+        });
         this.calendarRenderer = new CalendarRenderer(
             this.eventService,
             this.eventFormManager,
