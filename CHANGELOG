@@ -1,6 +1,19 @@
 # Changelog
 
+## [1.1.0] - 2026-02-24
+
+### Pre-Security Testing
+
+- Added Put/Delete Requests
+- Added linking between sibling events (same event across multi resources)
+- Added editing for entire event rucurrence series
+- Added display name in "Creator" field for new events
+- Updated Form UI, including selecting resources by phase or cluster
+- Removed general context to only load dependencies to pages with macro
+
 ## [1.0.0] - 2026-01-23
+
 ### Initial release
+
 - Map + scheduler macro
 - Read-only integration with Team Calendar
