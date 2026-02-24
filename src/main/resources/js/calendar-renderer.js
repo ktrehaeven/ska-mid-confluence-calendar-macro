@@ -354,31 +354,11 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     _handleRowClick(args) {
-        this.mapRenderer.resetTooltips();
-
-        if (this.selection.type === 'time') {
-            this.mapRenderer.highlightStations([]);
-        }
-
         if (args.row.id !== this.selection.value) {
-
-            this.selection = { value: args.row.id, type: 'resource' }
-
-            if (this.mapRenderer) {
-                this.mapRenderer.zoomToStation(args.row.id);
-                this.mapRenderer.openTooltips([args.row.id]);
-            }
-
+            this.selectStation(args.row.id);
         } else {
-
-            this.selection = { value: null, type: null };
-
-            if (this.mapRenderer) {
-                this.mapRenderer.resetView();
-            }
-
+            this.deselectStation();
         }
-        this.refresh();
     }
 
     /**
@@ -446,6 +426,7 @@ class CalendarRenderer {
 
     /**
      * Updates visible resources (rows) based on events in the current view
+     * If a station is currently selected, it is always included even if it has no events
      */
     updateVisibleResources() {
         if (!this.calendar.visibleStart || !this.calendar.visibleEnd) return;
@@ -454,6 +435,7 @@ class CalendarRenderer {
         const viewEnd = this.calendar.visibleEnd().getTime();
 
         const resourcesInView = this.stationDataManager.stationList.filter(resource =>
+            resource.id === this.selection.value ||
             this.calendar.events.list.some(event =>
                 event.resource === resource.id &&
                 event.start.getTime() < viewEnd &&
@@ -484,5 +466,29 @@ class CalendarRenderer {
         return this.calendar.events.list.filter(
             ev => ev.confluenceId === event.confluenceId
         );
+    }
+
+    /**
+     * Selects a station, updating selection state and syncing the map
+     * Clears any active time selection highlight, zooms to the station and opens its tooltip
+     * @param {string} stationId - Station ID to select
+     */
+    selectStation(stationId) {
+        this.mapRenderer.resetTooltips();
+        if (this.selection.type === 'time') this.mapRenderer.highlightStations([]);
+        this.selection = { value: stationId, type: 'resource' };
+        this.mapRenderer.zoomToStation(stationId);
+        this.mapRenderer.openTooltips([stationId]);
+        this.refresh();
+    }
+
+    /**
+     * Deselects the current station, clearing selection state and resetting the map view
+     */
+    deselectStation() {
+        this.mapRenderer.resetTooltips();
+        this.selection = { value: null, type: null };
+        this.mapRenderer.resetView();
+        this.refresh();
     }
 }
