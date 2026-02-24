@@ -37,6 +37,7 @@ class CalendarRenderer {
         await this.eventService.loadCalendars();
         await this.eventService.getCurrentUser();
         this.calendar.events.list = await this.eventService.fetchAllEvents();
+        this._initCurrentTimeLine()
         this.refresh();
     }
 
@@ -78,6 +79,52 @@ class CalendarRenderer {
             onTimeHeaderClick: (args) => this._handleTimeHeaderClick(args),
             onBeforeTimeHeaderRender: (args) => this._handleTimeHeaderRender(args),
         });
+    }
+
+    /**
+     * Initializes automatic updating of the "current time" vertical indicator.
+     * Sets up a timer that refreshes the current-time line every minute so it
+     * stays aligned with the actual time as the scheduler remains open.
+     * @private
+     */
+    _initCurrentTimeLine() {
+        setInterval(() => this._updateCurrentTimeLine(), 60000);
+    }
+
+    /**
+     * Updates (or redraws) the vertical line indicating the current time
+     * within the scheduler timeline.
+     * If the current time is outside the visible range, no line is rendered.
+     * @private
+     */
+    _updateCurrentTimeLine() {
+        const matrix = this.calendar.nav.scroll.querySelector('.scheduler_default_matrix');
+        matrix.querySelector('.current-time-line')?.remove();
+
+        const now = new DayPilot.Date().getTime();
+        const start = this.calendar.startDate.getTime();
+        const end = new DayPilot.Date(this.calendar.startDate).addDays(this.calendar.days).getTime();
+
+        if (now < start || now > end) return;
+
+        const totalMs = end - start;
+        const elapsedMs = now - start;
+        const leftPx = (elapsedMs / totalMs) * matrix.scrollWidth;
+
+        const line = document.createElement('div');
+        line.className = 'current-time-line';
+        line.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: ${leftPx}px;
+        width: 2px;
+        height: 100%;
+        background: #E70068;
+        pointer-events: none;
+        z-index: 100;
+    `;
+
+        matrix.appendChild(line);
     }
 
     /**
@@ -452,6 +499,7 @@ class CalendarRenderer {
     refresh() {
         this.updateVisibleResources();
         this.calendar.update();
+        this._updateCurrentTimeLine()
     }
 
     /**
