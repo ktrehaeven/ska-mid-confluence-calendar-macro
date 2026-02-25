@@ -367,24 +367,42 @@ class EventService {
     }
 
     /**
-     * Deletes an existing Confluence event
+     * Deletes an existing Confluence event, with optional scope for series
      * @param {Object} existingEvent - Existing event object
+     * @param {String} scope - scope of events to delete
      * @returns {Promise<Object>} Deleted event response
      */
-    async deleteEvent(existingEvent) {
+    async deleteEvent(existingEvent, scope = "single") {
 
         const payload = {
             subCalendarId: existingEvent.childSubCalendarId,
             uid: existingEvent.confluenceId,
         };
+
         if (this.isRecurring(existingEvent)) {
-            payload.originalStart = existingEvent.confluenceId.split("/")[0],
-                payload.singleInstance = true,
-                payload.recurrenceId = ""
+
+            switch (scope) {
+                case "single": {
+                    payload.originalStart = existingEvent.confluenceId.split("/")[0],
+                        payload.singleInstance = true,
+                        payload.recurrenceId = ""
+                    break
+                }
+                case "future": {
+                    // change to recur only up to this event
+                    payload.recurUntil = existingEvent.confluenceId.split("T")[0].replaceAll("-", "")
+                    break
+                }
+                case "series":
+            }
+
         }
 
         try {
-            return await this.requestEvent(payload, 'DELETE');
+            await this.requestEvent(payload, 'DELETE');
+            if (this.isRecurring(existingEvent) && scope !== "single") {
+                await this.deleteHiddenEvents(existingEvent);
+            }
         } catch (err) {
             console.error("Delete event error:", err);
             throw err;

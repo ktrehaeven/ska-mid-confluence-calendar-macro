@@ -225,4 +225,58 @@ class EventFormManager {
             modal.result.end = new DayPilot.Date.parse(`${endDate} ${endTime}`, "dd/MM/yyyy HH:mm");
         }
     }
+
+    /**
+     * Opens the delete confirmation.
+     * @param {Object} event - Event data to prepopulate the form with
+     * @returns {Promise<Object|null>} The submitted form result, or null if the modal was canceled
+     */
+    async confirmDelete(event) {
+
+        const name = event.text || "Untitled booking";
+        const start = new DayPilot.Date(event.start).toString("dd/MM/yyyy HH:mm");
+        const end = new DayPilot.Date(event.end).toString("dd/MM/yyyy HH:mm");
+
+        const htmlField = {
+            name: "Heading",
+            id: "heading",
+            type: "html",
+            html: `
+        <div style="text-align:left; line-height:1.6;">
+            <div style="font-size:16px; font-weight:600;">Delete booking?</div>
+            <br>
+            <div><strong>${name}</strong><br>${start} - ${end}</div>
+            <br>
+            <div>This action cannot be undone.</div>
+        </div>
+    `
+        };
+
+        const scopeField = {
+            name: "",
+            id: "deleteScope",
+            type: "radio",
+            options: [
+                { name: "This instance only", id: "single" },
+                { name: "This and all future instances", id: "future" },
+                { name: "Entire series", id: "series" }
+            ],
+        }
+
+        // only show scopeField if event is in series
+        const deleteForm = this.eventService.isRecurring(event)
+            ? [htmlField, scopeField]
+            : [htmlField];
+
+
+        const modal = await DayPilot.Modal.form(deleteForm, { deleteScope: "single" }, {
+            okText: "Delete",
+            cancelText: "Cancel",
+            scrollWithPage: false,
+            zIndex: 1000,
+        });
+
+        if (modal.canceled) return null;
+        return modal.result;
+    }
 }

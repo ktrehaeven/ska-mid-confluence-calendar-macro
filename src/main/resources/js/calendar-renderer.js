@@ -208,49 +208,20 @@ class CalendarRenderer {
 
     /**
      * Handles event deletion
-     * Deletes the DayPilot event, all sibling events and correpsonding Confluence event
+     * Deletes the DayPilot event, all sibling events and corresponding Confluence event
      * @private
      * @param {Object} args - Event arguments
      */
     async _handleEventDelete(args) {
+
         args.preventDefault();
+        const result = await this.eventFormManager.confirmDelete(args.e.data)
+        if (!result) return
 
-        const name = args.e.data.text || "Untitled booking";
-        const start = new DayPilot.Date(args.e.data.start).toString("dd/MM/yyyy HH:mm");
-        const end = new DayPilot.Date(args.e.data.end).toString("dd/MM/yyyy HH:mm");
-
-        // confirmation prompt
-        const modal = await DayPilot.Modal.confirm(`
-        <div style="text-align:left; line-height:1.6;">
-            <div style="font-size:16px; font-weight:600;">
-                Delete booking?
-            </div>
-            <br>
-            <div>
-                <strong>${name}</strong><br>
-                ${start} - ${end}
-            </div>
-            <br>
-            <div>
-                This will remove the booking for all stations.
-            </div>
-            <br>
-            <div>
-                This action cannot be undone.
-            </div>
-        </div>
-    `, { scrollWithPage: false });
-
-        if (modal.canceled) {
-            return;
-        }
-
-        else if (modal.result) {
-            const events = this.getSiblings(args.e.data);
-            events.forEach(ev => this._removeEventInstance(ev.confluenceId, ev.resource));
-            this.refresh();
-            await this.eventService.deleteEvent(args.e.data);
-        }
+        await this.eventService.deleteEvent(args.e.data, result.deleteScope);
+        // TODO: only request events from the subcalendar of updated event
+        this.calendar.events.list = await this.eventService.fetchAllEvents();
+        this.refresh();
     }
 
     /**
