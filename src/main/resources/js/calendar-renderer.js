@@ -33,11 +33,11 @@ class CalendarRenderer {
             this.navigator.init();
         }
 
-        // Load events
         await this.eventService.loadCalendars();
         await this.eventService.getCurrentUser();
         this.calendar.events.list = await this.eventService.fetchAllEvents();
         this._initCurrentTimeLine()
+        this._startAutoRefresh()
         this.refresh();
     }
 
@@ -526,5 +526,28 @@ class CalendarRenderer {
         this.selection = { value: null, type: null };
         this.mapRenderer.resetView();
         this.refresh();
+    }
+
+    /**
+     * Fetches all events every 5 minutes
+     */
+    _startAutoRefresh(intervalMs = 300000) {
+        this._refreshInterval = setInterval(() => {
+            this.eventService.fetchAllEvents()
+            this.refresh()
+        },
+            intervalMs);
+
+        document.addEventListener('visibilitychange', this._onVisibilityChange.bind(this));
+    }
+
+    /**
+     * Fetches all events when you tab back into the page
+     */
+    _onVisibilityChange() {
+        if (document.visibilityState === 'visible') {
+            this.eventService.fetchAllEvents();
+            this.refresh()
+        }
     }
 }
