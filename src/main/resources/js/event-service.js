@@ -120,42 +120,60 @@ class EventService {
     }
 
     /**
-     * Fetches all events for the configured calendars
+     * Fetches events for a single sub-calendar
+     * @param {Object} eventType - Entry from childSubCalendarsByEventId
      * @returns {Promise<Array>} Array of DayPilot event objects
      */
-    async fetchAllEvents() {
+    async _fetchEventsForCalendar(eventType) {
         const today = new DayPilot.Date().getDatePart();
         const start = this._ensureZulu(today.addDays(-365).toString());
         const end = this._ensureZulu(today.addDays(365).toString());
 
-        const fetchPromises = Object.values(this.childSubCalendarsByEventId).map(
-            async (eventType) => {
-                try {
-                    const response = await fetch(
-                        AJS.contextPath() +
-                        `/rest/calendar-services/1.0/calendar/events.json` +
-                        `?subCalendarId=${eventType.childSubCalendarId}` +
-                        `&start=${start}` +
-                        `&end=${end}`
-                    );
-
-                    if (!response.ok) {
-                        console.warn(`Failed to fetch events for ${id}`);
-                        return [];
-                    }
-
-                    const data = await response.json();
-                    return (data.events || []).flatMap(event =>
-                        this.confluenceEventToDayPilotEvents(event)
-                    );
-                } catch (err) {
-                    console.error(`Error fetching events for ${eventType.title}:`, err);
-                    return [];
-                }
+        try {
+            const response = await fetch(
+                AJS.contextPath() +
+                `/rest/calendar-services/1.0/calendar/events.json` +
+                `?subCalendarId=${eventType.childSubCalendarId}` +
+                `&start=${start}` +
+                `&end=${end}`
+            );
+            if (!response.ok) {
+                console.warn(`Failed to fetch events for ${eventType.title}`);
+                return [];
             }
-        );
+            const data = await response.json();
+            return (data.events || []).flatMap(event =>
+                this.confluenceEventToDayPilotEvents(event)
+            );
+        } catch (err) {
+            console.error(`Error fetching events for ${eventType.title}:`, err);
+            return [];
+        }
+    }
+
+    /**
+     * Fetches all events for the configured calendars
+     * @returns {Promise<Array>} Array of DayPilot event objects
+     */
+    async fetchAllEvents() {
+        const fetchPromises = Object.values(this.childSubCalendarsByEventId)
+            .map(eventType => this._fetchEventsForCalendar(eventType));
         const allEventsArrays = await Promise.all(fetchPromises);
         return allEventsArrays.flat();
+    }
+
+    /**
+     * Fetches events for a single calendar by its event type id
+     * @param {string} eventId - Key from childSubCalendarsByEventId
+     * @returns {Promise<Array>} Array of DayPilot event objects
+     */
+    async fetchEventsByEventId(eventId) {
+        const eventType = this.childSubCalendarsByEventId[eventId];
+        if (!eventType) {
+            console.warn(`No calendar found for eventId: ${eventId}`);
+            return [];
+        }
+        return this._fetchEventsForCalendar(eventType);
     }
 
     /**
