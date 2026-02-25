@@ -218,9 +218,22 @@ class CalendarRenderer {
         const result = await this.eventFormManager.confirmDelete(args.e.data)
         if (!result) return
 
-        await this.eventService.deleteEvent(args.e.data, result.deleteScope);
-        // TODO: only request events from the subcalendar of updated event
-        this.calendar.events.list = await this.eventService.fetchAllEvents();
+        if (result.deleteScope == "single") {
+            // handle single delete without confluence request for faster response
+            const events = this.getSiblings(args.e.data);
+            events.forEach(ev => this._removeEventInstance(ev.confluenceId, ev.resource));
+            await this.eventService.deleteEvent(args.e.data, result.deleteScope);
+        }
+        else {
+            // request events from the subcalendar of updated event to update recurrence
+            await this.eventService.deleteEvent(args.e.data, result.deleteScope);
+            const eventId = args.e.data.customEventTypeId
+            const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
+            this.calendar.events.list = [
+                ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
+                ...updatedEvents
+            ];
+        }
         this.refresh();
     }
 
@@ -331,9 +344,13 @@ class CalendarRenderer {
         await this.eventService.updateEvent(result, event);
 
         if (result.editAllInRecurrenceSeries) {
-            // must request all confluence events again since they handle the recurrence
-            // TODO: only request events from the subcalendar of updated event
-            this.calendar.events.list = await this.eventService.fetchAllEvents();
+            // must request the edited confluence calendar events again since they handle the recurrence
+            const eventId = result.customEventTypeId
+            const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
+            this.calendar.events.list = [
+                ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
+                ...updatedEvents
+            ];
             this.refresh();
             return
         }
