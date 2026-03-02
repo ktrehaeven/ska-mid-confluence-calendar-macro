@@ -9,6 +9,7 @@ class CalendarRenderer {
         this.mapRenderer = mapRenderer;
         this.calendar = null;
         this.navigator = null;
+        this.navEl = null;
         this.selection = { value: null, type: null };
         this.isInitialized = false;
     }
@@ -29,15 +30,17 @@ class CalendarRenderer {
         this.calendar.init();
 
         if (navEl) {
+            this.navEl = navEl;
             this.navigator = this._createNavigator(navEl);
             this.navigator.init();
+            this.initRowFilter();
         }
 
         await this.eventService.loadCalendars();
         await this.eventService.getCurrentUser();
         this.calendar.events.list = await this.eventService.fetchAllEvents();
-        this._initCurrentTimeLine()
-        this._startAutoRefresh()
+        this._initCurrentTimeLine();
+        this._startAutoRefresh();
         this.refresh();
     }
 
@@ -461,24 +464,27 @@ class CalendarRenderer {
 
     /**
      * Updates visible resources (rows) based on events in the current view
-     * If a station is currently selected, it is always included even if it has no events
+     * and the input in filter box
      */
     updateVisibleResources() {
         if (!this.calendar.visibleStart || !this.calendar.visibleEnd) return;
 
         const viewStart = this.calendar.visibleStart().getTime();
         const viewEnd = this.calendar.visibleEnd().getTime();
+        const filterQuery = this._rowFilterInput?.value.trim().toUpperCase() || '';
 
-        const resourcesInView = this.stationDataManager.stationList.filter(resource =>
-            resource.id === this.selection.value ||
-            this.calendar.events.list.some(event =>
+        this.calendar.resources = this.stationDataManager.stationList.filter(resource => {
+            const hasEvents = this.calendar.events.list.some(event =>
                 event.resource === resource.id &&
                 event.start.getTime() < viewEnd &&
                 event.end.getTime() > viewStart
-            )
-        );
+            );
+            const matchesFilter = !filterQuery ||
+                resource.name?.toUpperCase().includes(filterQuery) ||
+                resource.id?.toUpperCase().includes(filterQuery);
 
-        this.calendar.resources = resourcesInView;
+            return filterQuery ? matchesFilter : hasEvents;
+        });
     }
 
     /**
@@ -549,5 +555,54 @@ class CalendarRenderer {
             this.eventService.fetchAllEvents();
             this.refresh()
         }
+    }
+
+    /**
+     * Initialises the row filter input below the navigator panel.
+     * Filters visible scheduler resources by name or ID on each keystroke.
+     */
+    initRowFilter() {
+        const navEl = this.navEl;
+        if (!navEl) return;
+
+        const filterContainer = document.createElement('div');
+        filterContainer.className = 'row-filter-container';
+
+        const row = document.createElement('div');
+        row.className = 'row-filter-row';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Filter stations...';
+        input.className = 'row-filter-input';
+
+        const clearBtn = document.createElement('button');
+        clearBtn.textContent = '✕';
+        clearBtn.className = 'row-filter-clear';
+
+        row.appendChild(input);
+        row.appendChild(clearBtn);
+        filterContainer.appendChild(row);
+
+        filterContainer.addEventListener('mousedown', (e) => e.stopPropagation());
+        filterContainer.addEventListener('click', (e) => e.stopPropagation());
+
+        navEl.parentNode.appendChild(filterContainer);
+
+        const applyFilter = (query) => {
+            const q = query.trim().toLowerCase();
+            clearBtn.style.display = q ? 'block' : 'none';
+            this.refresh();
+        };
+
+        input.addEventListener('input', (e) => applyFilter(e.target.value));
+
+        clearBtn.addEventListener('click', () => {
+            input.value = '';
+            applyFilter('');
+            input.focus();
+        });
+
+        this._rowFilterInput = input;
     }
 }

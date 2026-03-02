@@ -33,10 +33,54 @@
     gap: 10px;
 }
 
+.ska-low-station-bookings-macro .nav-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 210px;
+}
+
+
+.ska-low-station-bookings-macro .row-filter-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 0;
+    border-top: 1px solid #ddd;
+    margin-top: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.ska-low-station-bookings-macro .row-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ska-low-station-bookings-macro .row-filter-input {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.ska-low-station-bookings-macro .row-filter-clear {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+    flex-shrink: 0;
+    display: none;
+}
+
 .ska-low-station-bookings-macro .daypilot-nav {
     width: 100%;
-    margin-right: 10px;
-    min-width: 200px;
+    min-width: 210px;
 }
 
 .ska-low-station-bookings-macro .daypilot {

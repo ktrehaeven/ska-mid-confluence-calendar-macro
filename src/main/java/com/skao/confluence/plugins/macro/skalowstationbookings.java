@@ -22,7 +22,9 @@ public class SkaLowStationBookings implements Macro {
         webResourceManager.requireResource("com.skao.confluence.plugins.ska-low-confluence-calendar-macro:ska-low-bootstrap-js");
         
         return "<div class='ska-low-station-bookings-macro'>" +  
+                "<div class='nav-panel'>" +
                 " <div class='daypilot-nav'></div>" +
+                "</div>" +
                 " <div class='daypilot'></div>" +
                 "</div>";
     }
