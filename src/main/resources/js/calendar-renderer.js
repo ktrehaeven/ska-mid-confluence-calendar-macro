@@ -324,6 +324,18 @@ class CalendarRenderer {
         const postedEvent = await this.eventService.createEvent(result);
         if (!postedEvent?.success) return;
 
+        if (result.editAllInRecurrenceSeries) {
+            // must request the edited confluence calendar events again since they handle the recurrence
+            const eventId = result.customEventTypeId
+            const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
+            this.calendar.events.list = [
+                ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
+                ...updatedEvents
+            ];
+            this.refresh();
+            return
+        }
+
         // Add new DayPilot events for each selected station
         result.resource.forEach(station => {
             this._addEventInstance(postedEvent.event.id, station, result);
