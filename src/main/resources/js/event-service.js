@@ -310,8 +310,9 @@ class EventService {
      * @returns {Object} Event payload object
      */
     _buildEventPayload(formData, existingEvent = null) {
-        // essential fields
+
         const payload = {
+            // essential fields
             what: formData.text,
             person: this.user.userKey,
             customEventTypeId: formData.customEventTypeId,
@@ -324,14 +325,19 @@ class EventService {
             description: formData.description,
             eventType: "custom",
             userTimeZoneId: "Australia/Perth",
+
+            // essential fields for recurring events (blank/false for single events)
+            rruleStr: formData.rruleStr || "",
+            until: formData.until || "",
+            editAllInRecurrenceSeries: formData.editAllInRecurrenceSeries || false,
         };
 
-        // required field for editing existing events
         if (existingEvent) {
+            // required field for editing existing events
             payload.uid = existingEvent.confluenceId;
 
-            // required fields for editing events in a series 
             if (this.isRecurring(existingEvent)) {
+                // required fields for editing events in a series 
                 payload.originalSubCalendarId = this.skaConstructionCalId;
                 payload.originalEventSubCalendarId = existingEvent.childSubCalendarId;
                 payload.originalCustomEventTypeId = existingEvent.customEventTypeId;
@@ -339,8 +345,6 @@ class EventService {
                 payload.originalEventType = existingEvent.eventType;
                 payload.childSubCalendarId = (this.childSubCalendarsByEventId
                 [formData.customEventTypeId].childSubCalendarId);
-                payload.rruleStr = existingEvent.rruleStr;
-                payload.editAllInRecurrenceSeries = formData.editAllInRecurrenceSeries;
             }
         }
 
