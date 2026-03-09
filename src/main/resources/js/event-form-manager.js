@@ -131,6 +131,14 @@ class EventFormManager {
             .rfm-radio-opt .rfm-input { width:70px; text-align:center; }
             .rfm-radio-opt .rfm-input[type=date] { width:130px; text-align:left; }
             .rfm-radio-opt .rfm-input:disabled { background:#f4f5f7; color:#a5adba; cursor:not-allowed; }
+            .rfm-date-picker-container { display:flex; align-items:center; gap:8px; }
+            .rfm-date-picker-btn {
+                padding:6px 8px; border:1px solid #c1c7d0; border-radius:3px;
+                font-size:13px; background:#fff; color:#172b4d; cursor:pointer;
+                transition:all .15s; min-width:80px;
+            }
+            .rfm-date-picker-btn:hover { background:#e9efff; border-color:#4c9aff; }
+            .rfm-date-picker-btn:disabled { background:#f4f5f7; color:#a5adba; cursor:not-allowed; }
             .rfm-error { color:#de350b; font-size:11px; margin-top:3px; display:none; }
             ${isRecurring ? `
             .rfm-instance-check {
@@ -203,8 +211,11 @@ class EventFormManager {
                 <div class="rfm-radio-opt">
                     <input type="radio" name="rfm-end" id="rfm-end-until" value="until" ${endUntilChecked}>
                     <label for="rfm-end-until">On date</label>
-                    <input type="date" class="rfm-input" id="rfm-end-until-val"
-                           value="${untilVal}" ${endUntilChecked ? '' : 'disabled'}>
+                    <div class="rfm-date-picker-container">
+                        <button type="button" class="rfm-date-picker-btn" id="rfm-end-until-picker-btn"
+                                ${endUntilChecked ? '' : 'disabled'}>${untilVal || 'Pick date'}</button>
+                    </div>
+                    <input type="hidden" id="rfm-end-until-val" value="${untilVal}">
                 </div>
                 <div class="rfm-error" id="rfm-until-error">Please select a valid end date.</div>
             </div>
@@ -263,7 +274,7 @@ class EventFormManager {
         const endUntilRadio = document.getElementById('rfm-end-until');
         const endTimesVal = document.getElementById('rfm-end-times-val');
         const endUntilVal = document.getElementById('rfm-end-until-val');
-        const untilErr = document.getElementById('rfm-until-error');
+        const endUntilPickerBtn = document.getElementById('rfm-end-until-picker-btn');
 
         const INTERVAL_LABELS = { DAILY: 'days', WEEKLY: 'weeks', MONTHLY: 'months', YEARLY: 'years' };
 
@@ -294,6 +305,7 @@ class EventFormManager {
         const syncEndInputs = () => {
             endTimesVal.disabled = !endTimesRadio.checked;
             endUntilVal.disabled = !endUntilRadio.checked;
+            endUntilPickerBtn.disabled = !endUntilRadio.checked;
         };
 
         document.querySelectorAll('input[name="rfm-end"]').forEach(r =>
@@ -306,10 +318,23 @@ class EventFormManager {
             intervalErr.style.display = (v > 0 && v < 100) ? 'none' : 'block';
         });
 
-        // Until date validation
-        endUntilVal.addEventListener('change', () => {
-            untilErr.style.display = endUntilVal.value ? 'none' : 'block';
-        });
+        // Inline date picker for "until" field
+        if (endUntilPickerBtn) {
+            endUntilPickerBtn.addEventListener('click', () => {
+
+                const picker = new DayPilot.DatePicker({
+                    target: endUntilPickerBtn,
+                    pattern: 'dd/MM/yyyy',
+                    zIndex: 1100,
+                    onTimeRangeSelected: args => {
+                        this._untilValue = args.date.toString("yyyyMMdd");
+                        endUntilVal.value = args.date.toString("dd/MM/yyyy");;
+                    }
+                });
+
+                picker.show();
+            });
+        }
     }
 
     /**
@@ -358,20 +383,6 @@ class EventFormManager {
     }
 
     /**
-     * Returns the until date from the recurrence form as a plain YYYYMMDD string,
-     * or null if the "on date" end-repeat option is not selected or has no value.
-     * This is returned separately from the RRULE string.
-     * @returns {string|null}
-     */
-    _getUntilFromForm() {
-        const endUntilRadio = document.getElementById('rfm-end-until');
-        if (!endUntilRadio?.checked) return null;
-        const val = document.getElementById('rfm-end-until-val')?.value;
-        if (!val) return null;
-        return val.replace(/-/g, '');
-    }
-
-    /**
      * Parses a RRULE string into a plain key/value object.
      * @param {string} rruleStr - e.g. "RRULE:FREQ=WEEKLY;BYDAY=MO,WE;COUNT=5"
      * @returns {Object} e.g. { FREQ: 'WEEKLY', BYDAY: 'MO,WE', COUNT: '5' }
@@ -385,13 +396,13 @@ class EventFormManager {
     }
 
     /**
-     * Converts an RRULE UNTIL date string (e.g. "20260301T000000Z") to an HTML date input value ("2026-03-01").
+     * Converts an RRULE UNTIL date string (e.g. "20260301T000000Z") to YYYYMMDD format.
      * @param {string} rruleDate
      * @returns {string}
      */
     _rruleDateToInput(rruleDate) {
-        const d = rruleDate.replace(/T.*$/, '');
-        return `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
+        const d = rruleDate.replace(/T.*$/, ''); // e.g. "20260301"
+        return `${d.slice(6, 8)}/${d.slice(4, 6)}/${d.slice(0, 4)}`; // "01/03/2026"
     }
 
     /**
@@ -535,7 +546,7 @@ class EventFormManager {
         const endUntilRadio = document.getElementById('rfm-end-until');
         const endNeverRadio = document.getElementById('rfm-end-never');
         const endTimesVal = document.getElementById('rfm-end-times-val');
-        const endUntilVal = document.getElementById('rfm-end-until-val');
+        const endUntilPickerBtn = document.getElementById('rfm-end-until-picker-btn');
 
         if (freqEl) freqEl.disabled = disabled;
         if (intervalVal) intervalVal.disabled = disabled;
@@ -547,10 +558,10 @@ class EventFormManager {
         // when re-enabling, restore them based on the current radio state instead.
         if (disabled) {
             if (endTimesVal) endTimesVal.disabled = true;
-            if (endUntilVal) endUntilVal.disabled = true;
+            if (endUntilPickerBtn) endUntilPickerBtn.disabled = true;
         } else {
             if (endTimesVal) endTimesVal.disabled = !endTimesRadio?.checked;
-            if (endUntilVal) endUntilVal.disabled = !endUntilRadio?.checked;
+            if (endUntilPickerBtn) endUntilPickerBtn.disabled = !endUntilRadio?.checked;
         }
 
         document.querySelectorAll('.rfm-day-btn').forEach(btn => {
@@ -573,10 +584,13 @@ class EventFormManager {
         const editInstanceCheckbox = document.getElementById('rfm-edit-instance');
         if (!editInstanceCheckbox) return;
 
-        // Apply initial state — checkbox starts checked (instance only), so fields start disabled
+        // Track checkbox state so _handleFormClose can read it even if DOM is gone
+        this._editInstanceChecked = editInstanceCheckbox.checked; // true = instance only
+
         this._setRecurrenceFieldsDisabled(editInstanceCheckbox.checked);
 
         editInstanceCheckbox.addEventListener('change', () => {
+            this._editInstanceChecked = editInstanceCheckbox.checked;
             const editingSeries = !editInstanceCheckbox.checked;
             this._setRecurrenceFieldsDisabled(!editingSeries);
 
@@ -619,12 +633,15 @@ class EventFormManager {
 
             // Capture the built RRULE and until (returned separately, not inside the RRULE)
             modal.result.rruleStr = this._buildRruleFromForm();
-            modal.result.until = this._getUntilFromForm();
+            modal.result.until = document.getElementById('rfm-end-until')?.checked ? (this._untilValue || null) : null;
 
             // editAllInRecurrenceSeries is the inverse of "Edit this instance only"
-            const editInstanceCheckbox = document.getElementById('rfm-edit-instance');
-            if (editInstanceCheckbox) {
-                modal.result.editAllInRecurrenceSeries = !editInstanceCheckbox.checked;
+            if (document.getElementById('rfm-edit-instance')) {
+                // Checkbox existed — use tracked state (safer than re-querying DOM)
+                modal.result.editAllInRecurrenceSeries = !this._editInstanceChecked;
+            } else {
+                // New event — no checkbox, derive from whether a recurrence was set
+                modal.result.editAllInRecurrenceSeries = !!modal.result.rruleStr;
             }
         }
     }
