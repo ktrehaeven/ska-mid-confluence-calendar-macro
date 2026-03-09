@@ -11,17 +11,6 @@
         "Project Stage": "Airstrip"
     },
     {
-        "Station ID": "0",
-        "Label": "Centre",
-        "Latitude": "-26.824722084",
-        "Longitude": "116.76444824",
-        "Elevation": "365.0",
-        "ECEF-X": "-2565044.433249",
-        "ECEF-Y": "5085763.694774",
-        "ECEF-Z": "-2861062.439952",
-        "Project Stage": "NA"
-    },
-    {
         "Station ID": "1",
         "Label": "C1",
         "Latitude": "-26.826162000",
