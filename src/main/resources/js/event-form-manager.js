@@ -571,7 +571,7 @@ class EventFormManager {
 
         // Dim the labels/sections visually
         const recurrenceBody = document.getElementById('rfm-recurrence-body');
-        if (recurrenceBody) recurrenceBody.style.opacity = disabled ? '0.5' : '1';
+        if (recurrenceBody) recurrenceBody.style.display = disabled ? 'none' : '';
     }
 
     /**
