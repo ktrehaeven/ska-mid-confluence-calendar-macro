@@ -479,22 +479,24 @@ class EventFormManager {
         }).join("");
 
         const html = `
-        <div style="display:flex; gap:12px; width:100%;">
-            <div style="flex:0 0 100px;">
-                <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Phase</div>
-                <select id="phase-multiselect" multiple size="19" style="width:100%;">
-                    ${phaseOptionsHtml}
-                </select>
+        <div style="display:flex; gap:12px; width:100%; align-items:stretch;">
+            <div style="display:flex; flex-direction:column; gap:8px; flex:0 0 100px;">
+                <div style="display:flex; flex-direction:column; flex:1;">
+                    <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Phase</div>
+                    <select id="phase-multiselect" multiple style="width:100%; flex:1;">
+                        ${phaseOptionsHtml}
+                    </select>
+                </div>
+                <div style="display:flex; flex-direction:column; flex:1;">
+                    <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Cluster</div>
+                    <select id="cluster-multiselect" multiple style="width:100%; flex:1;">
+                        ${clusterOptionsHtml}
+                    </select>
+                </div>
             </div>
-            <div style="flex:0 0 100px;">
-                <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Cluster</div>
-                <select id="cluster-multiselect" multiple size="19" style="width:100%;">
-                    ${clusterOptionsHtml}
-                </select>
-            </div>
-            <div style="flex:1;">
+            <div style="flex:1; display:flex; flex-direction:column;">
                 <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Stations</div>
-                <select id="station-multiselect" multiple size="18" style="width:100%;">
+                <select id="station-multiselect" size="18" multiple style="width:100%; flex:1;">
                     ${stationOptionsHtml}
                 </select>
             </div>
