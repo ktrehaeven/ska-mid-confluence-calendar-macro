@@ -1,10 +1,8 @@
 package com.skao.confluence.plugins.macro;
-
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.macro.Macro;
 import com.atlassian.confluence.macro.MacroExecutionException;
 import com.atlassian.plugin.webresource.WebResourceManager;
-
 import java.util.Map;
 
 public class SkaLowStationBookings implements Macro {
@@ -16,20 +14,23 @@ public class SkaLowStationBookings implements Macro {
     }
 
     public String execute(Map<String, String> map, String s, ConversionContext conversionContext) throws MacroExecutionException {
-        // Require the web resources for this macro
+
+        // parameter passed in from the macro browser, should be a comma separated list of calendar ids
+        String calendarIds = map.get("Calendar");
+        if (calendarIds == null) calendarIds = "";
+
         webResourceManager.requireResource("com.skao.confluence.plugins.ska-low-confluence-calendar-macro:daypilot-resources");
         webResourceManager.requireResource("com.skao.confluence.plugins.ska-low-confluence-calendar-macro:ska-low-confluence-calendar-macro-resources");
         webResourceManager.requireResource("com.skao.confluence.plugins.ska-low-confluence-calendar-macro:ska-low-bootstrap-js");
-        
-        return "<div class='ska-low-station-bookings-macro'>" +  
-                "<div class='nav-panel'>" +
-                " <div class='daypilot-nav'></div>" +
-                "</div>" +
-                " <div class='daypilot'></div>" +
-                "</div>";
+
+        return "<div class='ska-low-station-bookings-macro' data-calendar-ids='" + calendarIds + "'>" +
+            "<div class='nav-panel'>" +
+                "<div class='daypilot-nav'></div>" +
+            "</div>" +
+            "<div class='daypilot'></div>" +
+        "</div>";
     }
 
     public BodyType getBodyType() { return BodyType.NONE; }
-
     public OutputType getOutputType() { return OutputType.BLOCK; }
 }

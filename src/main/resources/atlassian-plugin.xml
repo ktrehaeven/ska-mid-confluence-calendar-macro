@@ -33,6 +33,13 @@
         <resource type="download" name="images/" location="/images"/>
     </web-resource>
 
+    <web-resource key="ska-low-macro-browser-resources" name="SKA Low Macro Browser Resources">
+        <resource type="download" name="station-bookings-macro-browser.js"
+                location="/js/station-bookings-macro-browser.js"/>
+        <dependency>confluence.editor.actions:editor-macro-browser</dependency>
+        <context>macro-browser</context>
+    </web-resource>
+
     <web-resource key="ska-low-bootstrap-js" name="SKA Low Bootstrap JS">
         <dependency>com.skao.confluence.plugins.ska-low-confluence-calendar-macro:ska-low-confluence-calendar-macro-resources</dependency>
 
@@ -50,7 +57,11 @@
         icon = "/download/resources/com.skao.confluence.plugins.ska-low-confluence-calendar-macro:ska-low-confluence-calendar-macro-resources/images/daypilotLogo.png">
         <description key="skalowstationbookings.macro.desc"/>
         <category name="formatting"/>
-        <parameters/>
+        <parameters>
+            <parameter name="Calendar" type="string" required="true">
+                <description key="skalowstationbookings.macro.param.calendar.desc"/>
+            </parameter>
+        </parameters>
     </xhtml-macro>
     
 </atlassian-plugin>
