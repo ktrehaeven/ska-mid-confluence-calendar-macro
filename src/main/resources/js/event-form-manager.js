@@ -44,7 +44,7 @@ class EventFormManager {
             {
                 name: "Event Type",
                 id: "customEventTypeId",
-                options: this.eventService.customEventTypes.filter(type => type.name !== type.id),
+                options: this.eventService.customEventTypes.filter(type => !type.id.includes(type.name)),
                 type: "select"
             },
             { name: "Title (required)", id: "text", type: "text" },

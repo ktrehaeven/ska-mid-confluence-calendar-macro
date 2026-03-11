@@ -1,10 +1,17 @@
 /**
  * Service for managing calendar events from Confluence
+ *
+ * Hierarchy:
+ *   subCalendarId (parent)
+ *     └─ childSubCalendarId
+ *           └─ customEventTypeId  ← keyed in childSubCalendarsByEventId
+ *
+ * }
  */
 class EventService {
     constructor(stationDataManager) {
         this.stationDataManager = stationDataManager;
-        this.skaConstructionCalId = null;
+        this.subCalendarIds = [];
         this.childSubCalendarsByEventId = {};
         this.user = null;
     }
@@ -14,28 +21,14 @@ class EventService {
      * @returns {Array} Array of event types with {name, id} format
      */
     get customEventTypes() {
-        const events = Object.entries(this.childSubCalendarsByEventId).map(([id, eventType]) => ({
-            name: eventType.title,
-            id: id
-        }));
-
-        const sortedEvents = events.sort((a, b) => {
-            return a.name.localeCompare(b.name);
-        })
-
-        return sortedEvents
+        return Object.entries(this.childSubCalendarsByEventId)
+            .map(([id, eventType]) => ({ name: eventType.title, id }))
+            .sort((a, b) => a.name.localeCompare(b.name));
     }
 
     /**
      * Base HTTP request method for Confluence REST API calls.
-     * Sets form-encoded headers only when a body is present, avoiding
-     * Content-Type errors on GET requests.
      * @private
-     * @param {string} url - API path relative to the Confluence context root
-     * @param {string} method - HTTP method (e.g. 'GET', 'PUT', 'DELETE')
-     * @param {URLSearchParams|null} body - Request body, or null for bodyless requests
-     * @returns {Promise<Object|null>} Parsed JSON response, or null if the response body is empty
-     * @throws {Error} If the response status is not ok
      */
     async _request(url, method = 'GET', body = null) {
         const options = { method };
@@ -59,26 +52,27 @@ class EventService {
 
     /**
      * Loads calendars using IDs read directly from the macro wrapper element's
-     * data-calendar-ids attribute. The first ID is treated as the parent
-     * construction calendar used for create/update/delete operations.
+     * data-calendar-ids attribute. All IDs are stored; each is fetched and its
+     * child sub-calendars are parsed into the hierarchy map.
      * @param {HTMLElement} wrapper - The macro wrapper DOM element
      * @returns {Promise<Array>} Array of custom event types
      */
     async loadCalendars(wrapper) {
-        const calendarIds = (wrapper.dataset.calendarIds || "")
+        const subCalendarIds = (wrapper.dataset.calendarIds || "")
             .split(",")
+            .map(id => id.trim())
             .filter(Boolean);
-        console.log(calendarIds);
-        if (calendarIds.length === 0) {
+
+        console.log("Loading calendar IDs:", subCalendarIds);
+
+        if (subCalendarIds.length === 0) {
             throw new Error("No calendar IDs found on macro wrapper element");
         }
 
-        // First ID is the parent calendar used for event write operations
-        this.skaConstructionCalId = calendarIds[0];
+        this.subCalendarIds = subCalendarIds;
 
         try {
-            // Fetch each calendar by ID and parse its child calendars
-            await Promise.all(calendarIds.map(id => this._loadCalendarById(id)));
+            await Promise.all(subCalendarIds.map(id => this._loadCalendarById(id)));
             return this.customEventTypes;
         } catch (err) {
             console.error("Calendar loading error:", err);
@@ -87,37 +81,40 @@ class EventService {
     }
 
     /**
-     * Fetches a single calendar by ID and parses its child calendars
+     * Fetches a single calendar by ID and parses its child calendars,
+     * storing the parent calendarId on each entry.
      * @private
-     * @param {string} calendarId - The calendar UUID
+     * @param {string} calendarId - The parent calendar UUID
      * @returns {Promise<void>}
      */
-    async _loadCalendarById(calendarId) {
+    async _loadCalendarById(subCalendarId) {
         const response = await fetch(
             AJS.contextPath() +
-            `/rest/calendar-services/1.0/calendar/subcalendars.json?calendarId=${calendarId}`
+            `/rest/calendar-services/1.0/calendar/subcalendars.json?include=${subCalendarId}`
         );
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch calendar ${calendarId}`);
+            throw new Error(`Failed to fetch calendar ${subCalendarId}`);
         }
 
         const data = await response.json();
         const targetPayload = data.payload && data.payload[0];
 
         if (!targetPayload) {
-            throw new Error(`Calendar ${calendarId} not found`);
+            throw new Error(`Calendar ${subCalendarId} not found`);
         }
 
-        this._parseChildCalendars(targetPayload.childSubCalendars || []);
+        this._parseChildCalendars(targetPayload.childSubCalendars || [], subCalendarId);
     }
 
     /**
-     * Parses child calendar data into a consolidated object with title, childSubCalendarId, and customEventTypeId
+     * Parses child calendar data into the hierarchy map, keyed by customEventTypeId.
+     * Each entry records its own childSubCalendarId AND the parent calendarId.
      * @private
-     * @param {Array} childSubCalendars - Array of child calendar objects
+     * @param {Array}  childSubCalendars - Array of child calendar objects
+     * @param {string} subCalendarId        - The parent calendar UUID
      */
-    _parseChildCalendars(childSubCalendars) {
+    _parseChildCalendars(childSubCalendars, subCalendarId) {
         childSubCalendars.forEach(child => {
             const sub = child.subCalendar;
 
@@ -126,18 +123,38 @@ class EventService {
                     this.childSubCalendarsByEventId[type.customEventTypeId] = {
                         title: type.title,
                         childSubCalendarId: sub.id,
+                        subCalendarId: subCalendarId,
                     };
                 });
+                // if there is no customeEventType it uses the type as the key e.g. 'other'
             } else if (sub?.type) {
-                // if no customEventTypes, include an entry using sub.type
-                // Note: we need a custom event type ID in this case - using type as fallback
-                this.childSubCalendarsByEventId[sub.type] = {
+                const key = `${sub.id}:${sub.type}`;
+                this.childSubCalendarsByEventId[key] = {
                     title: sub.type,
                     childSubCalendarId: sub.id,
+                    subCalendarId: subCalendarId,
                 };
             }
         });
     }
+
+    /**
+     * Looks up the full hierarchy entry for a given customEventTypeId.
+     * Throws if the ID is not found, so callers get a clear error rather
+     * than silently sending requests with undefined IDs.
+     * @private
+     * @param {string} customEventTypeId
+     * @returns {{ title, childSubCalendarId, calendarId }}
+     */
+    _getEventTypeEntry(customEventTypeId) {
+        const entry = this.childSubCalendarsByEventId[customEventTypeId];
+        if (!entry) {
+            throw new Error(`Unknown customEventTypeId: "${customEventTypeId}"`);
+        }
+        return entry;
+    }
+
+    // ─── Event fetching ────────────────────────────────────────────────────────
 
     /**
      * Fetches events for a single sub-calendar
@@ -172,13 +189,14 @@ class EventService {
     }
 
     /**
-     * Fetches all events for the configured calendars
+     * Fetches all events for all configured calendars
      * @returns {Promise<Array>} Array of DayPilot event objects
      */
     async fetchAllEvents() {
-        const fetchPromises = Object.values(this.childSubCalendarsByEventId)
-            .map(eventType => this._fetchEventsForCalendar(eventType));
-        const allEventsArrays = await Promise.all(fetchPromises);
+        const allEventsArrays = await Promise.all(
+            Object.values(this.childSubCalendarsByEventId)
+                .map(eventType => this._fetchEventsForCalendar(eventType))
+        );
         return allEventsArrays.flat();
     }
 
@@ -196,17 +214,21 @@ class EventService {
         return this._fetchEventsForCalendar(eventType);
     }
 
+    // ─── Event conversion ──────────────────────────────────────────────────────
+
     /**
      * Converts a Confluence event to DayPilot events (one per station)
+     * NOTE: confluence event field subCalendarId is actually the childSubCalendarId
+     * The parent calendarId must be looked up via the hierarchy map
      * @param {Object} event - Confluence event object
      * @returns {Array} Array of DayPilot event objects
      */
     confluenceEventToDayPilotEvents(event) {
         const matchedResources = this.extractResourcesFromEvent(event);
+        if (matchedResources.length === 0) return [];
 
-        if (matchedResources.length === 0) {
-            return [];
-        }
+        const { subCalendarId, childSubCalendarId } =
+            this._getEventTypeEntry(event.customEventTypeId || `${event.subCalendarId}:${event.eventType}`);
 
         return matchedResources.map(resourceId => ({
             id: this.makeEventId(event.id, resourceId),
@@ -214,12 +236,15 @@ class EventService {
             creator: event.invitees ? event.invitees[0].displayName : null,
             text: event.title,
             start: this.removeTZ(event.start),
-            end: this.removeTZ(event.end),
+            // All-day event handling since confluence end time is incorrect
+            end: event.allDay ? DayPilot.Date(this.removeTZ(event.end)).addDays(1) : this.removeTZ(event.end),
             description: event.description,
             resource: resourceId,
             barColor: event.borderColor,
             customEventTypeId: event.customEventTypeId,
-            childSubCalendarId: event.subCalendarId,
+            eventType: event.eventType,
+            childSubCalendarId: childSubCalendarId,
+            subCalendarId: subCalendarId,
             rruleStr: event.rruleStr,
             originalStartDateTime: this.removeTZ(event.originalStartDateTime),
             originalEndDateTime: this.removeTZ(event.originalEndDateTime)
@@ -240,25 +265,22 @@ class EventService {
 
         const matched = new Set();
 
-        // --- Rule 1: AA phase matching (AA0.5, AA1) ---
+        // --- Rule 1: AA phase matching (can allow for flexible matching) ---
         const PHASE_MAP = {
             'AA0.5': ['AA0.5'],
             'AA1': ['AA1'],
         };
-
         const phaseMatches = haystackUpper.match(/\bAA(0\.5|1)\b/gi) ?? [];
         for (const phase of phaseMatches) {
-            const phasesToInclude = PHASE_MAP[phase.toUpperCase()]
-                ?? PHASE_MAP[phase]
-                ?? [phase];
+            const phasesToInclude = PHASE_MAP[phase.toUpperCase()] ?? [phase];
             for (const p of phasesToInclude) {
-                const phaseStations = this.stationDataManager.getStationsByPhase(p);
-                for (const s of phaseStations) matched.add(s.Label);
+                for (const s of this.stationDataManager.getStationsByPhase(p)) {
+                    matched.add(s.Label);
+                }
             }
         }
 
         // --- Rule 2: Bare S8 / S9 / S10 → wildcard to all S8-x, S9-x, S10-x ---
-        // Matches S8, S9, S10 only when NOT followed by a hyphen
         const bareGroupMatches = haystackUpper.match(/\bS(10|[89])(?!-)\b/gi) ?? [];
         for (const bare of bareGroupMatches) {
             const prefix = bare.toUpperCase() + '-';
@@ -269,28 +291,19 @@ class EventService {
 
         // --- Rule 3: direct label matching ---
         for (const stationId of stationIds) {
-            if (haystackUpper.includes(stationId.toUpperCase())) {
-                matched.add(stationId);
-            }
+            if (haystackUpper.includes(stationId.toUpperCase())) matched.add(stationId);
         }
 
         return [...matched];
     }
 
-    /**
-     * Removes the timezone component from a Confluence date string
-     * @param {string} dateString - ISO date string potentially containing a timezone offset
-     * @returns {DayPilot.Date} DayPilot date with timezone stripped
-     */
-    removeTZ(dateString) {
-        return new DayPilot.Date(dateString.split("+")[0]);
-    }
+    // ─── Create / Update / Delete ──────────────────────────────────────────────
 
     /**
      * Sends a create, update, or delete request for a Confluence calendar event
-     * @param {Object} body - Event payload as key-value pairs
-     * @param {string} method - HTTP method, 'PUT' for create/update or 'DELETE' for delete
-     * @returns {Promise<Object>} Parsed JSON response from the server
+     * @param {Object} body   - Event payload as key-value pairs
+     * @param {string} method - 'PUT' for create/update, 'DELETE' for delete
+     * @returns {Promise<Object>} Parsed JSON response
      */
     async requestEvent(body, method = 'PUT') {
         const formData = new URLSearchParams();
@@ -299,6 +312,127 @@ class EventService {
         }
         return this._request('/rest/calendar-services/1.0/calendar/events.json', method, formData);
     }
+
+    /**
+     * Builds event payload for create/update operations.
+     * subCalendarId and childSubCalendarId are now derived from the
+     * customEventTypeId via the hierarchy map rather than a single hardcoded ID.
+     * @private
+     * @param {Object}      formData      - Event form data
+     * @param {Object|null} existingEvent - Existing DayPilot event (null for creates)
+     * @returns {Object} Event payload object
+     */
+    _buildEventPayload(formData, existingEvent = null) {
+        // Derive parent calendarId and childSubCalendarId from the chosen event type
+        const { subCalendarId, childSubCalendarId } =
+            this._getEventTypeEntry(formData.customEventTypeId ||
+                `${existingEvent.childSubCalendarId}:${formData.eventType || existingEvent.eventType}`);
+
+        const payload = {
+            what: formData.text,
+            person: this.user.userKey,
+            customEventTypeId: formData.customEventTypeId,
+            subCalendarId: subCalendarId,
+            childSubCalendarId: childSubCalendarId,
+            startDate: this.convertToConfluenceDate(formData.start),
+            endDate: this.convertToConfluenceDate(formData.end),
+            startTime: this.convertToConfluenceTime(formData.start),
+            endTime: this.convertToConfluenceTime(formData.end),
+            where: formData.resource,
+            description: formData.description,
+            eventType: "custom",
+            userTimeZoneId: "Australia/Perth",
+            rruleStr: formData.rruleStr || "",
+            until: formData.until || "",
+            editAllInRecurrenceSeries: formData.editAllInRecurrenceSeries || false,
+        };
+
+        if (existingEvent) {
+            payload.uid = existingEvent.confluenceId;
+            payload.originalSubCalendarId = existingEvent.subCalendarId;
+            payload.originalEventSubCalendarId = existingEvent.childSubCalendarId;
+            payload.originalCustomEventTypeId = existingEvent.customEventTypeId;
+            payload.originalStartDate = existingEvent.confluenceId.split("/")[0];
+            payload.originalEventType = existingEvent.eventType;
+        }
+
+        return payload;
+    }
+
+    /**
+     * Creates a new Confluence event
+     * @param {Object} formData - Event form data
+     * @returns {Promise<Object>} Created event or null on error
+     */
+    async createEvent(formData) {
+        try {
+            return await this.requestEvent(this._buildEventPayload(formData));
+        } catch (err) {
+            console.error("Create event error:", err);
+            return null;
+        }
+    }
+
+    /**
+     * Updates an existing Confluence event
+     * @param {Object} formData       - Event form data
+     * @param {Object} existingEvent  - Existing event object
+     * @returns {Promise<void>}
+     */
+    async updateEvent(formData, existingEvent) {
+        const confluenceEvent = this._buildEventPayload(formData, existingEvent);
+
+        try {
+            await this.requestEvent(confluenceEvent);
+            if (this.isRecurring(existingEvent)) {
+                await this.deleteHiddenEvents(confluenceEvent);
+            }
+        } catch (err) {
+            console.error("Update event error:", err);
+            throw err;
+        }
+    }
+
+    /**
+     * Deletes an existing Confluence event, with optional scope for series
+     * @param {Object} existingEvent - Existing event object
+     * @param {string} scope         - 'single' | 'future' | 'series'
+     * @returns {Promise<void>}
+     */
+    async deleteEvent(existingEvent, scope = "single") {
+        const payload = {
+            subCalendarId: existingEvent.childSubCalendarId,
+            uid: existingEvent.confluenceId,
+        };
+
+        if (this.isRecurring(existingEvent)) {
+            switch (scope) {
+                case "single":
+                    payload.originalStart = existingEvent.confluenceId.split("/")[0];
+                    payload.singleInstance = true;
+                    payload.recurrenceId = "";
+                    break;
+                case "future":
+                    payload.recurUntil = existingEvent.confluenceId.split("T")[0].replaceAll("-", "");
+                    break;
+                case "series":
+                    // no extra fields needed
+                    break;
+            }
+        }
+
+        try {
+            await this.requestEvent(payload, 'DELETE');
+            if (this.isRecurring(existingEvent) && scope !== "single") {
+                await this.deleteHiddenEvents(existingEvent);
+            }
+        } catch (err) {
+            console.error("Delete event error:", err);
+            throw err;
+        }
+    }
+
+    // ─── Utilities ─────────────────────────────────────────────────────────────
 
     /**
      * Fetches and stores the current Confluence user
@@ -316,145 +450,26 @@ class EventService {
     async deleteHiddenEvents(event) {
         const formData = new URLSearchParams();
         formData.append("subCalendarId", event.childSubCalendarId);
-        formData.append("subCalendarId", this.skaConstructionCalId);
-        return this._request('/rest/calendar-services/1.0/calendar/preferences/events/hidden.json', 'DELETE', formData);
+        formData.append("subCalendarId", event.subCalendarId);
+        return this._request(
+            '/rest/calendar-services/1.0/calendar/preferences/events/hidden.json',
+            'DELETE',
+            formData
+        );
     }
 
     /**
-     * Builds event payload for create/update operations
-     * @private
-     * @param {Object} formData - Event form data
-     * @param {string|null} existingEvent - event from daypilot
-     * @returns {Object} Event payload object
+     * Removes the timezone component from a Confluence date string
+     * @param {string} dateString - ISO date string potentially containing a timezone offset
+     * @returns {DayPilot.Date} DayPilot date with timezone stripped
      */
-    _buildEventPayload(formData, existingEvent = null) {
-
-        const payload = {
-            // essential fields
-            what: formData.text,
-            person: this.user.userKey,
-            customEventTypeId: formData.customEventTypeId,
-            subCalendarId: this.skaConstructionCalId,
-            startDate: this.convertToConfluenceDate(formData.start),
-            endDate: this.convertToConfluenceDate(formData.end),
-            startTime: this.convertToConfluenceTime(formData.start),
-            endTime: this.convertToConfluenceTime(formData.end),
-            where: formData.resource,
-            description: formData.description,
-            eventType: "custom",
-            userTimeZoneId: "Australia/Perth",
-
-            // essential fields for recurring events (blank/false for single events)
-            rruleStr: formData.rruleStr || "",
-            until: formData.until || "",
-            editAllInRecurrenceSeries: formData.editAllInRecurrenceSeries || false,
-        };
-
-        if (existingEvent) {
-            // required field for editing existing events
-            payload.uid = existingEvent.confluenceId;
-
-            if (this.isRecurring(existingEvent)) {
-                // required fields for editing events in a series
-                payload.originalSubCalendarId = this.skaConstructionCalId;
-                payload.originalEventSubCalendarId = existingEvent.childSubCalendarId;
-                payload.originalCustomEventTypeId = existingEvent.customEventTypeId;
-                payload.originalStartDate = existingEvent.confluenceId.split("/")[0];
-                payload.originalEventType = existingEvent.eventType;
-                payload.childSubCalendarId = (this.childSubCalendarsByEventId
-                [formData.customEventTypeId].childSubCalendarId);
-            }
-        }
-
-        return payload;
-    }
-
-    /**
-     * Creates a new Confluence event
-     * @param {Object} formData - Event form data
-     * @returns {Promise<Object>} Created event or null on error
-     */
-    async createEvent(formData) {
-        const confluenceEvent = this._buildEventPayload(formData);
-
-        try {
-            return await this.requestEvent(confluenceEvent);
-        } catch (err) {
-            console.error("Create event error:", err);
-            return null;
-        }
-    }
-
-    /**
-     * Updates an existing Confluence event
-     * @param {Object} formData - Event form data
-     * @param {Object} existingEvent - Existing event object
-     * @returns {Promise<Object>} Updated event response
-     */
-    async updateEvent(formData, existingEvent) {
-        const confluenceEvent = this._buildEventPayload(formData, existingEvent);
-
-        try {
-            await this.requestEvent(confluenceEvent);
-            // if it is a recurring event, you must delete hidden events after updating ¯\_(ツ)_/¯
-            if (this.isRecurring(existingEvent)) {
-                await this.deleteHiddenEvents(confluenceEvent);
-            }
-        } catch (err) {
-            console.error("Update event error:", err);
-            throw err;
-        }
-    }
-
-    /**
-     * Deletes an existing Confluence event, with optional scope for series
-     * @param {Object} existingEvent - Existing event object
-     * @param {String} scope - scope of events to delete
-     * @returns {Promise<Object>} Deleted event response
-     */
-    async deleteEvent(existingEvent, scope = "single") {
-
-        const payload = {
-            subCalendarId: existingEvent.childSubCalendarId,
-            uid: existingEvent.confluenceId,
-        };
-
-        if (this.isRecurring(existingEvent)) {
-
-            switch (scope) {
-                case "single": {
-                    payload.originalStart = existingEvent.confluenceId.split("/")[0];
-                    payload.singleInstance = true;
-                    payload.recurrenceId = "";
-                    break;
-                }
-                case "future": {
-                    // change to recur only up to this event
-                    payload.recurUntil = existingEvent.confluenceId.split("T")[0].replaceAll("-", "");
-                    break;
-                }
-                case "series":
-            }
-        }
-
-        try {
-            await this.requestEvent(payload, 'DELETE');
-            if (this.isRecurring(existingEvent) && scope !== "single") {
-                await this.deleteHiddenEvents(existingEvent);
-            }
-        } catch (err) {
-            console.error("Delete event error:", err);
-            throw err;
-        }
+    removeTZ(dateString) {
+        return new DayPilot.Date(dateString.split("+")[0]);
     }
 
     /**
      * Formats a date using Intl.DateTimeFormat
      * @private
-     * @param {string} dateString - ISO date string
-     * @param {Object} options - Intl.DateTimeFormat options
-     * @param {string} timeZone - IANA timezone string
-     * @returns {string} Formatted date/time
      */
     _formatDateWithIntl(dateString, options, timeZone = "Australia/Perth") {
         const dateObject = new Date(dateString);
@@ -467,15 +482,9 @@ class EventService {
      * @returns {string} Formatted date
      */
     convertToConfluenceDate(dateString) {
-        // catch for if dateString is a DatePicker object
-        if (dateString.value) {
-            dateString = dateString.value;
-        }
-
+        if (dateString.value) dateString = dateString.value;   // DatePicker object guard
         return this._formatDateWithIntl(dateString, {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
+            year: 'numeric', month: 'long', day: 'numeric'
         });
     }
 
@@ -486,17 +495,12 @@ class EventService {
      */
     convertToConfluenceTime(dateString) {
         return this._formatDateWithIntl(dateString, {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
+            hour: 'numeric', minute: '2-digit', hour12: true
         });
     }
 
     /**
      * Creates unique event ID combining Confluence ID and resource ID
-     * @param {string} confluenceId - Confluence event ID
-     * @param {string} resourceId - Resource/station ID
-     * @returns {string} Combined ID
      */
     makeEventId(confluenceId, resourceId) {
         return `${confluenceId}:${resourceId}`;
@@ -505,8 +509,6 @@ class EventService {
     /**
      * Ensures date string ends with Z (Zulu/UTC timezone)
      * @private
-     * @param {string} s - Date string
-     * @returns {string} Date string ending with Z
      */
     _ensureZulu(s) {
         return s.replace(/Z?$/, "Z");
@@ -514,10 +516,8 @@ class EventService {
 
     /**
      * Checks if an event is part of a recurring series
-     * @param {object} event - event object
-     * @returns {boolean} true if it is recurring
      */
     isRecurring(event) {
-        return (event.rruleStr);
+        return Boolean(event.rruleStr);
     }
 }
