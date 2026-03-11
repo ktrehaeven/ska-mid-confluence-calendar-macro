@@ -104,7 +104,7 @@ class EventService {
             throw new Error(`Calendar ${subCalendarId} not found`);
         }
 
-        this._parseChildCalendars(targetPayload.childSubCalendars || [], subCalendarId);
+        this._parseChildCalendars(targetPayload.childSubCalendars || []);
     }
 
     /**
@@ -114,7 +114,7 @@ class EventService {
      * @param {Array}  childSubCalendars - Array of child calendar objects
      * @param {string} subCalendarId        - The parent calendar UUID
      */
-    _parseChildCalendars(childSubCalendars, subCalendarId) {
+    _parseChildCalendars(childSubCalendars) {
         childSubCalendars.forEach(child => {
             const sub = child.subCalendar;
 
@@ -123,16 +123,18 @@ class EventService {
                     this.childSubCalendarsByEventId[type.customEventTypeId] = {
                         title: type.title,
                         childSubCalendarId: sub.id,
-                        subCalendarId: subCalendarId,
+                        subCalendarId: sub.parentId,
+                        subCalendarTitle: sub.name
                     };
                 });
-                // if there is no customeEventType it uses the type as the key e.g. 'other'
+                // if there is no customEventType it uses the type as the key e.g. 'other'
             } else if (sub?.type) {
                 const key = `${sub.id}:${sub.type}`;
                 this.childSubCalendarsByEventId[key] = {
                     title: sub.type,
                     childSubCalendarId: sub.id,
-                    subCalendarId: subCalendarId,
+                    subCalendarId: sub.parentId,
+                    subCalendarTitle: sub.name
                 };
             }
         });
@@ -149,7 +151,7 @@ class EventService {
     _getEventTypeEntry(customEventTypeId) {
         const entry = this.childSubCalendarsByEventId[customEventTypeId];
         if (!entry) {
-            throw new Error(`Unknown customEventTypeId: "${customEventTypeId}"`);
+            return
         }
         return entry;
     }
@@ -324,9 +326,9 @@ class EventService {
      */
     _buildEventPayload(formData, existingEvent = null) {
         // Derive parent calendarId and childSubCalendarId from the chosen event type
-        const { subCalendarId, childSubCalendarId } =
-            this._getEventTypeEntry(formData.customEventTypeId ||
-                `${existingEvent.childSubCalendarId}:${formData.eventType || existingEvent.eventType}`);
+        const entry = this._getEventTypeEntry(formData.customEventTypeId);
+        const subCalendarId = entry?.subCalendarId || existingEvent?.subCalendarId;
+        const childSubCalendarId = entry?.childSubCalendarId || existingEvent?.childSubCalendarId;
 
         const payload = {
             what: formData.text,
@@ -352,8 +354,11 @@ class EventService {
             payload.originalSubCalendarId = existingEvent.subCalendarId;
             payload.originalEventSubCalendarId = existingEvent.childSubCalendarId;
             payload.originalCustomEventTypeId = existingEvent.customEventTypeId;
-            payload.originalStartDate = existingEvent.confluenceId.split("/")[0];
             payload.originalEventType = existingEvent.eventType;
+
+            if (this.isRecurring(existingEvent)) {
+                payload.originalStartDate = existingEvent.confluenceId.split("/")[0];
+            }
         }
 
         return payload;

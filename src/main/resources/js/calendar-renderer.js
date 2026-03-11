@@ -379,6 +379,7 @@ class CalendarRenderer {
         toKeep.forEach(resource => {
             this._updateEventInstance(event.confluenceId, resource, {
                 text: result.text,
+                customEventTypeId: result.customEventTypeId,
                 start: result.start,
                 end: result.end,
                 resource: resource,
