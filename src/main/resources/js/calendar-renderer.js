@@ -36,7 +36,7 @@ class CalendarRenderer {
             this.initRowFilter();
         }
 
-        await this.eventService.loadCalendars();
+        await this.eventService.loadCalendars(wrapper);
         await this.eventService.getCurrentUser();
         this.calendar.events.list = await this.eventService.fetchAllEvents();
         this._initCurrentTimeLine();

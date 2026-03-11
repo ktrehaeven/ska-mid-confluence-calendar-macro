@@ -58,38 +58,58 @@ class EventService {
     }
 
     /**
-     * Loads the SKA-Low construction calendar and parses its child calendars and event types
+     * Loads calendars using IDs read directly from the macro wrapper element's
+     * data-calendar-ids attribute. The first ID is treated as the parent
+     * construction calendar used for create/update/delete operations.
+     * @param {HTMLElement} wrapper - The macro wrapper DOM element
      * @returns {Promise<Array>} Array of custom event types
      */
-    async loadCalendars() {
-        const skaConstructionCalName = "SKA-Low Telescope Construction";
+    async loadCalendars(wrapper) {
+        const calendarIds = (wrapper.dataset.calendarIds || "")
+            .split(",")
+            .filter(Boolean);
+        console.log(calendarIds);
+        if (calendarIds.length === 0) {
+            throw new Error("No calendar IDs found on macro wrapper element");
+        }
+
+        // First ID is the parent calendar used for event write operations
+        this.skaConstructionCalId = calendarIds[0];
 
         try {
-            const response = await fetch(
-                AJS.contextPath() + "/rest/calendar-services/1.0/calendar/subcalendars.json?"
-            );
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch calendars');
-            }
-
-            const data = await response.json();
-            const targetPayload = data.payload.find(
-                entry => entry.subCalendar && entry.subCalendar.name === skaConstructionCalName
-            );
-
-            if (!targetPayload) {
-                throw new Error(`Calendar "${skaConstructionCalName}" not found`);
-            }
-
-            this.skaConstructionCalId = targetPayload.subCalendar.id;
-            this._parseChildCalendars(targetPayload.childSubCalendars);
-
+            // Fetch each calendar by ID and parse its child calendars
+            await Promise.all(calendarIds.map(id => this._loadCalendarById(id)));
             return this.customEventTypes;
         } catch (err) {
             console.error("Calendar loading error:", err);
             throw err;
         }
+    }
+
+    /**
+     * Fetches a single calendar by ID and parses its child calendars
+     * @private
+     * @param {string} calendarId - The calendar UUID
+     * @returns {Promise<void>}
+     */
+    async _loadCalendarById(calendarId) {
+        const response = await fetch(
+            AJS.contextPath() +
+            `/rest/calendar-services/1.0/calendar/subcalendars.json?calendarId=${calendarId}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch calendar ${calendarId}`);
+        }
+
+        const data = await response.json();
+        const targetPayload = data.payload && data.payload[0];
+
+        if (!targetPayload) {
+            throw new Error(`Calendar ${calendarId} not found`);
+        }
+
+        this._parseChildCalendars(targetPayload.childSubCalendars || []);
     }
 
     /**
@@ -263,9 +283,8 @@ class EventService {
      * @returns {DayPilot.Date} DayPilot date with timezone stripped
      */
     removeTZ(dateString) {
-        return new DayPilot.Date(dateString.split("+")[0])
+        return new DayPilot.Date(dateString.split("+")[0]);
     }
-
 
     /**
      * Sends a create, update, or delete request for a Confluence calendar event
@@ -284,15 +303,14 @@ class EventService {
     /**
      * Fetches and stores the current Confluence user
      * @returns {Promise<void>}
-     */        //rest/api/user/list?start=2000&limit=200
+     */
     async getCurrentUser() {
         this.user = await this._request('/rest/api/user/current');
     }
 
     /**
-     * required to push through edits to recurring event updates
+     * Required to push through edits to recurring event updates
      * @param {Object} event - Event just edited
-     * @param {string} method - HTTP method ('PUT' for create/update, 'DELETE' for delete)
      * @returns {Promise<Object>} Response from server
      */
     async deleteHiddenEvents(event) {
@@ -337,7 +355,7 @@ class EventService {
             payload.uid = existingEvent.confluenceId;
 
             if (this.isRecurring(existingEvent)) {
-                // required fields for editing events in a series 
+                // required fields for editing events in a series
                 payload.originalSubCalendarId = this.skaConstructionCalId;
                 payload.originalEventSubCalendarId = existingEvent.childSubCalendarId;
                 payload.originalCustomEventTypeId = existingEvent.customEventTypeId;
@@ -405,19 +423,18 @@ class EventService {
 
             switch (scope) {
                 case "single": {
-                    payload.originalStart = existingEvent.confluenceId.split("/")[0],
-                        payload.singleInstance = true,
-                        payload.recurrenceId = ""
-                    break
+                    payload.originalStart = existingEvent.confluenceId.split("/")[0];
+                    payload.singleInstance = true;
+                    payload.recurrenceId = "";
+                    break;
                 }
                 case "future": {
                     // change to recur only up to this event
-                    payload.recurUntil = existingEvent.confluenceId.split("T")[0].replaceAll("-", "")
-                    break
+                    payload.recurUntil = existingEvent.confluenceId.split("T")[0].replaceAll("-", "");
+                    break;
                 }
                 case "series":
             }
-
         }
 
         try {
@@ -436,6 +453,7 @@ class EventService {
      * @private
      * @param {string} dateString - ISO date string
      * @param {Object} options - Intl.DateTimeFormat options
+     * @param {string} timeZone - IANA timezone string
      * @returns {string} Formatted date/time
      */
     _formatDateWithIntl(dateString, options, timeZone = "Australia/Perth") {
