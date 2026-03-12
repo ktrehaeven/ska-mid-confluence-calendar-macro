@@ -33,6 +33,8 @@
     gap: 10px;
 }
 
+/* nav panel holds navigator and filter input */
+
 .ska-low-station-bookings-macro .nav-panel {
     display: flex;
     flex-direction: column;
@@ -83,13 +85,6 @@
     min-width: 210px;
 }
 
-.ska-low-station-bookings-macro .daypilot {
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-}
-
-
 .ska-low-station-bookings-macro .navigator_default_todaybox {
     border: 2px solid #070068;
     position: absolute;
@@ -103,6 +98,14 @@
     z-index: 1;
 }
 
+/* scheduler */
+
+.ska-low-station-bookings-macro .daypilot {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
 .scheduler_default_cell:hover,
 .scheduler_default_timeheadercol:hover,
 .scheduler_default_timeheadergroup:hover,
@@ -112,6 +115,8 @@
     box-shadow: inset 0 0 0 9999px rgba(204, 204, 204, 0.5);
     transition: background-color 0.1s ease-in, box-shadow 0.1s ease-in;
 }
+
+/* modal form (for booking details) */
 
 .modal_default_inner {
     max-height: 85vh;
