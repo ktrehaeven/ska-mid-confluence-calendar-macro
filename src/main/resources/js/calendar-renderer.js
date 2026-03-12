@@ -59,6 +59,7 @@ class CalendarRenderer {
             scale: "CellDuration",
             locale: "en-AU",
             cellDuration: 15,
+            eventBorderRadius: 6,
             cellWidth: 20,
             days: 1,
             width: "100%",
