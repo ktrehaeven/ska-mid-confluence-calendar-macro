@@ -200,8 +200,6 @@ class CalendarRenderer {
                 end: eventData.end,
                 resource: station,
                 customEventTypeId: eventData.customEventTypeId,
-                childSubCalendarId: (this.eventService.childSubCalendarsByEventId
-                [eventData.customEventTypeId].childSubCalendarId),
                 description: eventData.description,
             });
 
@@ -231,11 +229,14 @@ class CalendarRenderer {
             // request events from the subcalendar of updated event to update recurrence
             await this.eventService.deleteEvent(args.e.data, result.deleteScope);
             const eventId = args.e.data.customEventTypeId
-            const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
-            this.calendar.events.list = [
-                ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
-                ...updatedEvents
-            ];
+            if (eventId) {
+                const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
+                this.calendar.events.list = [
+                    ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
+                    ...updatedEvents
+                ];
+            }
+            else { this.calendar.events.list = await this.eventService.fetchAllEvents(); }
         }
         this.refresh();
     }
@@ -324,24 +325,20 @@ class CalendarRenderer {
         const postedEvent = await this.eventService.createEvent(result);
         if (!postedEvent?.success) return;
 
-        if (result.editAllInRecurrenceSeries) {
-            // must request the edited confluence calendar events again since they handle the recurrence
-            const eventId = result.customEventTypeId
-            const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
-            this.calendar.events.list = [
-                ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
-                ...updatedEvents
-            ];
-            this.refresh();
-            return
-        }
-
-        // Add new DayPilot events for each selected station
-        result.resource.forEach(station => {
-            this._addEventInstance(postedEvent.event.id, station, result);
-        });
-
+        const eventId = result.customEventTypeId
+        const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
+        this.calendar.events.list = [
+            ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
+            ...updatedEvents
+        ];
         this.refresh();
+
+        // // Add new DayPilot events for each selected station
+        // result.resource.forEach(station => {
+        //     this._addEventInstance(postedEvent.event.id, station, result);
+        // });
+
+        // this.refresh();
     }
 
     /**
@@ -358,44 +355,40 @@ class CalendarRenderer {
 
         await this.eventService.updateEvent(result, event);
 
-        if (result.editAllInRecurrenceSeries) {
-            // must request the edited confluence calendar events again since they handle the recurrence
-            const eventId = result.customEventTypeId
-            const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
-            this.calendar.events.list = [
-                ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
-                ...updatedEvents
-            ];
-            this.refresh();
-            return
-        }
-
-        const currentResources = event.resource
-        const nextResources = result.resource;
-        const toAdd = nextResources.filter(r => !currentResources.includes(r));
-        const toRemove = currentResources.filter(r => !nextResources.includes(r));
-        const toKeep = nextResources.filter(r => currentResources.includes(r));
-
-        toKeep.forEach(resource => {
-            this._updateEventInstance(event.confluenceId, resource, {
-                text: result.text,
-                customEventTypeId: result.customEventTypeId,
-                start: result.start,
-                end: result.end,
-                resource: resource,
-                description: result.description
-            });
-        });
-
-        toRemove.forEach(resource => {
-            this._removeEventInstance(event.confluenceId, resource);
-        });
-
-        toAdd.forEach(resource => {
-            this._addEventInstance(event.confluenceId, resource, result);
-        });
-
+        this.calendar.events.list = await this.eventService.fetchAllEvents();
         this.refresh();
+        return
+
+        // The below code was an attempt to update events without refetching all events 
+        // from Confluence, but due to the complexity of handling recurring events and 
+        // event types it is less error-prone to simply refetch all events after an update.
+
+        // const currentResources = event.resource
+        // const nextResources = result.resource;
+        // const toAdd = nextResources.filter(r => !currentResources.includes(r));
+        // const toRemove = currentResources.filter(r => !nextResources.includes(r));
+        // const toKeep = nextResources.filter(r => currentResources.includes(r));
+
+        // toKeep.forEach(resource => {
+        //     this._updateEventInstance(event.confluenceId, resource, {
+        //         text: result.text,
+        //         customEventTypeId: result.customEventTypeId || "",
+        //         start: result.start,
+        //         end: result.end,
+        //         resource: resource,
+        //         description: result.description
+        //     });
+        // });
+
+        // toRemove.forEach(resource => {
+        //     this._removeEventInstance(event.confluenceId, resource);
+        // });
+
+        // toAdd.forEach(resource => {
+        //     this._addEventInstance(event.confluenceId, resource, result);
+        // });
+
+        // this.refresh();
     }
 
     /**
