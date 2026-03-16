@@ -122,3 +122,17 @@
     max-height: 85vh;
     overflow-y: auto;
 }
+
+/* crosshair highlighting */
+
+.dp-xh-row {
+    background-color: rgba(204, 204, 204, 0.5) !important;
+    transition: background-color 0.1s ease-in, box-shadow 0.1s ease-in;
+}
+
+.dp-xh-col {
+    background-color: rgba(204, 204, 204, 0.5) !important;
+    outline: 1px solid rgba(204, 204, 204, 0.5);
+    outline-offset: -1px;
+    transition: background-color 0.1s ease-in, box-shadow 0.1s ease-in;
+}

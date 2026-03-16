@@ -36,6 +36,9 @@ class CalendarRenderer {
             this.initRowFilter();
         }
 
+        const xhair = new DayPilotCrosshair(this.calendar);
+        xhair.attach();
+
         await this.eventService.loadCalendars(wrapper);
         await this.eventService.getCurrentUser();
         this.calendar.events.list = await this.eventService.fetchAllEvents();
@@ -611,5 +614,112 @@ class CalendarRenderer {
         });
 
         this._rowFilterInput = input;
+    }
+}
+
+class DayPilotCrosshair {
+
+    constructor(dp) {
+        this.dp = dp;
+        this._lastRowEl = null;   // currently highlighted row header element
+        this._lastColEls = [];     // currently highlighted col header elements
+        this._onMove = this._onMove.bind(this);
+        this._onLeave = this._onLeave.bind(this);
+        this._attached = false;
+    }
+
+    attach() {
+        if (this._attached) return;
+
+        // The scroll container is the mouse target
+        this._scrollEl = this.dp.nav.scrollable || this.dp.nav.scroll;
+        if (!this._scrollEl) { console.warn('DayPilotCrosshair: not ready'); return; }
+
+        this._scrollEl.addEventListener('mousemove', this._onMove);
+        this._scrollEl.addEventListener('mouseleave', this._onLeave);
+        this._attached = true;
+    }
+
+    _onMove(e) {
+        const rect = this._scrollEl.getBoundingClientRect();
+
+        // Mouse coords relative to the scrollable area (accounting for scroll)
+        const xRel = e.clientX - rect.left + this._scrollEl.scrollLeft;
+        const yRel = e.clientY - rect.top + this._scrollEl.scrollTop;
+
+        this._highlightRow(yRel);
+        this._highlightCol(xRel);
+    }
+
+    _onLeave() {
+        this._clearHighlights();
+    }
+
+    _highlightRow(yRel) {
+        const dp = this.dp;
+        const rowlist = dp.rowlist;
+        const divHeader = dp.divHeader;
+        if (!rowlist || !divHeader) return;
+
+        let cumY = 0, rowIdx = -1;
+        for (let i = 0; i < rowlist.length; i++) {
+            cumY += rowlist[i].height;
+            if (yRel < cumY) { rowIdx = i; break; }
+        }
+        if (rowIdx === -1) return;
+
+        // .cellDiv is the inner _rowheader div — the wrapper has no class/background
+        const rowEl = divHeader.rows[rowIdx]?.cellDiv;
+        if (!rowEl || rowEl === this._lastRowEl) return;
+
+        this._clearRow();
+        rowEl.classList.add('dp-xh-row');
+        this._lastRowEl = rowEl;
+    }
+
+    _highlightCol(xRel) {
+        const dp = this.dp;
+
+        // Column index from pixel x offset in the scrollable area
+        const colIdx = Math.floor(xRel / dp.cellWidth / 4);
+
+        if (colIdx === this._lastColIdx) return;
+        this._clearCol();
+        this._lastColIdx = colIdx;
+
+        // Highlight every timeHeader row for this column
+        // Keys are "colIndex_timeHeaderRowIndex" (one per timeHeaders[] level)
+        const numHeaderRows = dp.timeHeaders ? dp.timeHeaders.length : 2;
+        const yb = dp.yb;
+        if (!yb || !yb.timeHeader) return;
+
+        const highlighted = [];
+        for (let row = 0; row < numHeaderRows; row++) {
+            const key = colIdx + '_' + row;
+            const el = yb.timeHeader[key];
+            if (el) {
+                el.classList.add('dp-xh-col');
+                highlighted.push(el);
+            }
+        }
+        this._lastColEls = highlighted;
+    }
+
+    _clearRow() {
+        if (this._lastRowEl) {
+            this._lastRowEl.classList.remove('dp-xh-row');
+            this._lastRowEl = null;
+        }
+    }
+
+    _clearCol() {
+        this._lastColEls.forEach(el => el.classList.remove('dp-xh-col'));
+        this._lastColEls = [];
+        this._lastColIdx = -1;
+    }
+
+    _clearHighlights() {
+        this._clearRow();
+        this._clearCol();
     }
 }
