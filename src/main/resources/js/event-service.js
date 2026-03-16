@@ -260,10 +260,15 @@ class EventService {
      */
     extractResourcesFromEvent(event) {
         const stationIds = this.stationDataManager.getAllStationLabels();
-        const haystack = event.where
-            ? event.where
-            : (event.title) + (event.description);
-        const haystackUpper = haystack.toUpperCase();
+        // use where field preferably, otherwise check both title and description
+        // filter out EMS generated cluster where fields since they are not specific/accurate
+        const haystack = event.where && !event.where.includes("Cluster (") ? event.where
+            : (event.title ?? '') + ' ' + (event.description ?? '');
+
+        const normalisedHaystack = haystack
+            .replace(/\bS0*(\d+)/gi, 'S$1') //removing leading zeros (e.g. S08 → S8)
+            .replace(/\s*-\s*/g, '-') // removing spaces around dashes (e.g. S8 - 1 → S8-1)
+            .toUpperCase();
 
         const matched = new Set();
 
@@ -272,7 +277,7 @@ class EventService {
             'AA0.5': ['AA0.5'],
             'AA1': ['AA1'],
         };
-        const phaseMatches = haystackUpper.match(/\bAA(0\.5|1)\b/gi) ?? [];
+        const phaseMatches = normalisedHaystack.match(/\bAA(0\.5|1)\b/gi) ?? [];
         for (const phase of phaseMatches) {
             const phasesToInclude = PHASE_MAP[phase.toUpperCase()] ?? [phase];
             for (const p of phasesToInclude) {
@@ -283,7 +288,7 @@ class EventService {
         }
 
         // --- Rule 2: Bare S8 / S9 / S10 → wildcard to all S8-x, S9-x, S10-x ---
-        const bareGroupMatches = haystackUpper.match(/\bS(10|[89])(?!-)\b/gi) ?? [];
+        const bareGroupMatches = normalisedHaystack.match(/\bS(10|[89])(?!-\d)\b/gi) ?? [];
         for (const bare of bareGroupMatches) {
             const prefix = bare.toUpperCase() + '-';
             for (const id of stationIds) {
@@ -293,7 +298,7 @@ class EventService {
 
         // --- Rule 3: direct label matching ---
         for (const stationId of stationIds) {
-            if (haystackUpper.includes(stationId.toUpperCase())) matched.add(stationId);
+            if (normalisedHaystack.includes(stationId.toUpperCase())) matched.add(stationId);
         }
 
         return [...matched];
