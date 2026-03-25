@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.0] - 2026-03-25
+
+### Security Testing
+
+- Improved map marker interactions
+- Added auto and visibility refresh
+- Added row filter input
+- Added recurrence fields to event form
+- Added support for multi calendars through macro parameter
+- Added crosshair highlighting
+
 ## [1.1.0] - 2026-02-24
 
 ### Pre-Security Testing

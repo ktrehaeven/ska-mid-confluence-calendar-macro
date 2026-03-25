@@ -63,8 +63,6 @@ class EventService {
             .map(id => id.trim())
             .filter(Boolean);
 
-        console.log("Loading calendar IDs:", subCalendarIds);
-
         if (subCalendarIds.length === 0) {
             throw new Error("No calendar IDs found on macro wrapper element");
         }
