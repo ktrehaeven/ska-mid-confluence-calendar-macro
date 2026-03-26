@@ -41,3 +41,6 @@ class SkaLowCalendarMacro {
         }
     }
 }
+
+// Expose globally so bootstrap.js can access it regardless of load batching
+window.SkaLowCalendarMacro = SkaLowCalendarMacro;

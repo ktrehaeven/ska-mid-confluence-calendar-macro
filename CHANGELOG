@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1] - 2026-03-26
+
+### Dependency Chain Patch
+
+- Added SkaLowCalendarMacro to window to ensure it is in global scope
+- Added waitForClass polling in bootstrap.js in case of files loading out of order
+
 ## [1.2.0] - 2026-03-25
 
 ### Security Testing
