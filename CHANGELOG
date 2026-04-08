@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.2.4] - 2026-04-08
+
+### Vertical Timeline Patch
+
+- Added an API request for perth time to avoid issues relating to incorrect computer time
+
+## [1.2.3] - 2026-04-08
+
+### Timezone Patch
+
+- Added Australia/Perth timezone to get requests
+
+## [1.2.2] - 2026-04-08
+
+### Window Assignment Patch
+
+- Added all js modules to window scope to ensure they are visible to each other
+- Removed repolling from bootstrap, no longer required due to above change
+
 ## [1.2.1] - 2026-03-26
 
 ### Dependency Chain Patch
