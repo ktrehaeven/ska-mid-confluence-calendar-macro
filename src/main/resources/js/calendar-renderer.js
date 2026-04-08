@@ -106,7 +106,7 @@ class CalendarRenderer {
      */
     async _updateCurrentTimeLine() {
 
-        const now = await getNetworkTime();
+        const now = new DayPilot.Date(new Date().toLocaleString("sv-SE", { timeZone: "Australia/Perth" })).getTime();
         const start = this.calendar.startDate.getTime();
         const end = new DayPilot.Date(this.calendar.startDate).addDays(this.calendar.days).getTime();
 
@@ -134,15 +134,6 @@ class CalendarRenderer {
 
         matrix.appendChild(line);
 
-        async function getNetworkTime() {
-            try {
-                const response = await fetch('https://time.now/developer/api/timezone/Australia/Perth');
-                const data = await response.json()
-                return new DayPilot.Date(data.unixtime * 1000).addHours(8).getTime(); // convert to milliseconds and adjust for AWST
-            } catch (error) {
-                console.error("Failed to fetch time:", error);
-            }
-        }
     }
 
     /**
