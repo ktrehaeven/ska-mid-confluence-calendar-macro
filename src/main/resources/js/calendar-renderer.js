@@ -22,6 +22,7 @@ class CalendarRenderer {
     async init(wrapper) {
         const calendarEl = wrapper.querySelector('.daypilot');
         const navEl = wrapper.querySelector('.daypilot-nav');
+        this._initCurrentTimeLine();
 
         if (!calendarEl || this.isInitialized) return;
         this.isInitialized = true;
@@ -42,7 +43,6 @@ class CalendarRenderer {
         await this.eventService.loadCalendars(wrapper);
         await this.eventService.getCurrentUser();
         this.calendar.events.list = await this.eventService.fetchAllEvents();
-        this._initCurrentTimeLine();
         this._startAutoRefresh();
         this.refresh();
     }
@@ -104,13 +104,14 @@ class CalendarRenderer {
      * If the current time is outside the visible range, no line is rendered.
      * @private
      */
-    _updateCurrentTimeLine() {
-        const matrix = this.calendar.nav.scroll.querySelector('.scheduler_default_matrix');
-        matrix.querySelector('.current-time-line')?.remove();
+    async _updateCurrentTimeLine() {
 
-        const now = new DayPilot.Date().getTime();
+        const now = await getNetworkTime();
         const start = this.calendar.startDate.getTime();
         const end = new DayPilot.Date(this.calendar.startDate).addDays(this.calendar.days).getTime();
+
+        const matrix = this.calendar.nav.scroll.querySelector('.scheduler_default_matrix');
+        matrix.querySelector('.current-time-line')?.remove();
 
         if (now < start || now > end) return;
 
@@ -132,6 +133,16 @@ class CalendarRenderer {
     `;
 
         matrix.appendChild(line);
+
+        async function getNetworkTime() {
+            try {
+                const response = await fetch('https://time.now/developer/api/timezone/Australia/Perth');
+                const data = await response.json()
+                return new DayPilot.Date(data.unixtime * 1000).addHours(8).getTime(); // convert to milliseconds and adjust for AWST
+            } catch (error) {
+                console.error("Failed to fetch time:", error);
+            }
+        }
     }
 
     /**
@@ -723,3 +734,5 @@ class DayPilotCrosshair {
         this._clearCol();
     }
 }
+
+window.CalendarRenderer = CalendarRenderer;

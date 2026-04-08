@@ -201,3 +201,5 @@ class MapRenderer {
         });
     }
 }
+
+window.MapRenderer = MapRenderer;

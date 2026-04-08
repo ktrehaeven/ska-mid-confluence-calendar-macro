@@ -85,3 +85,5 @@ class StationDataManager {
         return Object.keys(this.stationData);
     }
 }
+
+window.StationDataManager = StationDataManager;

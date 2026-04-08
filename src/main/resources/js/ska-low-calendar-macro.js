@@ -4,13 +4,13 @@
  */
 class SkaLowCalendarMacro {
     constructor() {
-        this.stationDataManager = new StationDataManager();
-        this.eventService = new EventService(this.stationDataManager);
-        this.eventFormManager = new EventFormManager(this.eventService, this.stationDataManager);
-        this.mapRenderer = new MapRenderer(this.stationDataManager, (stationId) => {
+        this.stationDataManager = new window.StationDataManager();
+        this.eventService = new window.EventService(this.stationDataManager);
+        this.eventFormManager = new window.EventFormManager(this.eventService, this.stationDataManager);
+        this.mapRenderer = new window.MapRenderer(this.stationDataManager, (stationId) => {
             this.calendarRenderer.selectStation(stationId);
         });
-        this.calendarRenderer = new CalendarRenderer(
+        this.calendarRenderer = new window.CalendarRenderer(
             this.eventService,
             this.eventFormManager,
             this.stationDataManager,
@@ -24,14 +24,10 @@ class SkaLowCalendarMacro {
      */
     async initialize() {
         try {
-            // Load station data first (required by other components)
             await this.stationDataManager.load();
-
-            // Initialize all macro instances on the page
             document.querySelectorAll('.ska-low-map-macro').forEach(wrapper =>
                 this.mapRenderer.init(wrapper)
             );
-
             document.querySelectorAll('.ska-low-station-bookings-macro').forEach(wrapper =>
                 this.calendarRenderer.init(wrapper)
             );
@@ -42,5 +38,4 @@ class SkaLowCalendarMacro {
     }
 }
 
-// Expose globally so bootstrap.js can access it regardless of load batching
 window.SkaLowCalendarMacro = SkaLowCalendarMacro;

@@ -170,7 +170,8 @@ class EventService {
             const response = await fetch(
                 AJS.contextPath() +
                 `/rest/calendar-services/1.0/calendar/events.json` +
-                `?subCalendarId=${eventType.childSubCalendarId}` +
+                `?userTimeZoneId=Australia/Perth` +
+                `&subCalendarId=${eventType.childSubCalendarId}` +
                 `&start=${start}` +
                 `&end=${end}`
             );
@@ -529,3 +530,5 @@ class EventService {
         return Boolean(event.rruleStr);
     }
 }
+
+window.EventService = EventService;
