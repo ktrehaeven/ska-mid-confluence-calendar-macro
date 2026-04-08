@@ -170,8 +170,8 @@ class EventService {
             const response = await fetch(
                 AJS.contextPath() +
                 `/rest/calendar-services/1.0/calendar/events.json` +
-                `?userTimeZoneId=Australia/Perth` +
-                `&subCalendarId=${eventType.childSubCalendarId}` +
+                `?subCalendarId=${eventType.childSubCalendarId}` +
+                `&userTimeZoneId=Australia/Perth` +
                 `&start=${start}` +
                 `&end=${end}`
             );
