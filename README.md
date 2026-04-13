@@ -6,7 +6,7 @@ Development on a confluence macro to link the existing SKA-Low calendar bookings
 
 Navigate to the top level of the directory in a terminal.
 
-`atlas-build`
+`atlas-run`
 
 Go to [url](http://localhost:1990/confluence/plugins/servlet/upm) in your browser.
 
