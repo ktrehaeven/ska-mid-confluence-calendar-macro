@@ -436,7 +436,7 @@ class EventFormManager {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STATIONS (unchanged)
+    // STATIONS
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
@@ -455,83 +455,385 @@ class EventFormManager {
     }
 
     /**
+     * Derives the cluster key from a station label by stripping the trailing
+     * hyphen-number suffix. Examples:
+     *   "S8-1"    → "S8"
+     *   "N1-3"    → "N1"
+     *   "E10-2"   → "E10"
+     *   "Airstrip" → "Airstrip"  (no suffix — treated as its own cluster)
+     * @param {string} label
+     * @returns {string}
+     */
+    _clusterKey(label) {
+        const match = label.match(/^(.+)-\d+$/);
+        return match ? match[1] : label;
+    }
+
+    /**
      * Builds the station selection HTML form field.
+     *
+     * Clusters are derived dynamically from station Labels (everything before the
+     * last "-N" suffix, e.g. "S8-1" → "S8"). Phases come from each station's
+     * "Project Stage" field and are applied at the station level — a single cluster
+     * can contain stations from multiple phases. Phase filtering dims non-matching
+     * tiles rather than hiding them, preserving existing selections.
+     *
+     * A hidden <select multiple id="station-multiselect"> is kept in sync so
+     * _handleFormClose can read selections without any changes.
+     *
+     * @param {Object} data       - Event data; data.resource is the array of pre-selected station labels
+     * @param {Array}  eventsList - All calendar events, used to determine station availability
+     * @returns {Object} DayPilot form field definition with type "html"
      */
     _buildStationSelect(data, eventsList = []) {
         const phaseFilters = ["Airstrip", "AAVS3", "AA0.5", "AA1"];
-        const clusterFilters = ["S8", "S9", "S10"];
+        const phaseButtons = ["AAVS3", "AA0.5", "AA1"];
         const stations = this.stationDataManager.getStationsByPhase(phaseFilters);
 
-        const phaseOptionsHtml = phaseFilters.map(phase =>
-            `<option value="${phase}">${phase}</option>`
-        ).join("");
+        // Group stations by derived cluster key, preserving insertion order.
+        const clusterMap = new Map();
+        for (const station of stations) {
+            const key = this._clusterKey(station.Label);
+            if (!clusterMap.has(key)) clusterMap.set(key, []);
+            clusterMap.get(key).push(station);
+        }
 
-        const clusterOptionsHtml = clusterFilters.map(cluster =>
-            `<option value="${cluster}">${cluster}</option>`
-        ).join("");
+        // Pre-compute busy/selected/phase state per station label.
+        const stationMeta = {};
+        for (const station of stations) {
+            stationMeta[station.Label] = {
+                selected: Array.isArray(data.resource) && data.resource.includes(station.Label),
+                busy: data.start && data.end
+                    ? this._isStationBusy(station.Label, data.start, data.end, eventsList)
+                    : false,
+                phase: station.Phase ?? ''
+            };
+        }
 
-        const stationOptionsHtml = stations.map(station => {
-            const selected = data.resource.includes(station.Label) ? 'selected' : '';
-            const busy = data.start && data.end ? this._isStationBusy(station.Label, data.start, data.end, eventsList) : false;
-            const dot = busy ? '🔴' : '🟢';
-            const cluster = clusterFilters.find(c => station.Label.startsWith(c)) ?? '';
-            return `<option value="${station.Label}" data-phase="${station.Phase}" data-cluster="${cluster}" ${selected}>${dot} ${station.Label}</option>`;
-        }).join("");
+        // ── Hidden <select> — read by _handleFormClose without modification ──
+        const hiddenOptionsHtml = stations.map(station => {
+            const { selected, phase } = stationMeta[station.Label];
+            const cluster = this._clusterKey(station.Label);
+            return `<option value="${station.Label}" data-phase="${phase}" data-cluster="${cluster}" ${selected ? 'selected' : ''}>${station.Label}</option>`;
+        }).join('');
+
+        // ── Cluster blocks ────────────────────────────────────────────────────
+        // Natural sort comparator for alphanumeric strings (so S8 < S10, not S10 < S8)
+        const naturalSort = (a, b) => {
+            const aParts = a[0].match(/(\d+|\D+)/g) || [];
+            const bParts = b[0].match(/(\d+|\D+)/g) || [];
+            for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+                const aPart = aParts[i] || '';
+                const bPart = bParts[i] || '';
+                const aNum = parseInt(aPart);
+                const bNum = parseInt(bPart);
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    if (aNum !== bNum) return aNum - bNum;
+                } else {
+                    if (aPart !== bPart) return aPart.localeCompare(bPart);
+                }
+            }
+            return 0;
+        };
+
+        const clusterBlocks = [...clusterMap.entries()].sort(naturalSort).map(([clusterKey, clStations]) => {
+            const selCount = clStations.filter(s => stationMeta[s.Label].selected).length;
+
+            const tilesHtml = clStations.map(station => {
+                const { selected, busy, phase } = stationMeta[station.Label];
+                return `<div class="sp-tile${selected ? ' sp-tile-selected' : ''}"
+                             data-station="${station.Label}"
+                             data-cluster="${clusterKey}"
+                             data-phase="${phase}">
+                    <span class="sp-dot ${busy ? 'sp-dot-busy' : 'sp-dot-free'}"></span>
+                    <span class="sp-tile-label">${station.Label}</span>
+                </div>`;
+            }).join('');
+
+            return `
+            <div class="sp-cluster-block" data-cluster="${clusterKey}">
+                <div class="sp-cluster-header">
+                    <span class="sp-chevron">&#9654;</span>
+                    <span class="sp-cluster-name">${clusterKey}</span>
+                    <span class="sp-select-all" data-cluster="${clusterKey}">Select all</span>
+                    <span class="sp-count-badge${selCount === 0 ? ' sp-count-none' : ''}">${selCount}/${clStations.length}</span>
+                </div>
+                <div class="sp-tiles" style="display:none;">${tilesHtml}</div>
+            </div>`;
+        });
+
+        // Split into two columns
+        const mid = Math.ceil(clusterBlocks.length / 2);
+        const col1 = clusterBlocks.slice(0, mid).join('');
+        const col2 = clusterBlocks.slice(mid).join('');
+        const clusterBlocksHtml = `<div class="sp-column">${col1}</div><div class="sp-column">${col2}</div>`;
+
+        // ── Phase filter buttons ──────────────────────────────────────────────
+        const phaseButtonsHtml = phaseButtons.map(p =>
+            `<button type="button" class="sp-phase-btn" data-phase="${p}">${p}</button>`
+        ).join('');
 
         const html = `
-        <div style="display:flex; gap:12px; width:100%; align-items:stretch;">
-            <div style="display:flex; flex-direction:column; gap:8px; flex:0 0 100px;">
-                <div style="display:flex; flex-direction:column; flex:1;">
-                    <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Phase</div>
-                    <select id="phase-multiselect" multiple style="width:100%; flex:1;">
-                        ${phaseOptionsHtml}
-                    </select>
-                </div>
-                <div style="display:flex; flex-direction:column; flex:1;">
-                    <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Cluster</div>
-                    <select id="cluster-multiselect" multiple style="width:100%; flex:1;">
-                        ${clusterOptionsHtml}
-                    </select>
-                </div>
-            </div>
-            <div style="flex:1; display:flex; flex-direction:column;">
-                <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Stations</div>
-                <select id="station-multiselect" size="18" multiple style="width:100%; flex:1;">
-                    ${stationOptionsHtml}
-                </select>
-            </div>
+        <style>
+            .sp-wrap { font-size:13px; }
+            .sp-phase-bar { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px; }
+            .sp-phase-btn {
+                padding:3px 9px; border-radius:3px; border:1px solid #c1c7d0;
+                background:#fff; color:#5e6c84; cursor:pointer; font-size:12px;
+                transition:all .15s;
+            }
+            .sp-phase-btn.sp-phase-active {
+                background:#e9efff; border-color:#4c9aff; color:#0052cc; font-weight:600;
+            }
+            #sp-clusters {
+                display: flex;
+                gap: 8px;
+            }
+            .sp-column {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .sp-cluster-block {
+                border:1px solid #dfe1e6; border-radius:4px; overflow:hidden; margin-bottom:0;
+                background:#fff;
+            }
+            .sp-cluster-block.sp-cluster-hidden { display:none; }
+            .sp-cluster-header {
+                display:flex; align-items:center; gap:7px; padding:6px 10px;
+                background:#f4f5f7; cursor:pointer; user-select:none;
+            }
+            .sp-cluster-header:hover { background:#ebecf0; }
+            .sp-chevron { font-size:9px; color:#5e6c84; transition:transform .2s; flex-shrink:0; }
+            .sp-chevron.sp-open { transform:rotate(90deg); }
+            .sp-cluster-name { font-weight:600; color:#172b4d; flex-shrink:0; }
+            .sp-cluster-phase { font-size:11px; color:#5e6c84; flex:1; }
+            .sp-select-all {
+                font-size:11px; color:#0052cc; cursor:pointer; flex-shrink:0;
+                padding:1px 3px; border-radius:3px; margin-left:auto;
+            }
+            .sp-select-all:hover { background:#deebff; }
+            .sp-count-badge {
+                font-size:11px; padding:1px 7px; border-radius:10px; flex-shrink:0;
+                background:#deebff; color:#0052cc; font-weight:600; min-width:28px; text-align:center;
+            }
+            .sp-count-badge.sp-count-none { background:#ebecf0; color:#5e6c84; font-weight:400; }
+            .sp-tiles {
+                display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
+                gap:5px; padding:8px 10px;
+            }
+            .sp-tile {
+                display:flex; align-items:center; gap:5px; padding:4px 7px;
+                border:1px solid #dfe1e6; border-radius:3px; cursor:pointer;
+                background:#fff; transition:all .15s;
+            }
+            .sp-tile:hover { border-color:#4c9aff; background:#f0f4ff; }
+            .sp-tile.sp-tile-selected { border-color:#0052cc; background:#deebff; }
+            .sp-tile.sp-tile-selected .sp-tile-label { color:#0052cc; font-weight:600; }
+            .sp-tile.sp-tile-disabled { cursor:not-allowed; }
+            .sp-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+            .sp-dot-free { background:#36b37e; }
+            .sp-dot-busy { background:#de350b; }
+            .sp-tile-label { font-size:12px; color:#172b4d; white-space:nowrap; }
+            .sp-summary {
+                margin-top:8px; padding:6px 9px; border-radius:3px;
+                background:#f4f5f7; border:1px solid #dfe1e6;
+                font-size:12px; color:#5e6c84; min-height:30px;
+                display:flex; flex-wrap:wrap; align-items:center; gap:5px;
+            }
+            .sp-summary-tag {
+                display:inline-flex; align-items:center; gap:4px;
+                background:#deebff; color:#0052cc; padding:2px 7px;
+                border-radius:10px; font-size:11px; font-weight:600;
+            }
+            .sp-summary-rm { cursor:pointer; font-size:10px; opacity:.6; line-height:1; }
+            .sp-summary-rm:hover { opacity:1; }
+            .sp-summary-empty { font-style:italic; color:#97a0af; }
+        </style>
+
+        <div class="sp-wrap">
+            <div style="font-size:12px;color:#5e6c84;margin-bottom:4px;">Filter by phase</div>
+            <div class="sp-phase-bar">${phaseButtonsHtml}</div>
+            <div id="sp-clusters">${clusterBlocksHtml}</div>
+            <div class="sp-summary" id="sp-summary"></div>
+
+            <!-- Hidden select — read by _handleFormClose without modification -->
+            <select id="station-multiselect" multiple style="display:none;">
+                ${hiddenOptionsHtml}
+            </select>
         </div>`;
 
         return { name: "Stations", id: "text", type: "html", html };
     }
 
     /**
-     * Attaches change listeners to the phase, cluster, and station multiselects.
+     * Wires up the station tile picker interactivity.
+     *
+     * Phase filter buttons show/hide entire cluster blocks based on whether the
+     * cluster contains at least one station matching any active phase. If no phase
+     * filters are active, all clusters are shown. Within a visible cluster, tiles
+     * whose phase does not match any active filter are dimmed (opacity 0.35) but
+     * remain clickable — this avoids silently deselecting stations when a filter
+     * is toggled.
+     *
+     * Keeps the hidden #station-multiselect in sync so _handleFormClose can read
+     * selections without modification. Must be called inside setTimeout after the
+     * modal DOM has rendered.
      */
     _setupStationListeners() {
-        const phaseSelect = document.getElementById('phase-multiselect');
-        const clusterSelect = document.getElementById('cluster-multiselect');
-        const stationSelect = document.getElementById('station-multiselect');
+        const container = document.getElementById('sp-clusters');
+        const summaryEl = document.getElementById('sp-summary');
+        if (!container) return;
 
-        phaseSelect.addEventListener('change', () => {
-            const selectedPhases = Array.from(phaseSelect.selectedOptions).map(o => o.value);
-            Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
-            Array.from(stationSelect.options).forEach(opt => {
-                opt.selected = selectedPhases.includes(opt.dataset.phase);
+        // ── helpers ──────────────────────────────────────────────────────────
+
+        const hiddenOpt = label =>
+            document.querySelector(`#station-multiselect option[value="${CSS.escape(label)}"]`);
+
+        const getSelected = () =>
+            Array.from(document.querySelectorAll('#station-multiselect option'))
+                .filter(o => o.selected)
+                .map(o => o.value);
+
+        /** Mark a station selected/deselected in both tile UI and hidden select */
+        const setStation = (label, selected) => {
+            const opt = hiddenOpt(label);
+            if (opt) opt.selected = selected;
+            const tile = container.querySelector(`.sp-tile[data-station="${CSS.escape(label)}"]`);
+            if (tile) tile.classList.toggle('sp-tile-selected', selected);
+        };
+
+        /** Recompute count badge for a cluster */
+        const refreshBadge = clusterKey => {
+            const block = container.querySelector(`.sp-cluster-block[data-cluster="${CSS.escape(clusterKey)}"]`);
+            if (!block) return;
+            const tiles = block.querySelectorAll('.sp-tile');
+            const selCount = Array.from(tiles).filter(t => t.classList.contains('sp-tile-selected')).length;
+            const badge = block.querySelector('.sp-count-badge');
+            if (badge) {
+                badge.textContent = `${selCount}/${tiles.length}`;
+                badge.classList.toggle('sp-count-none', selCount === 0);
+            }
+        };
+
+        /** Repaint the summary strip */
+        const refreshSummary = () => {
+            const sel = getSelected();
+            if (sel.length === 0) {
+                summaryEl.innerHTML = '<span class="sp-summary-empty">No stations selected</span>';
+                return;
+            }
+            summaryEl.innerHTML =
+                `<span style="color:#5e6c84;flex-shrink:0;">${sel.length} selected:</span>` +
+                sel.map(label =>
+                    `<span class="sp-summary-tag">${label}<span class="sp-summary-rm" data-station="${label}">&#x2715;</span></span>`
+                ).join('');
+
+            summaryEl.querySelectorAll('.sp-summary-rm').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const label = btn.dataset.station;
+                    setStation(label, false);
+                    refreshBadge(this._clusterKey(label));
+                    refreshSummary();
+                });
+            });
+        };
+
+        /** Active phase filter set. Empty = no filter active (show everything). */
+        const activePhases = () => new Set(
+            Array.from(document.querySelectorAll('.sp-phase-btn.sp-phase-active'))
+                .map(b => b.dataset.phase)
+        );
+
+        /**
+         * Re-evaluate cluster and tile visibility based on current phase filters.
+         * Cluster shown  → contains ≥1 tile matching an active phase (or no filters active).
+         * Tile dimmed    → its phase doesn't match any active filter (but still clickable).
+         */
+        const applyPhaseFilter = () => {
+            const phases = activePhases();
+            container.querySelectorAll('.sp-cluster-block').forEach(block => {
+                const tiles = block.querySelectorAll('.sp-tile');
+                const clusterVisible = phases.size === 0 ||
+                    Array.from(tiles).some(t => phases.has(t.dataset.phase));
+                block.classList.toggle('sp-cluster-hidden', !clusterVisible);
+
+                tiles.forEach(tile => {
+                    const match = phases.size === 0 || phases.has(tile.dataset.phase);
+                    if (match) {
+                        tile.style.opacity = '';
+                        tile.style.pointerEvents = '';
+                        tile.classList.remove('sp-tile-disabled');
+                    } else {
+                        tile.style.opacity = '0.35';
+                        tile.style.pointerEvents = 'none';
+                        tile.classList.add('sp-tile-disabled');
+                    }
+                });
+            });
+        };
+
+        // ── initial state ────────────────────────────────────────────────────
+        // Clusters start collapsed (tiles already have display:none from HTML).
+        refreshSummary();
+
+        // ── phase filter buttons ─────────────────────────────────────────────
+        document.querySelectorAll('.sp-phase-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('sp-phase-active');
+                applyPhaseFilter();
             });
         });
 
-        clusterSelect.addEventListener('change', () => {
-            const selectedClusters = Array.from(clusterSelect.selectedOptions).map(o => o.value);
-            Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
-            Array.from(stationSelect.options).forEach(opt => {
-                opt.selected = selectedClusters.includes(opt.dataset.cluster);
+        // ── cluster header: expand/collapse + select-all ─────────────────────
+        container.querySelectorAll('.sp-cluster-header').forEach(header => {
+            header.addEventListener('click', e => {
+                // "Select all" sits inside the header — handle separately
+                if (e.target.classList.contains('sp-select-all')) {
+                    const clusterKey = e.target.dataset.cluster;
+                    const block = container.querySelector(`.sp-cluster-block[data-cluster="${CSS.escape(clusterKey)}"]`);
+                    if (!block) return;
+                    const tiles = block.querySelectorAll('.sp-tile');
+                    const allSel = Array.from(tiles).every(t => t.classList.contains('sp-tile-selected'));
+                    tiles.forEach(tile => setStation(tile.dataset.station, !allSel));
+                    e.target.textContent = allSel ? 'Select all' : 'Deselect all';
+                    refreshBadge(clusterKey);
+                    refreshSummary();
+                    return;
+                }
+
+                // Toggle expand/collapse
+                const block = header.closest('.sp-cluster-block');
+                const tilesEl = block.querySelector('.sp-tiles');
+                const chevron = header.querySelector('.sp-chevron');
+                const isOpen = chevron.classList.toggle('sp-open');
+                tilesEl.style.display = isOpen ? '' : 'none';
             });
         });
 
-        stationSelect.addEventListener('change', () => {
-            Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
-            Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
+        // ── individual tile clicks ───────────────────────────────────────────
+        container.querySelectorAll('.sp-tile').forEach(tile => {
+            tile.addEventListener('click', () => {
+                if (tile.classList.contains('sp-tile-disabled')) return;
+
+                const label = tile.dataset.station;
+                const clusterKey = tile.dataset.cluster;
+                const nowSelected = !tile.classList.contains('sp-tile-selected');
+                setStation(label, nowSelected);
+
+                // Update select-all button label for this cluster
+                const block = container.querySelector(`.sp-cluster-block[data-cluster="${CSS.escape(clusterKey)}"]`);
+                if (block) {
+                    const tiles = block.querySelectorAll('.sp-tile');
+                    const allSel = Array.from(tiles).every(t => t.classList.contains('sp-tile-selected'));
+                    const btn = block.querySelector('.sp-select-all');
+                    if (btn) btn.textContent = allSel ? 'Deselect all' : 'Select all';
+                }
+
+                refreshBadge(clusterKey);
+                refreshSummary();
+            });
         });
     }
 
@@ -616,7 +918,7 @@ class EventFormManager {
      * built RRULE string from the DOM and writes them back to modal.result.
      */
     _handleFormClose(modal) {
-        // Capture station selections
+        // Capture station selections — reads the hidden <select> which the tile UI keeps in sync
         const selectEl = document.getElementById("station-multiselect");
         if (selectEl && modal.result) {
             modal.result.resource = Array.from(selectEl.selectedOptions).map(opt => opt.value);
