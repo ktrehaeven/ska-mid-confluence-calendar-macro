@@ -550,8 +550,8 @@ class CalendarRenderer {
      * Fetches all events every 5 minutes
      */
     _startAutoRefresh(intervalMs = 300000) {
-        this._refreshInterval = setInterval(() => {
-            this.eventService.fetchAllEvents()
+        this._refreshInterval = setInterval(async () => {
+            this.calendar.events.list = await this.eventService.fetchAllEvents();
             this.refresh()
         },
             intervalMs);
@@ -562,9 +562,9 @@ class CalendarRenderer {
     /**
      * Fetches all events when you tab back into the page
      */
-    _onVisibilityChange() {
+    async _onVisibilityChange() {
         if (document.visibilityState === 'visible') {
-            this.eventService.fetchAllEvents();
+            this.calendar.events.list = await this.eventService.fetchAllEvents();
             this.refresh()
         }
     }
