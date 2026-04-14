@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.8] - 2026-04-14
+
+### Auto-Refresh Patch
+
+- Fixed Auto-Refresh not saving new data to calendar
+
 ## [1.2.8] - 2026-04-08
 
 ### Timezone Patch
