@@ -35,6 +35,7 @@ class CalendarRenderer {
             this.navigator = this._createNavigator(navEl);
             this.navigator.init();
             this.initRowFilter();
+            this.initNavFooter();
         }
 
         const xhair = new DayPilotCrosshair(this.calendar);
@@ -616,6 +617,28 @@ class CalendarRenderer {
         });
 
         this._rowFilterInput = input;
+    }
+
+    initNavFooter() {
+        const navEl = this.navEl;
+        if (!navEl) return;
+
+        const footer = document.createElement('div');
+        footer.className = 'nav-footer';
+
+        const logo = document.createElement('img');
+        logo.src = AJS.contextPath() +
+            '/download/resources/com.skao.confluence.plugins.ska-low-confluence-calendar-macro:' +
+            'ska-low-confluence-calendar-macro-resources/images/skaoLogo.png';
+        logo.className = 'nav-footer-logo';
+
+        const text = document.createElement('span');
+        text.className = 'nav-footer-text';
+        text.textContent = `An SKAO Confluence plugin`;
+
+        footer.appendChild(logo);
+        footer.appendChild(text);
+        navEl.parentNode.appendChild(footer);
     }
 }
 

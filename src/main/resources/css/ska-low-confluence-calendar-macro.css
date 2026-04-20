@@ -98,6 +98,26 @@
     z-index: 1;
 }
 
+.ska-low-station-bookings-macro .nav-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 4px;
+    border-top: 1px solid #e0e0e0;
+    justify-content: center;
+}
+
+.ska-low-station-bookings-macro .nav-footer-logo {
+    height: 20px;
+    width: auto;
+    opacity: 0.7;
+}
+
+.ska-low-station-bookings-macro .nav-footer-text {
+    font-size: 11px;
+    color: #a5adba;
+}
+
 /* scheduler */
 
 .ska-low-station-bookings-macro .daypilot {
