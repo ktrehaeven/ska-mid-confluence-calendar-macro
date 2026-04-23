@@ -4,15 +4,17 @@ A custom Confluence Data Center plugin designed to improve the user experience u
 
 Calendar data is stored on Confluence and interacted with through the [REST API](https://developer.atlassian.com/server/confluence/confluence-server-rest-api/) in the same way as in-built Confluence calendars interfaces. This is purely an interface and does not change the way this data stored. Access permissions are inherited from the active user's session. The station assignments of existing events are determined by applying regex searches to the "title", "description" fields. Events created or edited through this tool will save the assignments in the "where" field.
 
-This is developed using the [Atlassian Plugin SDK](https://developer.atlassian.com/server/framework/atlassian-sdk/set-up-the-atlassian-plugin-sdk-and-build-a-project/) and uses open-source JavaScript packages [Leaflet](leafletjs.com) and [DayPilot Lite](https://javascript.daypilot.org/open-source/).
+This is developed using the [Atlassian Plugin SDK](https://developer.atlassian.com/server/framework/atlassian-sdk/set-up-the-atlassian-plugin-sdk-and-build-a-project/) and uses open-source JavaScript packages [Leaflet](https://leafletjs.com/) and [DayPilot Lite](https://javascript.daypilot.org/open-source/).
 
 ## Local Installation
+
+Follow the steps in the [Atlassian Plugin SDK documentation](https://developer.atlassian.com/server/framework/atlassian-sdk/set-up-the-atlassian-plugin-sdk-and-build-a-project/) to install the SDK on your machine.
 
 Clone this repository and navigate to the top level of the directory in a terminal.
 
 `atlas-run` will setup a fresh local instance of Confluence.
 
-Go to the [local url](http://localhost:1990/confluence/plugins/servlet/upm) in your browser. Login with username: admin, password: admin.
+Go to the [local url](http://localhost:1990/confluence/plugins/servlet/upm) in your browser. The SDK should default to either port 1990 or 2990, so check both if the url does not work. Login with username: admin, password: admin.
 
 ## Packaging
 
