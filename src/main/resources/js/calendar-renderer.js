@@ -2,10 +2,10 @@
  * Manages the calendar scheduler and event interactions
  */
 class CalendarRenderer {
-    constructor(eventService, eventFormManager, stationDataManager, mapRenderer) {
+    constructor(eventService, eventFormManager, dishDataManager, mapRenderer) {
         this.eventService = eventService;
         this.eventFormManager = eventFormManager;
-        this.stationDataManager = stationDataManager;
+        this.dishDataManager = dishDataManager;
         this.mapRenderer = mapRenderer;
         this.calendar = null;
         this.navigator = null;
@@ -107,7 +107,7 @@ class CalendarRenderer {
      */
     async _updateCurrentTimeLine() {
 
-        const now = new DayPilot.Date(new Date().toLocaleString("sv-SE", { timeZone: "Australia/Perth" })).getTime();
+        const now = new DayPilot.Date(new Date().toLocaleString("sv-SE", { timeZone: "South Africa/Johannesburg" })).getTime();
         const start = this.calendar.startDate.getTime();
         const end = new DayPilot.Date(this.calendar.startDate).addDays(this.calendar.days).getTime();
 
@@ -161,7 +161,7 @@ class CalendarRenderer {
      * Updates an existing DayPilot calendar event instance
      * @private
      * @param {string} confluenceId - Confluence event ID
-     * @param {string} resource - Resource/station ID
+     * @param {string} resource - Resource/dish ID
      * @param {Object} updatedData - Updated event properties
      * @returns {Object|null} Updated event or null if not found
      */
@@ -178,7 +178,7 @@ class CalendarRenderer {
      * Removes an existing DayPilot calendar event instance
      * @private
      * @param {string} confluenceId - Confluence event ID
-     * @param {string} resource - Resource/station ID
+     * @param {string} resource - Resource/dish ID
      */
     _removeEventInstance(confluenceId, resource) {
         const id = this.eventService.makeEventId(confluenceId, resource);
@@ -192,20 +192,20 @@ class CalendarRenderer {
      * Adds a new DayPilot calendar event instance
      * @private
      * @param {string} confluenceId - Confluence event ID
-     * @param {string} station - Station/resource identifier
+     * @param {string} dish - Dish/resource identifier
      * @param {Object} eventData - Event data object
      */
-    _addEventInstance(confluenceId, station, eventData) {
-        const id = this.eventService.makeEventId(confluenceId, station);
+    _addEventInstance(confluenceId, dish, eventData) {
+        const id = this.eventService.makeEventId(confluenceId, dish);
         if (!this.calendar.events.find(id)) {
 
             const newEvent = new DayPilot.Event({
-                id: this.eventService.makeEventId(confluenceId, station),
+                id: this.eventService.makeEventId(confluenceId, dish),
                 confluenceId: confluenceId,
                 text: eventData.text,
                 start: eventData.start,
                 end: eventData.end,
-                resource: station,
+                resource: dish,
                 customEventTypeId: eventData.customEventTypeId,
                 description: eventData.description,
             });
@@ -280,12 +280,13 @@ class CalendarRenderer {
      */
     async _handleEventMove(args) {
         const newId = this.eventService.makeEventId(args.e.data.confluenceId, args.newResource);
+        // const newId = `${args.e.data.confluenceId}-${args.newResource}`; // fallback without eventService
 
         // catch for moving an event to a resource where a sibling exists
         // (would result in duplicate id)
         if (args.e.data.id != newId && this.calendar.events.find(newId)) {
             args.preventDefault();
-            DayPilot.Modal.alert("This booking is already assigned to that station.");
+            DayPilot.Modal.alert("This booking is already assigned to that dish.");
             return;
         }
         args.e.data.id = newId;
@@ -340,9 +341,9 @@ class CalendarRenderer {
         ];
         this.refresh();
 
-        // // Add new DayPilot events for each selected station
-        // result.resource.forEach(station => {
-        //     this._addEventInstance(postedEvent.event.id, station, result);
+        // // Add new DayPilot events for each selected dish
+        // result.resource.forEach(dish => {
+        //     this._addEventInstance(postedEvent.event.id, dish, result);
         // });
 
         // this.refresh();
@@ -406,9 +407,9 @@ class CalendarRenderer {
      */
     _handleRowClick(args) {
         if (args.row.id !== this.selection.value) {
-            this.selectStation(args.row.id);
+            this.selectDish(args.row.id);
         } else {
-            this.deselectStation();
+            this.deselectDish();
         }
     }
 
@@ -430,7 +431,7 @@ class CalendarRenderer {
 
     /**
      * Handles time header click
-     * changes colour and opens tooltips of busy stations in time range
+     * changes colour and opens tooltips of busy dishes in time range
      * @private
      * @param {Object} args - Header arguments
      */
@@ -441,19 +442,19 @@ class CalendarRenderer {
             args.header.end === this.selection.value.end) {
 
             this.selection = { value: null, type: null };
-            this.mapRenderer.highlightStations([]);
+            this.mapRenderer.highlightDishes([]);
 
         } else {
             this.selection.value = { start: args.header.start, end: args.header.end };
             this.selection.type = 'time';
 
-            const resourcesInSelection = this.stationDataManager.stationList.filter(r =>
+            const resourcesInSelection = this.dishDataManager.dishList.filter(r =>
                 this.calendar.events.list.some(ev =>
                     ev.resource === r.id &&
                     ev.start.getTime() < this.selection.value.end.getTime() &&
                     ev.end.getTime() > this.selection.value.start.getTime()
                 )).map(r => r.id)
-            this.mapRenderer.highlightStations(resourcesInSelection);
+            this.mapRenderer.highlightDishes(resourcesInSelection);
             this.mapRenderer.openTooltips(resourcesInSelection);
         }
         this.refresh();
@@ -486,7 +487,7 @@ class CalendarRenderer {
         const viewEnd = this.calendar.visibleEnd().getTime();
         const filterQuery = this._rowFilterInput?.value.trim().toUpperCase() || '';
 
-        this.calendar.resources = this.stationDataManager.stationList.filter(resource => {
+        this.calendar.resources = this.dishDataManager.dishList.filter(resource => {
             const hasEvents = this.calendar.events.list.some(event =>
                 event.resource === resource.id &&
                 event.start.getTime() < viewEnd &&
@@ -512,7 +513,7 @@ class CalendarRenderer {
     /**
      * Finds siblings of a given event
      * Events can only be assigned to one resource in DayPilot
-     * When a booking uses multiple stations, an event is made for each station
+     * When a booking uses multiple dishes, an event is made for each dish
      * These events are siblings and are related through identical confluenceId fields
      * @param {DayPilot.Event} event - The event to find siblings for
      * @returns {Array} Array of sibling events
@@ -524,23 +525,23 @@ class CalendarRenderer {
     }
 
     /**
-     * Selects a station, updating selection state and syncing the map
-     * Clears any active time selection highlight, zooms to the station and opens its tooltip
-     * @param {string} stationId - Station ID to select
+     * Selects a dish, updating selection state and syncing the map
+     * Clears any active time selection highlight, zooms to the dish and opens its tooltip
+     * @param {string} dishId - Dish ID to select
      */
-    selectStation(stationId) {
+    selectDish(dishId) {
         this.mapRenderer.resetTooltips();
-        if (this.selection.type === 'time') this.mapRenderer.highlightStations([]);
-        this.selection = { value: stationId, type: 'resource' };
-        this.mapRenderer.zoomToStation(stationId);
-        this.mapRenderer.openTooltips([stationId]);
+        if (this.selection.type === 'time') this.mapRenderer.highlightDishes([]);
+        this.selection = { value: dishId, type: 'resource' };
+        this.mapRenderer.zoomToDish(dishId);
+        this.mapRenderer.openTooltips([dishId]);
         this.refresh();
     }
 
     /**
-     * Deselects the current station, clearing selection state and resetting the map view
+     * Deselects the current dish, clearing selection state and resetting the map view
      */
-    deselectStation() {
+    deselectDish() {
         this.mapRenderer.resetTooltips();
         this.selection = { value: null, type: null };
         this.mapRenderer.resetView();
@@ -586,7 +587,7 @@ class CalendarRenderer {
 
         const input = document.createElement('input');
         input.type = 'text';
-        input.placeholder = 'Filter stations...';
+        input.placeholder = 'Filter dishes...';
         input.className = 'row-filter-input';
 
         const clearBtn = document.createElement('button');
@@ -628,8 +629,8 @@ class CalendarRenderer {
 
         const logo = document.createElement('img');
         logo.src = AJS.contextPath() +
-            '/download/resources/com.skao.confluence.plugins.ska-low-confluence-calendar-macro:' +
-            'ska-low-confluence-calendar-macro-resources/images/skaoLogo.png';
+            '/download/resources/com.skao.confluence.plugins.ska-mid-confluence-calendar-macro:' +
+            'ska-mid-confluence-calendar-macro-resources/images/skaoLogo.png';
         logo.className = 'nav-footer-logo';
 
         const text = document.createElement('span');

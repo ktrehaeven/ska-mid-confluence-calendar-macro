@@ -11,11 +11,11 @@
     <osgi:reference id="webResourceManager" 
                     interface="com.atlassian.plugin.webresource.WebResourceManager"/>
 
-    <bean id="skaLowMap" class="com.skao.confluence.plugins.macro.SkaLowMap">
+    <bean id="skaMidMap" class="com.skao.confluence.plugins.macro.SkaMidMap">
         <constructor-arg ref="webResourceManager"/>
     </bean>
 
-    <bean id="skaLowStationBookings" class="com.skao.confluence.plugins.macro.SkaLowStationBookings">
+    <bean id="skaMidDishBookings" class="com.skao.confluence.plugins.macro.SkaMidDishBookings">
         <constructor-arg ref="webResourceManager"/>
     </bean>
 

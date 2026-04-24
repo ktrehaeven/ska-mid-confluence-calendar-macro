@@ -7,7 +7,7 @@
         <param name="plugin-logo">images/pluginLogo.png</param>
     </plugin-info>
 
-    <resource type="i18n" name="i18n" location="ska-low-confluence-calendar-macro"/>
+    <resource type="i18n" name="i18n" location="ska-mid-confluence-calendar-macro"/>
     
     <!-- add our web resources -->
     <web-resource key="leaflet-resources" name="Leaflet Resources">
@@ -20,47 +20,47 @@
         <resource type="download" name="daypilot-all.min.js" location="/daypilot/daypilot-all.min.js"/>
     </web-resource>
 
-    <web-resource key="ska-low-confluence-calendar-macro-resources" name="ska-low-confluence-calendar-macro Web Resources">
-        <dependency>com.skao.confluence.plugins.ska-low-confluence-calendar-macro:daypilot-resources</dependency>
-        <dependency>com.skao.confluence.plugins.ska-low-confluence-calendar-macro:leaflet-resources</dependency>
-        <resource type="download" name="stationLocations.json" location="/data/stationLocations.json"/>
-        <resource type="download" name="ska-low-confluence-calendar-macro.css" location="/css/ska-low-confluence-calendar-macro.css"/>
-        <resource type="download" name="station-data-manager.js" location="/js/station-data-manager.js"/>
+    <web-resource key="ska-mid-confluence-calendar-macro-resources" name="ska-mid-confluence-calendar-macro Web Resources">
+        <dependency>com.skao.confluence.plugins.ska-mid-confluence-calendar-macro:daypilot-resources</dependency>
+        <dependency>com.skao.confluence.plugins.ska-mid-confluence-calendar-macro:leaflet-resources</dependency>
+        <resource type="download" name="dishLocations.json" location="/data/dishLocations.json"/>
+        <resource type="download" name="ska-mid-confluence-calendar-macro.css" location="/css/ska-mid-confluence-calendar-macro.css"/>
+        <resource type="download" name="dish-data-manager.js" location="/js/dish-data-manager.js"/>
         <resource type="download" name="event-service.js" location="/js/event-service.js"/>
         <resource type="download" name="map-renderer.js" location="/js/map-renderer.js"/>
         <resource type="download" name="event-form-manager.js" location="/js/event-form-manager.js"/>
         <resource type="download" name="calendar-renderer.js" location="/js/calendar-renderer.js"/>
-        <resource type="download" name="ska-low-calendar-macro.js" location="/js/ska-low-calendar-macro.js"/>
+        <resource type="download" name="ska-mid-calendar-macro.js" location="/js/ska-mid-calendar-macro.js"/>
         <resource type="download" name="images/" location="/images"/>
     </web-resource>
 
-    <web-resource key="ska-low-macro-browser-resources" name="SKA Low Macro Browser Resources">
-        <resource type="download" name="station-bookings-macro-browser.js"
-                location="/js/station-bookings-macro-browser.js"/>
+    <web-resource key="ska-mid-macro-browser-resources" name="SKA Mid Macro Browser Resources">
+        <resource type="download" name="dish-bookings-macro-browser.js"
+                location="/js/dish-bookings-macro-browser.js"/>
         <dependency>confluence.editor.actions:editor-macro-browser</dependency>
         <context>macro-browser</context>
     </web-resource>
 
-    <web-resource key="ska-low-bootstrap-js" name="SKA Low Bootstrap JS">
-        <dependency>com.skao.confluence.plugins.ska-low-confluence-calendar-macro:ska-low-confluence-calendar-macro-resources</dependency>
+    <web-resource key="ska-mid-bootstrap-js" name="SKA Mid Bootstrap JS">
+        <dependency>com.skao.confluence.plugins.ska-mid-confluence-calendar-macro:ska-mid-confluence-calendar-macro-resources</dependency>
 
         <resource type="download" name="bootstrap.js" location="/js/bootstrap.js"/>
     </web-resource>
 
-    <xhtml-macro name="ska-low-map-macro" class="com.skao.confluence.plugins.macro.SkaLowMap" key='ska-low-map-macro'
-        icon = "/download/resources/com.skao.confluence.plugins.ska-low-confluence-calendar-macro:ska-low-confluence-calendar-macro-resources/images/leafletLogo.jpeg">
-        <description key="skalowmap.macro.desc"/>
+    <xhtml-macro name="ska-mid-map-macro" class="com.skao.confluence.plugins.macro.SkaMidMap" key='ska-mid-map-macro'
+        icon = "/download/resources/com.skao.confluence.plugins.ska-mid-confluence-calendar-macro:ska-mid-confluence-calendar-macro-resources/images/leafletLogo.jpeg">
+        <description key="skamidmap.macro.desc"/>
         <category name="formatting"/>
         <parameters/>
     </xhtml-macro>
 
-    <xhtml-macro name="ska-low-station-bookings-macro" class="com.skao.confluence.plugins.macro.SkaLowStationBookings" key='ska-low-station-bookings-macro'
-        icon = "/download/resources/com.skao.confluence.plugins.ska-low-confluence-calendar-macro:ska-low-confluence-calendar-macro-resources/images/daypilotLogo.png">
-        <description key="skalowstationbookings.macro.desc"/>
+    <xhtml-macro name="ska-mid-dish-bookings-macro" class="com.skao.confluence.plugins.macro.SkaMidDishBookings" key='ska-mid-dish-bookings-macro'
+        icon = "/download/resources/com.skao.confluence.plugins.ska-mid-confluence-calendar-macro:ska-mid-confluence-calendar-macro-resources/images/daypilotLogo.png">
+        <description key="skamiddishbookings.macro.desc"/>
         <category name="formatting"/>
         <parameters>
             <parameter name="Calendar" type="string" required="true">
-                <description key="skalowstationbookings.macro.param.calendar.desc"/>
+                <description key="skamiddishbookings.macro.param.calendar.desc"/>
             </parameter>
         </parameters>
     </xhtml-macro>

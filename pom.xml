@@ -6,7 +6,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.skao.confluence.plugins</groupId>
-    <artifactId>ska-low-confluence-calendar-macro</artifactId>
+    <artifactId>ska-mid-confluence-calendar-macro</artifactId>
     <version>1.2.9</version>
 
     <organization>
@@ -14,8 +14,8 @@
         <url>http://www.skao.int/</url>
     </organization>
 
-    <name>ska-low-confluence-calendar-macro</name>
-    <description>This is the com.skao.confluence.plugins:ska-low-confluence-calendar-macro plugin for Atlassian Confluence.</description>
+    <name>ska-mid-confluence-calendar-macro</name>
+    <description>This is the com.skao.confluence.plugins:ska-mid-confluence-calendar-macro plugin for Atlassian Confluence.</description>
     <packaging>atlassian-plugin</packaging>
 
     <dependencyManagement>

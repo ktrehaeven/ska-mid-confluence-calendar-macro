@@ -1,21 +1,21 @@
 class EventFormManager {
-    constructor(eventService, stationDataManager) {
+    constructor(eventService, dishDataManager) {
         this.eventService = eventService;
-        this.stationDataManager = stationDataManager;
+        this.dishDataManager = dishDataManager;
     }
 
     /**
      * Opens the event form modal prepopulated with the given event data.
-     * Sets up station, series, and recurrence listeners after the DOM renders via setTimeout.
+     * Sets up dish, series, and recurrence listeners after the DOM renders via setTimeout.
      * @param {Object} data - Event data to prepopulate the form with
-     * @param {Array} eventsList - All calendar events, used to determine station availability
+     * @param {Array} eventsList - All calendar events, used to determine dish availability
      * @returns {Promise<Object|null>} The submitted form result, or null if the modal was canceled
      */
     async show(data, eventsList = []) {
         const eventForm = this._buildFormDefinition(data, eventsList);
 
         setTimeout(() => {
-            this._setupStationListeners();
+            this._setupDishListeners();
             this._setupEditSeriesListener(data);
             this._setupRecurrenceListeners();
         }, 0);
@@ -34,9 +34,9 @@ class EventFormManager {
     /**
      * Builds the DayPilot form field definitions for the event modal.
      * Includes event type, title, creator, start/end datetimes, recurrence editing,
-     * station selection, recurrence, and description.
+     * dish selection, recurrence, and description.
      * @param {Object} data - Event data used to prepopulate and configure fields
-     * @param {Array} eventsList - All calendar events, passed through to the station select for availability indicators
+     * @param {Array} eventsList - All calendar events, passed through to the dish select for availability indicators
      * @returns {Array} Array of DayPilot form field definition objects
      */
     _buildFormDefinition(data, eventsList = []) {
@@ -52,7 +52,7 @@ class EventFormManager {
             { name: "Start", id: "start", type: "datetime", timeInterval: 1, dateFormat: "dd/MM/yyyy" },
             { name: "End", id: "end", type: "datetime", timeInterval: 1, dateFormat: "dd/MM/yyyy" },
             this._buildRecurrenceField(data),
-            this._buildStationSelect(data, eventsList),
+            this._buildDishSelect(data, eventsList),
             { name: "Description", id: "description", type: "textarea", height: 70 }
         ];
     }
@@ -436,18 +436,18 @@ class EventFormManager {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STATIONS (unchanged)
+    // DISHS (unchanged)
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Checks if a station has a conflicting event in the given time range.
+     * Checks if a dish has a conflicting event in the given time range.
      */
-    _isStationBusy(stationLabel, start, end, eventsList = []) {
+    _isDishBusy(dishLabel, start, end, eventsList = []) {
         const startTime = new DayPilot.Date(start).getTime();
         const endTime = new DayPilot.Date(end).getTime();
 
         return eventsList.some(ev => {
-            if (ev.resource !== stationLabel) return false;
+            if (ev.resource !== dishLabel) return false;
             const evStart = new DayPilot.Date(ev.start).getTime();
             const evEnd = new DayPilot.Date(ev.end).getTime();
             return evStart < endTime && evEnd > startTime;
@@ -455,27 +455,27 @@ class EventFormManager {
     }
 
     /**
-     * Builds the station selection HTML form field.
+     * Builds the dish selection HTML form field.
      */
-    _buildStationSelect(data, eventsList = []) {
-        const phaseFilters = ["Airstrip", "AAVS3", "AA0.5", "AA1"];
-        const clusterFilters = ["S8", "S9", "S10"];
-        const stations = this.stationDataManager.getStationsByPhase(phaseFilters);
+    _buildDishSelect(data, eventsList = []) {
+        const phaseFilters = ["Airstrip", "AA0.5", "AA1", "AA2", "AAstar"];
+        //const clusterFilters = ["S8", "S9", "S10"];
+        const dishes = this.dishDataManager.getDishesByPhase(phaseFilters);
 
         const phaseOptionsHtml = phaseFilters.map(phase =>
             `<option value="${phase}">${phase}</option>`
         ).join("");
 
-        const clusterOptionsHtml = clusterFilters.map(cluster =>
-            `<option value="${cluster}">${cluster}</option>`
-        ).join("");
+        //const clusterOptionsHtml = clusterFilters.map(cluster =>
+        //    `<option value="${cluster}">${cluster}</option>`
+        //).join("");
 
-        const stationOptionsHtml = stations.map(station => {
-            const selected = data.resource.includes(station.Label) ? 'selected' : '';
-            const busy = data.start && data.end ? this._isStationBusy(station.Label, data.start, data.end, eventsList) : false;
+        const dishOptionsHtml = dishes.map(dish => {
+            const selected = data.resource.includes(dish.Label) ? 'selected' : '';
+            const busy = data.start && data.end ? this._isDishBusy(dish.Label, data.start, data.end, eventsList) : false;
             const dot = busy ? '🔴' : '🟢';
-            const cluster = clusterFilters.find(c => station.Label.startsWith(c)) ?? '';
-            return `<option value="${station.Label}" data-phase="${station.Phase}" data-cluster="${cluster}" ${selected}>${dot} ${station.Label}</option>`;
+            //const cluster = clusterFilters.find(c => dish.Label.startsWith(c)) ?? '';
+            return `<option value="${dish.Label}" data-phase="${dish.Phase}" ${selected}>${dot} ${dish.Label}</option>`; //data-cluster="${cluster}"
         }).join("");
 
         const html = `
@@ -495,28 +495,28 @@ class EventFormManager {
                 </div>
             </div>
             <div style="flex:1; display:flex; flex-direction:column;">
-                <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Stations</div>
-                <select id="station-multiselect" size="18" multiple style="width:100%; flex:1;">
-                    ${stationOptionsHtml}
+                <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Dishes</div>
+                <select id="dish-multiselect" size="18" multiple style="width:100%; flex:1;">
+                    ${dishOptionsHtml}
                 </select>
             </div>
         </div>`;
 
-        return { name: "Stations", id: "text", type: "html", html };
+        return { name: "Dishes", id: "text", type: "html", html };
     }
 
     /**
-     * Attaches change listeners to the phase, cluster, and station multiselects.
+     * Attaches change listeners to the phase, cluster, and dish multiselects.
      */
-    _setupStationListeners() {
+    _setupDishListeners() {
         const phaseSelect = document.getElementById('phase-multiselect');
         const clusterSelect = document.getElementById('cluster-multiselect');
-        const stationSelect = document.getElementById('station-multiselect');
+        const dishSelect = document.getElementById('dish-multiselect');
 
         phaseSelect.addEventListener('change', () => {
             const selectedPhases = Array.from(phaseSelect.selectedOptions).map(o => o.value);
             Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
-            Array.from(stationSelect.options).forEach(opt => {
+            Array.from(dishSelect.options).forEach(opt => {
                 opt.selected = selectedPhases.includes(opt.dataset.phase);
             });
         });
@@ -524,12 +524,12 @@ class EventFormManager {
         clusterSelect.addEventListener('change', () => {
             const selectedClusters = Array.from(clusterSelect.selectedOptions).map(o => o.value);
             Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
-            Array.from(stationSelect.options).forEach(opt => {
+            Array.from(dishSelect.options).forEach(opt => {
                 opt.selected = selectedClusters.includes(opt.dataset.cluster);
             });
         });
 
-        stationSelect.addEventListener('change', () => {
+        dishSelect.addEventListener('change', () => {
             Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
             Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
         });
@@ -612,12 +612,12 @@ class EventFormManager {
     }
 
     /**
-     * Handles form close: extracts station selections, datetime values, and the
+     * Handles form close: extracts dish selections, datetime values, and the
      * built RRULE string from the DOM and writes them back to modal.result.
      */
     _handleFormClose(modal) {
-        // Capture station selections
-        const selectEl = document.getElementById("station-multiselect");
+        // Capture dish selections
+        const selectEl = document.getElementById("dish-multiselect");
         if (selectEl && modal.result) {
             modal.result.resource = Array.from(selectEl.selectedOptions).map(opt => opt.value);
         }
