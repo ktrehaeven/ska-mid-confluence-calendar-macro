@@ -1,12 +1,12 @@
-.ska-low-map-macro {
+.ska-mid-map-macro {
     width: 100%;
 }
 
-.ska-low-map-macro .map-wrapper {
+.ska-mid-map-macro .map-wrapper {
     width: 100%;
 }
 
-.ska-low-map-macro .map {
+.ska-mid-map-macro .map {
     height: 400px;
     width: 100%;
     position: relative;
@@ -14,19 +14,19 @@
 }
 
 /* prevent macro sliding over browser banner */
-.ska-low-map-macro .leaflet-container {
+.ska-mid-map-macro .leaflet-container {
     z-index: 1;
 }
 
-.ska-low-map-macro .leaflet-pane,
-.ska-low-map-macro .leaflet-top,
-.ska-low-map-macro .leaflet-bottom {
+.ska-mid-map-macro .leaflet-pane,
+.ska-mid-map-macro .leaflet-top,
+.ska-mid-map-macro .leaflet-bottom {
     z-index: 2;
 }
 
 /* ------------------------ */
 
-.ska-low-station-bookings-macro {
+.ska-mid-dish-bookings-macro {
     width: 100%;
     display: flex;
     flex-direction: row;
@@ -35,14 +35,14 @@
 
 /* nav panel holds navigator and filter input */
 
-.ska-low-station-bookings-macro .nav-panel {
+.ska-mid-dish-bookings-macro .nav-panel {
     display: flex;
     flex-direction: column;
     min-width: 210px;
 }
 
 
-.ska-low-station-bookings-macro .row-filter-container {
+.ska-mid-dish-bookings-macro .row-filter-container {
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -53,13 +53,13 @@
     box-sizing: border-box;
 }
 
-.ska-low-station-bookings-macro .row-filter-row {
+.ska-mid-dish-bookings-macro .row-filter-row {
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
-.ska-low-station-bookings-macro .row-filter-input {
+.ska-mid-dish-bookings-macro .row-filter-input {
     padding: 6px 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -69,7 +69,7 @@
     outline: none;
 }
 
-.ska-low-station-bookings-macro .row-filter-clear {
+.ska-mid-dish-bookings-macro .row-filter-clear {
     padding: 6px 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -80,25 +80,25 @@
     display: none;
 }
 
-.ska-low-station-bookings-macro .daypilot-nav {
+.ska-mid-dish-bookings-macro .daypilot-nav {
     width: 100%;
     min-width: 210px;
 }
 
-.ska-low-station-bookings-macro .navigator_default_todaybox {
+.ska-mid-dish-bookings-macro .navigator_default_todaybox {
     border: 2px solid #070068;
     position: absolute;
     z-index: 20;
 }
 
-.ska-low-station-bookings-macro .navigator_default_select .navigator_default_cell_box {
+.ska-mid-dish-bookings-macro .navigator_default_select .navigator_default_cell_box {
     background-color: #E70068;
     opacity: .5;
     position: absolute;
     z-index: 1;
 }
 
-.ska-low-station-bookings-macro .nav-footer {
+.ska-mid-dish-bookings-macro .nav-footer {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -107,20 +107,20 @@
     justify-content: center;
 }
 
-.ska-low-station-bookings-macro .nav-footer-logo {
+.ska-mid-dish-bookings-macro .nav-footer-logo {
     height: 20px;
     width: auto;
     opacity: 0.7;
 }
 
-.ska-low-station-bookings-macro .nav-footer-text {
+.ska-mid-dish-bookings-macro .nav-footer-text {
     font-size: 11px;
     color: #a5adba;
 }
 
 /* scheduler */
 
-.ska-low-station-bookings-macro .daypilot {
+.ska-mid-dish-bookings-macro .daypilot {
     width: 100%;
     position: relative;
     overflow: hidden;

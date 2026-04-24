@@ -1,15 +1,15 @@
 /**
- * Macro Browser Override for SKA-Low Station Bookings Macro
+ * Macro Browser Override for SKA-Mid Dish Bookings Macro
  *
  * Registers a custom field override with the Confluence Macro Browser so that
- * the "Calendar" parameter on the ska-low-station-bookings-macro renders as a
+ * the "Calendar" parameter on the ska-mid-dish-bookings-macro renders as a
  * multi-select calendar picker rather than a plain text input.
  *
  * This file is loaded automatically by Confluence whenever the Macro Browser
  * opens, via the <context>macro-browser</context> declaration in atlassian-plugin.xml.
  *
  * The selected calendar IDs are stored as a comma-separated string in the
- * hidden macro parameter named "id", and are embedded by SkaLowStationBookings.java
+ * hidden macro parameter named "id", and are embedded by SkaMidDishBookings.java
  * as a data-calendar-ids attribute on the macro wrapper div at render time.
  */
 (function ($, Meta) {
@@ -160,7 +160,7 @@
         };
     }
 
-    AJS.MacroBrowser.setMacroJsOverride('ska-low-station-bookings-macro', {
+    AJS.MacroBrowser.setMacroJsOverride('ska-mid-dish-bookings-macro', {
         fields: getFieldsOverride()
     });
 

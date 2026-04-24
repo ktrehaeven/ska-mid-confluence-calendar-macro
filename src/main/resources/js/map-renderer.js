@@ -2,8 +2,8 @@
  * Manages the map display and interactions
  */
 class MapRenderer {
-    constructor(stationDataManager, onMarkerClick = null) {
-        this.stationDataManager = stationDataManager;
+    constructor(dishDataManager, onMarkerClick = null) {
+        this.dishDataManager = dishDataManager;
         this.map = null;
         this.onMarkerClick = onMarkerClick;
         this.isInitialized = false;
@@ -19,16 +19,16 @@ class MapRenderer {
         this.isInitialized = true;
 
         // Initialize Leaflet map
-        const centreStation = this.stationDataManager.getStation('S8-1');
+        const centreDish = this.dishDataManager.getDish('SKA001');
         this.map = L.map(mapEl).setView([
-            centreStation.Latitude,
-            centreStation.Longitude
+            centreDish.Latitude,
+            centreDish.Longitude
         ], 13);
 
         this._addControls();
         this._addTileLayer();
         this._addAirstrip();
-        this._addStationMarkers();
+        this._addDishMarkers();
     }
 
     /**
@@ -58,9 +58,9 @@ class MapRenderer {
      */
     _addAirstrip() {
         const airstripPolyline = L.polyline([
-            ["-26.84110", "116.73869"],
-            ["-26.84114", "116.74569"],
-            ["-26.84114", "116.75297"]
+            ["-30.693786", "21.461036"],
+            ["-30.688743", "21.457668"],
+            ["-30.683631", "21.454252"],
         ], {
             color: 'black',
             weight: 5,
@@ -72,30 +72,30 @@ class MapRenderer {
         }).addTo(this.map);
 
         // Store airstrip marker reference
-        const airstripData = this.stationDataManager.getStation('Airstrip');
+        const airstripData = this.dishDataManager.getDish('Airstrip');
         if (airstripData) {
             airstripData.marker = airstripPolyline;
         }
     }
 
     /**
-     * Adds a circle marker for each station (excluding Airstrip and Centre)
+     * Adds a circle marker for each dish (excluding Airstrip and Centre)
      * Markers fire the onMarkerClick callback when clicked
      * @private
      */
-    _addStationMarkers() {
-        Object.entries(this.stationDataManager.stationData).forEach(([key, station]) => {
-            if (station.Label === 'Airstrip' || station.Label === 'Centre') return;
+    _addDishMarkers() {
+        Object.entries(this.dishDataManager.dishData).forEach(([key, dish]) => {
+            if (dish.Label === 'Airstrip' || dish.Label === 'Centre') return;
 
             const marker = L.circleMarker(
-                [station.Latitude, station.Longitude],
+                [dish.Latitude, dish.Longitude],
                 {
                     radius: 8,
                     color: '#070068',
                     fillColor: '#ffffff',
                     fillOpacity: 0.8
                 }
-            ).bindTooltip(station.Label, {
+            ).bindTooltip(dish.Label, {
                 permanent: false,
                 direction: "right",
                 offset: [10, 0],
@@ -106,11 +106,11 @@ class MapRenderer {
                 if (this.onMarkerClick) this.onMarkerClick(key);
             });
 
-            station.marker = marker;
+            dish.marker = marker;
         });
 
         // Remove airstrip marker if it was added as a circle
-        const airstripMarker = this.stationDataManager.getStation('Airstrip')?.marker;
+        const airstripMarker = this.dishDataManager.getDish('Airstrip')?.marker;
         if (airstripMarker && airstripMarker._latlng) {
             this.map.removeLayer(airstripMarker);
         }
@@ -121,11 +121,11 @@ class MapRenderer {
      */
     resetTooltips() {
         if (!this.map) return;
-        this.stationDataManager.stationList.forEach(station => {
-            const marker = this.stationDataManager.getStation(station.id)?.marker;
+        this.dishDataManager.dishList.forEach(dish => {
+            const marker = this.dishDataManager.getDish(dish.id)?.marker;
             if (!marker) return;
             marker.unbindTooltip();
-            marker.bindTooltip(station.id, {
+            marker.bindTooltip(dish.id, {
                 permanent: false,
                 direction: "right",
                 offset: [10, 0],
@@ -139,39 +139,39 @@ class MapRenderer {
      */
     resetView() {
         if (!this.map) return;
-        const centreStation = this.stationDataManager.getStation('S8-1');
+        const centreDish = this.dishDataManager.getDish('SKA001');
         this.map.flyTo([
-            centreStation.Latitude,
-            centreStation.Longitude
+            centreDish.Latitude,
+            centreDish.Longitude
         ], 13, { animate: true, duration: 0.5 });
     }
 
     /**
-     * Pans to a specific station
-     * @param {string} stationId - Station label/ID
+     * Pans to a specific dish
+     * @param {string} dishId - Dish label/ID
      */
-    zoomToStation(stationId) {
+    zoomToDish(dishId) {
         if (!this.map) return;
-        const station = this.stationDataManager.getStation(stationId);
-        if (!station) return;
+        const dish = this.dishDataManager.getDish(dishId);
+        if (!dish) return;
 
         this.map.flyTo(
-            [station.Latitude, station.Longitude],
+            [dish.Latitude, dish.Longitude],
             this.map.getZoom(),
             { animate: true, duration: 0.5 }
         );
     }
 
     /**
-     * Highlights the given stations in pink and opens their tooltips
-     * Resets all other highlighted stations back to white
-     * @param {string[]} resources - Station IDs to highlight
+     * Highlights the given dishes in pink and opens their tooltips
+     * Resets all other highlighted dishes back to white
+     * @param {string[]} resources - Dish IDs to highlight
      */
-    highlightStations(resources) {
-        this.stationDataManager.stationList.forEach(station => {
-            const marker = this.stationDataManager.getStation(station.id)?.marker;
+    highlightDishes(resources) {
+        this.dishDataManager.dishList.forEach(dish => {
+            const marker = this.dishDataManager.getDish(dish.id)?.marker;
             if (!marker) return;
-            if (resources.some(r => r === station.id)) {
+            if (resources.some(r => r === dish.id)) {
                 marker.setStyle({ fillColor: '#E70068' });
                 marker.openTooltip();
             } else if (marker.options.fillColor !== '#ffffff') {
@@ -181,17 +181,17 @@ class MapRenderer {
     }
 
     /**
-     * Opens a station's tooltip permanently so it persists on hover
-     * @param {string[]} stations - Station IDs to make permanent
+     * Opens a dish's tooltip permanently so it persists on hover
+     * @param {string[]} dishes - Dish IDs to make permanent
      */
-    openTooltips(stations) {
-        if (!stations) return;
-        this.stationDataManager.stationList.forEach(station => {
-            const marker = this.stationDataManager.getStation(station.id)?.marker;
+    openTooltips(dishes) {
+        if (!dishes) return;
+        this.dishDataManager.dishList.forEach(dish => {
+            const marker = this.dishDataManager.getDish(dish.id)?.marker;
             if (!marker) return;
-            if (stations.some(s => s === station.id)) {
+            if (dishes.some(s => s === dish.id)) {
                 marker.unbindTooltip();
-                marker.bindTooltip(station.id, {
+                marker.bindTooltip(dish.id, {
                     permanent: true,
                     direction: "right",
                     offset: [10, 0],

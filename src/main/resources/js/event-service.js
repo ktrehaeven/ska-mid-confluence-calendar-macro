@@ -9,8 +9,8 @@
  * }
  */
 class EventService {
-    constructor(stationDataManager) {
-        this.stationDataManager = stationDataManager;
+    constructor(dishDataManager) {
+        this.dishDataManager = dishDataManager;
         this.subCalendarIds = [];
         this.childSubCalendarsByEventId = {};
         this.user = null;
@@ -171,7 +171,7 @@ class EventService {
                 AJS.contextPath() +
                 `/rest/calendar-services/1.0/calendar/events.json` +
                 `?subCalendarId=${eventType.childSubCalendarId}` +
-                `&userTimeZoneId=Australia/Perth` +
+                `&userTimeZoneId=South Africa/Johannesburg` +
                 `&start=${start}` +
                 `&end=${end}`
             );
@@ -218,7 +218,7 @@ class EventService {
     // ─── Event conversion ──────────────────────────────────────────────────────
 
     /**
-     * Converts a Confluence event to DayPilot events (one per station)
+     * Converts a Confluence event to DayPilot events (one per dish)
      * NOTE: confluence event field subCalendarId is actually the childSubCalendarId
      * The parent calendarId must be looked up via the hierarchy map
      * @param {Object} event - Confluence event object
@@ -253,20 +253,20 @@ class EventService {
     }
 
     /**
-     * Extracts station IDs mentioned in event title, description or where field
+     * Extracts dish IDs mentioned in event title, description or where field
      * @param {Object} event - Confluence Event object
-     * @returns {Array<string>} Array of matching station IDs
+     * @returns {Array<string>} Array of matching dish IDs
      */
     extractResourcesFromEvent(event) {
-        const stationIds = this.stationDataManager.getAllStationLabels();
+        const dishIds = this.dishDataManager.getAllDishLabels();
         // use where field preferably, otherwise check both title and description
         // filter out EMS generated cluster where fields since they are not specific/accurate
         const haystack = event.where && !event.where.includes("Cluster (") ? event.where
             : (event.title ?? '') + ' ' + (event.description ?? '');
 
         const normalisedHaystack = haystack
-            .replace(/\bS0*(\d+)/gi, 'S$1') //removing leading zeros (e.g. S08 → S8)
-            .replace(/\s*-\s*/g, '-') // removing spaces around dashes (e.g. S8 - 1 → S8-1)
+        //    .replace(/\bS0*(\d+)/gi, 'S$1') //removing leading zeros (e.g. S08 → S8)
+        //    .replace(/\s*-\s*/g, '-') // removing spaces around dashes (e.g. S8 - 1 → S8-1)
             .toUpperCase();
 
         const matched = new Set();
@@ -280,24 +280,24 @@ class EventService {
         for (const phase of phaseMatches) {
             const phasesToInclude = PHASE_MAP[phase.toUpperCase()] ?? [phase];
             for (const p of phasesToInclude) {
-                for (const s of this.stationDataManager.getStationsByPhase(p)) {
+                for (const s of this.dishDataManager.getDishesByPhase(p)) {
                     matched.add(s.Label);
                 }
             }
         }
 
         // --- Rule 2: Bare S8 / S9 / S10 → wildcard to all S8-x, S9-x, S10-x ---
-        const bareGroupMatches = normalisedHaystack.match(/\bS(10|[89])(?!-\d)\b/gi) ?? [];
-        for (const bare of bareGroupMatches) {
-            const prefix = bare.toUpperCase() + '-';
-            for (const id of stationIds) {
-                if (id.toUpperCase().startsWith(prefix)) matched.add(id);
-            }
-        }
+        //const bareGroupMatches = normalisedHaystack.match(/\bS(10|[89])(?!-\d)\b/gi) ?? [];
+        //for (const bare of bareGroupMatches) {
+        //    const prefix = bare.toUpperCase() + '-';
+        //    for (const id of dishIds) {
+        //        if (id.toUpperCase().startsWith(prefix)) matched.add(id);
+        //    }
+        //}
 
         // --- Rule 3: direct label matching ---
-        for (const stationId of stationIds) {
-            if (normalisedHaystack.includes(stationId.toUpperCase())) matched.add(stationId);
+        for (const dishId of dishIds) {
+            if (normalisedHaystack.includes(dishId.toUpperCase())) matched.add(dishId);
         }
 
         return [...matched];
@@ -347,7 +347,7 @@ class EventService {
             where: formData.resource,
             description: formData.description,
             eventType: "custom",
-            userTimeZoneId: "Australia/Perth",
+            userTimeZoneId: "South Africa/Johannesburg",
             rruleStr: formData.rruleStr || "",
             until: formData.until || "",
             editAllInRecurrenceSeries: formData.editAllInRecurrenceSeries || false,
@@ -480,7 +480,7 @@ class EventService {
      * Formats a date using Intl.DateTimeFormat
      * @private
      */
-    _formatDateWithIntl(dateString, options, timeZone = "Australia/Perth") {
+    _formatDateWithIntl(dateString, options, timeZone = "South Africa/Johannesburg") {
         const dateObject = new Date(dateString);
         return new Intl.DateTimeFormat('en-US', { ...options, timeZone }).format(dateObject);
     }

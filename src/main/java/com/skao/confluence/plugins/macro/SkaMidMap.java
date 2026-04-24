@@ -7,11 +7,11 @@ import com.atlassian.plugin.webresource.WebResourceManager;
 
 import java.util.Map;
 
-public class SkaLowMap implements Macro {
+public class SkaMidMap implements Macro {
 
     private final WebResourceManager webResourceManager;
 
-    public SkaLowMap(WebResourceManager webResourceManager) {
+    public SkaMidMap(WebResourceManager webResourceManager) {
         this.webResourceManager = webResourceManager;
     }
 
@@ -20,11 +20,11 @@ public class SkaLowMap implements Macro {
             throws MacroExecutionException {
 
         // Require the web resources for this macro
-        webResourceManager.requireResource("com.skao.confluence.plugins.ska-low-confluence-calendar-macro:leaflet-resources");
-        webResourceManager.requireResource("com.skao.confluence.plugins.ska-low-confluence-calendar-macro:ska-low-bootstrap-js");
+        webResourceManager.requireResource("com.skao.confluence.plugins.ska-mid-confluence-calendar-macro:leaflet-resources");
+        webResourceManager.requireResource("com.skao.confluence.plugins.ska-mid-confluence-calendar-macro:ska-mid-bootstrap-js");
 
         // HTML wrapper for the Leaflet map
-        return "<div class='ska-low-map-macro'>" +  
+        return "<div class='ska-mid-map-macro'>" +  
             " <div class='map-wrapper'>" +
             " <div class='map'></div>" +
             "</div>" +
