@@ -8,7 +8,7 @@ This is developed using the [Atlassian Plugin SDK](https://developer.atlassian.c
 
 ## Local Installation
 
-Clone this repository and navigate to the top level of the directory in a terminal.
+Clone this repository and navigate to the top level of the directory in a terminal. Make sure it is Java 11, Atlassian Plugin SDK is not compatible with Java 17+ ensure `JAVA_HOME` points to a Java 11 installation:
 
 `atlas-run` will setup a fresh local instance of Confluence.
 
@@ -19,7 +19,7 @@ Go to the [local url](http://localhost:1990/confluence/plugins/servlet/upm) in y
 Navigate to the top level of the directory in another terminal.
 
 `atlas-mvn package` will package the macro into a .jar and .obr file. These are automatically installed onto the local Confluence instance and can now be added to a page by searching for SKA-Mid Dish Bookings and SKA-Mid Map in the macro browser. A calendar will need to be imported or created on the Confluence instance to view events on the macro.
-
+When installing onto a Confluence instance via the Manage Apps page, always upload the `.obr` file as well. The `.obr` bundles all dependencies and is required for the calendar macro to function correctly. The `.jar` alone will only partially install the plugin (the map macro may appear but the calendar macro will not).
 ## Deployment
 
 Use `atlas-mvn clean package` to package for deployment onto an external Confluence, which ensures there are no conflicting files. Note this will also recreate a clean local instance of Confluence from scratch, removing any pages/calenders etc. created on previous instances. The resultant file at target/ska-mid-confluence-calendar-macro-X.X.X.obr can now be installed onto an external Confluence via the Manage Apps page. This file contains all dependencies and components necessary for the macro to be installed and run.
