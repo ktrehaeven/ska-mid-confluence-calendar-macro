@@ -36,7 +36,7 @@ Below is a diagram of the code architecture.
 
 This tool is designed specifically for the SKA-Mid telescope however could be adapted to be used in other contexts. The SKA-Mid specifics that would need changing include:
 
-- Timezone is locked to South Africa/Johannesburg
+- Timezone is locked to Africa/Johannesburg
 - Dish and Project Phase naming conventions
 - Dish data .json file
 

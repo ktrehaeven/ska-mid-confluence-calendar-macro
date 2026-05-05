@@ -458,7 +458,7 @@ class EventFormManager {
      * Builds the dish selection HTML form field.
      */
     _buildDishSelect(data, eventsList = []) {
-        const phaseFilters = ["Airstrip", "AA0.5", "AA1", "AA2", "AAstar"];
+        const phaseFilters = ["Airstrip", "MKT", "AA0_5", "AA1", "AA2", "AAstar", "AA4"];
         //const clusterFilters = ["S8", "S9", "S10"];
         const dishes = this.dishDataManager.getDishesByPhase(phaseFilters);
 
@@ -479,28 +479,23 @@ class EventFormManager {
         }).join("");
 
         const html = `
-        <div style="display:flex; gap:12px; width:100%; align-items:stretch;">
-            <div style="display:flex; flex-direction:column; gap:8px; flex:0 0 100px;">
-                <div style="display:flex; flex-direction:column; flex:1;">
-                    <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Phase</div>
-                    <select id="phase-multiselect" multiple style="width:100%; flex:1;">
-                        ${phaseOptionsHtml}
-                    </select>
+            <div style="display:flex; gap:12px; width:100%; align-items:stretch;">
+                <div style="display:flex; flex-direction:column; gap:8px; flex:0 0 100px;">
+                    <div style="display:flex; flex-direction:column; flex:1;">
+                        <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Phase</div>
+                        <select id="phase-multiselect" multiple style="width:100%; flex:1;">
+                            ${phaseOptionsHtml}
+                        </select>
+                    </div>
                 </div>
-                <div style="display:flex; flex-direction:column; flex:1;">
-                    <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Cluster</div>
-                    <select id="cluster-multiselect" multiple style="width:100%; flex:1;">
-                        ${clusterOptionsHtml}
+                <div style="flex:1; display:flex; flex-direction:column;">
+                    <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Dishes</div>
+                    <select id="dish-multiselect" size="18" multiple style="width:100%; flex:1;">
+                        ${dishOptionsHtml}
                     </select>
                 </div>
             </div>
-            <div style="flex:1; display:flex; flex-direction:column;">
-                <div style="font-size:14px; font-weight:400; margin-bottom:4px;">Dishes</div>
-                <select id="dish-multiselect" size="18" multiple style="width:100%; flex:1;">
-                    ${dishOptionsHtml}
-                </select>
-            </div>
-        </div>`;
+        `;
 
         return { name: "Dishes", id: "text", type: "html", html };
     }
@@ -510,28 +505,28 @@ class EventFormManager {
      */
     _setupDishListeners() {
         const phaseSelect = document.getElementById('phase-multiselect');
-        const clusterSelect = document.getElementById('cluster-multiselect');
+        //const clusterSelect = document.getElementById('cluster-multiselect');
         const dishSelect = document.getElementById('dish-multiselect');
 
         phaseSelect.addEventListener('change', () => {
             const selectedPhases = Array.from(phaseSelect.selectedOptions).map(o => o.value);
-            Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
+            //Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
             Array.from(dishSelect.options).forEach(opt => {
                 opt.selected = selectedPhases.includes(opt.dataset.phase);
             });
         });
 
-        clusterSelect.addEventListener('change', () => {
-            const selectedClusters = Array.from(clusterSelect.selectedOptions).map(o => o.value);
-            Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
-            Array.from(dishSelect.options).forEach(opt => {
-                opt.selected = selectedClusters.includes(opt.dataset.cluster);
-            });
-        });
+        //clusterSelect.addEventListener('change', () => {
+        //    const selectedClusters = Array.from(clusterSelect.selectedOptions).map(o => o.value);
+        //    Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
+        //    Array.from(dishSelect.options).forEach(opt => {
+        //        opt.selected = selectedClusters.includes(opt.dataset.cluster);
+        //    });
+        //});
 
         dishSelect.addEventListener('change', () => {
             Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
-            Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
+            //Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
         });
     }
 

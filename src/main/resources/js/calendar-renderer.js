@@ -41,10 +41,8 @@ class CalendarRenderer {
         const xhair = new DayPilotCrosshair(this.calendar);
         xhair.attach();
 
-        await this.eventService.loadCalendars(wrapper);
         await this.eventService.getCurrentUser();
-        this.calendar.events.list = await this.eventService.fetchAllEvents();
-        this._startAutoRefresh();
+        //this._startAutoRefresh();
         this.refresh();
     }
 
@@ -107,7 +105,7 @@ class CalendarRenderer {
      */
     async _updateCurrentTimeLine() {
 
-        const now = new DayPilot.Date(new Date().toLocaleString("sv-SE", { timeZone: "South Africa/Johannesburg" })).getTime();
+        const now = new DayPilot.Date(new Date().toLocaleString("sv-SE", { timeZone: "Africa/Johannesburg" })).getTime();
         const start = this.calendar.startDate.getTime();
         const end = new DayPilot.Date(this.calendar.startDate).addDays(this.calendar.days).getTime();
 
@@ -160,13 +158,12 @@ class CalendarRenderer {
     /**
      * Updates an existing DayPilot calendar event instance
      * @private
-     * @param {string} confluenceId - Confluence event ID
      * @param {string} resource - Resource/dish ID
      * @param {Object} updatedData - Updated event properties
      * @returns {Object|null} Updated event or null if not found
      */
-    _updateEventInstance(confluenceId, resource, updatedData) {
-        const id = this.eventService.makeEventId(confluenceId, resource);
+    _updateEventInstance(resource, updatedData) {
+        const id = this.eventService.makeEventId(resource);
         const ev = this.calendar.events.find(id);
         if (ev) {
             Object.assign(ev.data, updatedData);
@@ -177,11 +174,10 @@ class CalendarRenderer {
     /**
      * Removes an existing DayPilot calendar event instance
      * @private
-     * @param {string} confluenceId - Confluence event ID
      * @param {string} resource - Resource/dish ID
      */
-    _removeEventInstance(confluenceId, resource) {
-        const id = this.eventService.makeEventId(confluenceId, resource);
+    _removeEventInstance(resource) {
+        const id = this.eventService.makeEventId(resource);
         const ev = this.calendar.events.find(id);
         if (ev) {
             this.calendar.events.remove(ev);
@@ -191,17 +187,15 @@ class CalendarRenderer {
     /**
      * Adds a new DayPilot calendar event instance
      * @private
-     * @param {string} confluenceId - Confluence event ID
      * @param {string} dish - Dish/resource identifier
      * @param {Object} eventData - Event data object
      */
-    _addEventInstance(confluenceId, dish, eventData) {
-        const id = this.eventService.makeEventId(confluenceId, dish);
+    _addEventInstance(dish, eventData) {
+        const id = this.eventService.makeEventId(dish);
         if (!this.calendar.events.find(id)) {
 
             const newEvent = new DayPilot.Event({
-                id: this.eventService.makeEventId(confluenceId, dish),
-                confluenceId: confluenceId,
+                id: this.eventService.makeEventId(dish),
                 text: eventData.text,
                 start: eventData.start,
                 end: eventData.end,
@@ -229,22 +223,22 @@ class CalendarRenderer {
         if (result.deleteScope == "single") {
             // handle single delete without confluence request for faster response
             const events = this.getSiblings(args.e.data);
-            events.forEach(ev => this._removeEventInstance(ev.confluenceId, ev.resource));
-            await this.eventService.deleteEvent(args.e.data, result.deleteScope);
+            events.forEach(ev => this._removeEventInstance(ev.resource));
+            //await this.eventService.deleteEvent(args.e.data, result.deleteScope);
         }
         else {
             // request events from the subcalendar of updated event to update recurrence
-            await this.eventService.deleteEvent(args.e.data, result.deleteScope);
+            //await this.eventService.deleteEvent(args.e.data, result.deleteScope);
             const eventId = args.e.data.customEventTypeId
-            if (eventId) {
-                const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
-                this.calendar.events.list = [
-                    ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
-                    ...updatedEvents
-                ];
+            //if (eventId) {
+            //const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
+            this.calendar.events.list = [
+                ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId)
+            ];
+            //    ...updatedEvents
             }
-            else { this.calendar.events.list = await this.eventService.fetchAllEvents(); }
-        }
+            //else { this.calendar.events.list = await this.eventService.fetchAllEvents(); }
+        
         this.refresh();
     }
 
@@ -260,16 +254,16 @@ class CalendarRenderer {
             start: args.newStart,
             end: args.newEnd
         };
-        events.forEach(ev => this._updateEventInstance(ev.confluenceId, ev.resource, updatedData));
+        events.forEach(ev => this._updateEventInstance(ev.resource, updatedData));
         this.refresh();
         // Prepare form data with all sibling resources for the Confluence API
-        const formData = {
-            ...args.e.data,
-            start: args.newStart,
-            end: args.newEnd,
-            resource: events.map(ev => String(ev.resource)).filter(Boolean)
-        };
-        await this.eventService.updateEvent(formData, args.e.data);
+        //const formData = {
+        //    ...args.e.data,
+        //    start: args.newStart,
+        //    end: args.newEnd,
+        //    resource: events.map(ev => String(ev.resource)).filter(Boolean)
+        //};
+        //await this.eventService.updateEvent(formData, args.e.data);
     }
 
     /**
@@ -279,7 +273,7 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     async _handleEventMove(args) {
-        const newId = this.eventService.makeEventId(args.e.data.confluenceId, args.newResource);
+        const newId = this.eventService.makeEventId(args.newResource);
         // const newId = `${args.e.data.confluenceId}-${args.newResource}`; // fallback without eventService
 
         // catch for moving an event to a resource where a sibling exists
@@ -298,17 +292,17 @@ class CalendarRenderer {
             end: args.newEnd
         };
         events.forEach(ev => {
-            this._updateEventInstance(ev.confluenceId, ev.resource, updatedData);
+            this._updateEventInstance(ev.resource, updatedData);
         });
         this.refresh();
         // Prepare form data with all sibling resources for the Confluence API
-        const formData = {
-            ...args.e.data,
-            start: args.newStart,
-            end: args.newEnd,
-            resource: events.map(ev => String(ev.resource)).filter(Boolean)
-        };
-        await this.eventService.updateEvent(formData, args.e.data);
+        //const formData = {
+        //    ...args.e.data,
+        //    start: args.newStart,
+        //    end: args.newEnd,
+        //    resource: events.map(ev => String(ev.resource)).filter(Boolean)
+        //};
+        //await this.eventService.updateEvent(formData, args.e.data);
     }
 
     /**
@@ -330,16 +324,16 @@ class CalendarRenderer {
         if (!result) return;
 
         //retrieve confluence response so we can use the event id generated
-        const postedEvent = await this.eventService.createEvent(result);
-        if (!postedEvent?.success) return;
+        //const postedEvent = await this.eventService.createEvent(result);
+        //if (!postedEvent?.success) return;
 
-        const eventId = result.customEventTypeId
-        const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
-        this.calendar.events.list = [
-            ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
-            ...updatedEvents
-        ];
-        this.refresh();
+        //const eventId = result.customEventTypeId
+        //const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
+        //this.calendar.events.list = [
+        //    ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
+        //    ...updatedEvents
+        //];
+        //this.refresh();
 
         // // Add new DayPilot events for each selected dish
         // result.resource.forEach(dish => {
@@ -361,9 +355,9 @@ class CalendarRenderer {
         const result = await this.eventFormManager.show(event, this.calendar.events.list);
         if (!result) return;
 
-        await this.eventService.updateEvent(result, event);
+        //await this.eventService.updateEvent(result, event);
 
-        this.calendar.events.list = await this.eventService.fetchAllEvents();
+        //this.calendar.events.list = await this.eventService.fetchAllEvents();
         this.refresh();
         return
 
@@ -518,11 +512,11 @@ class CalendarRenderer {
      * @param {DayPilot.Event} event - The event to find siblings for
      * @returns {Array} Array of sibling events
      */
-    getSiblings(event) {
-        return this.calendar.events.list.filter(
-            ev => ev.confluenceId === event.confluenceId
-        );
-    }
+    //getSiblings(event) {
+    //    return this.calendar.events.list.filter(
+    //        ev => ev.confluenceId === event.confluenceId
+    //    );
+    //}
 
     /**
      * Selects a dish, updating selection state and syncing the map
@@ -553,7 +547,7 @@ class CalendarRenderer {
      */
     _startAutoRefresh(intervalMs = 300000) {
         this._refreshInterval = setInterval(async () => {
-            this.calendar.events.list = await this.eventService.fetchAllEvents();
+            //this.calendar.events.list = await this.eventService.fetchAllEvents();
             this.refresh()
         },
             intervalMs);
@@ -566,7 +560,7 @@ class CalendarRenderer {
      */
     async _onVisibilityChange() {
         if (document.visibilityState === 'visible') {
-            this.calendar.events.list = await this.eventService.fetchAllEvents();
+            //this.calendar.events.list = await this.eventService.fetchAllEvents();
             this.refresh()
         }
     }

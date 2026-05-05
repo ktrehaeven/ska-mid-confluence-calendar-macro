@@ -11,7 +11,7 @@
         "Project Stage": "Airstrip"
     },
     {
-        "Dish ID": "M000",
+        "Dish ID": "0",
         "Label": "M000",
         "Latitude": "-30.71292499",
         "Longitude": "21.44380263",
@@ -19,10 +19,10 @@
         "ECEF-X": "5109271.497",
         "ECEF-Y": "2006808.893",
         "ECEF-Z": "-3239130.736",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M001",
+        "Dish ID": "1",
         "Label": "M001",
         "Latitude": "-30.71260458",
         "Longitude": "21.44390058",
@@ -30,10 +30,10 @@
         "ECEF-X": "5109284.854",
         "ECEF-Y": "2006824.222",
         "ECEF-Z": "-3239100.126",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M002",
+        "Dish ID": "2",
         "Label": "M002",
         "Latitude": "-30.71307782",
         "Longitude": "21.4435537",
@@ -41,10 +41,10 @@
         "ECEF-X": "5109272.199",
         "ECEF-Y": "2006783.546",
         "ECEF-Z": "-3239145.33",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M003",
+        "Dish ID": "3",
         "Label": "M003",
         "Latitude": "-30.71287977",
         "Longitude": "21.44319459",
@@ -52,10 +52,10 @@
         "ECEF-X": "5109294.929",
         "ECEF-Y": "2006755.51",
         "ECEF-Z": "-3239126.266",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M004",
+        "Dish ID": "4",
         "Label": "M004",
         "Latitude": "-30.71333673",
         "Longitude": "21.44259852",
@@ -63,10 +63,10 @@
         "ECEF-X": "5109291.902",
         "ECEF-Y": "2006692.968",
         "ECEF-Z": "-3239169.946",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M005",
+        "Dish ID": "5",
         "Label": "M005",
         "Latitude": "-30.71360886",
         "Longitude": "21.44282331",
@@ -74,10 +74,10 @@
         "ECEF-X": "5109269.975",
         "ECEF-Y": "2006707.493",
         "ECEF-Z": "-3239196.073",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M006",
+        "Dish ID": "6",
         "Label": "M006",
         "Latitude": "-30.71371986",
         "Longitude": "21.44369859",
@@ -85,10 +85,10 @@
         "ECEF-X": "5109233.718",
         "ECEF-Y": "2006783.345",
         "ECEF-Z": "-3239206.815",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M007",
+        "Dish ID": "7",
         "Label": "M007",
         "Latitude": "-30.71468757",
         "Longitude": "21.44295373",
@@ -96,10 +96,10 @@
         "ECEF-X": "5109209.263",
         "ECEF-Y": "2006697.072",
         "ECEF-Z": "-3239299.367",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M008",
+        "Dish ID": "8",
         "Label": "M008",
         "Latitude": "-30.71588066",
         "Longitude": "21.44291264",
@@ -107,10 +107,10 @@
         "ECEF-X": "5109148.356",
         "ECEF-Y": "2006668.922",
         "ECEF-Z": "-3239413.452",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M009",
+        "Dish ID": "9",
         "Label": "M009",
         "Latitude": "-30.7144019",
         "Longitude": "21.44422662",
@@ -118,10 +118,10 @@
         "ECEF-X": "5109180.035",
         "ECEF-Y": "2006816.61",
         "ECEF-Z": "-3239272.322",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M010",
+        "Dish ID": "10",
         "Label": "M010",
         "Latitude": "-30.71567185",
         "Longitude": "21.44480843",
@@ -129,10 +129,10 @@
         "ECEF-X": "5109093.557",
         "ECEF-Y": "2006842.527",
         "ECEF-Z": "-3239393.924",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M011",
+        "Dish ID": "11",
         "Label": "M011",
         "Latitude": "-30.71423075",
         "Longitude": "21.4447658",
@@ -140,10 +140,10 @@
         "ECEF-X": "5109170.181",
         "ECEF-Y": "2006868.236",
         "ECEF-Z": "-3239256.012",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M012",
+        "Dish ID": "12",
         "Label": "M012",
         "Latitude": "-30.71437675",
         "Longitude": "21.4453504",
@@ -151,10 +151,10 @@
         "ECEF-X": "5109142.247",
         "ECEF-Y": "2006917.437",
         "ECEF-Z": "-3239270.083",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M013",
+        "Dish ID": "13",
         "Label": "M013",
         "Latitude": "-30.71460393",
         "Longitude": "21.44636051",
@@ -162,10 +162,10 @@
         "ECEF-X": "5109095.433",
         "ECEF-Y": "2007003.019",
         "ECEF-Z": "-3239292.087",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M014",
+        "Dish ID": "14",
         "Label": "M014",
         "Latitude": "-30.71363293",
         "Longitude": "21.44681848",
@@ -173,10 +173,10 @@
         "ECEF-X": "5109130.11",
         "ECEF-Y": "2007063.781",
         "ECEF-Z": "-3239199.224",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M015",
+        "Dish ID": "15",
         "Label": "M015",
         "Latitude": "-30.71303186",
         "Longitude": "21.44608755",
@@ -184,10 +184,10 @@
         "ECEF-X": "5109186.747",
         "ECEF-Y": "2007010.793",
         "ECEF-Z": "-3239141.508",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M016",
+        "Dish ID": "16",
         "Label": "M016",
         "Latitude": "-30.71273181",
         "Longitude": "21.44689663",
@@ -195,10 +195,10 @@
         "ECEF-X": "5109174.268",
         "ECEF-Y": "2007089.172",
         "ECEF-Z": "-3239112.935",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M017",
+        "Dish ID": "17",
         "Label": "M017",
         "Latitude": "-30.71206798",
         "Longitude": "21.4459725",
@@ -206,10 +206,10 @@
         "ECEF-X": "5109240.954",
         "ECEF-Y": "2007020.245",
         "ECEF-Z": "-3239049.219",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M018",
+        "Dish ID": "18",
         "Label": "M018",
         "Latitude": "-30.71327292",
         "Longitude": "21.44499245",
@@ -217,10 +217,10 @@
         "ECEF-X": "5109212.231",
         "ECEF-Y": "2006908.083",
         "ECEF-Z": "-3239164.381",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M019",
+        "Dish ID": "19",
         "Label": "M019",
         "Latitude": "-30.71362782",
         "Longitude": "21.44567154",
@@ -228,10 +228,10 @@
         "ECEF-X": "5109170.172",
         "ECEF-Y": "2006961.461",
         "ECEF-Z": "-3239198.492",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M020",
+        "Dish ID": "20",
         "Label": "M020",
         "Latitude": "-30.71375783",
         "Longitude": "21.44490153",
@@ -239,10 +239,10 @@
         "ECEF-X": "5109190.134",
         "ECEF-Y": "2006890.045",
         "ECEF-Z": "-3239210.786",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M021",
+        "Dish ID": "21",
         "Label": "M021",
         "Latitude": "-30.71400673",
         "Longitude": "21.44079962",
@@ -250,10 +250,10 @@
         "ECEF-X": "5109319.275",
         "ECEF-Y": "2006518.561",
         "ECEF-Z": "-3239233.62",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M022",
+        "Dish ID": "22",
         "Label": "M022",
         "Latitude": "-30.71105059",
         "Longitude": "21.43999565",
@@ -261,10 +261,10 @@
         "ECEF-X": "5109501.278",
         "ECEF-Y": "2006507.282",
         "ECEF-Z": "-3238950.545",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M023",
+        "Dish ID": "23",
         "Label": "M023",
         "Latitude": "-30.7123378",
         "Longitude": "21.44052474",
@@ -272,10 +272,10 @@
         "ECEF-X": "5109415.838",
         "ECEF-Y": "2006528.189",
         "ECEF-Z": "-3239073.856",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M024",
+        "Dish ID": "24",
         "Label": "M024",
         "Latitude": "-30.70970194",
         "Longitude": "21.44022486",
@@ -283,10 +283,10 @@
         "ECEF-X": "5109563.694",
         "ECEF-Y": "2006555.387",
         "ECEF-Z": "-3238821.563",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M025",
+        "Dish ID": "25",
         "Label": "M025",
         "Latitude": "-30.70902082",
         "Longitude": "21.44198952",
@@ -294,10 +294,10 @@
         "ECEF-X": "5109537.966",
         "ECEF-Y": "2006726.924",
         "ECEF-Z": "-3238756.741",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M026",
+        "Dish ID": "26",
         "Label": "M026",
         "Latitude": "-30.71090183",
         "Longitude": "21.44285553",
@@ -305,10 +305,10 @@
         "ECEF-X": "5109409.881",
         "ECEF-Y": "2006765.759",
         "ECEF-Z": "-3238936.951",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M027",
+        "Dish ID": "27",
         "Label": "M027",
         "Latitude": "-30.71126399",
         "Longitude": "21.44431135",
@@ -316,10 +316,10 @@
         "ECEF-X": "5109340.507",
         "ECEF-Y": "2006888.362",
         "ECEF-Z": "-3238971.928",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M028",
+        "Dish ID": "28",
         "Label": "M028",
         "Latitude": "-30.71184169",
         "Longitude": "21.4433547",
@@ -327,10 +327,10 @@
         "ECEF-X": "5109343.517",
         "ECEF-Y": "2006791.074",
         "ECEF-Z": "-3239026.972",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M029",
+        "Dish ID": "29",
         "Label": "M029",
         "Latitude": "-30.71217484",
         "Longitude": "21.44296242",
@@ -338,10 +338,10 @@
         "ECEF-X": "5109339.748",
         "ECEF-Y": "2006749.216",
         "ECEF-Z": "-3239058.765",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M030",
+        "Dish ID": "30",
         "Label": "M030",
         "Latitude": "-30.7100279",
         "Longitude": "21.44567663",
@@ -349,10 +349,10 @@
         "ECEF-X": "5109357.505",
         "ECEF-Y": "2007035.573",
         "ECEF-Z": "-3238853.876",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M031",
+        "Dish ID": "31",
         "Label": "M031",
         "Latitude": "-30.71020999",
         "Longitude": "21.44646243",
@@ -360,10 +360,10 @@
         "ECEF-X": "5109320.535",
         "ECEF-Y": "2007101.937",
         "ECEF-Z": "-3238871.335",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M032",
+        "Dish ID": "32",
         "Label": "M032",
         "Latitude": "-30.70947268",
         "Longitude": "21.44870341",
@@ -371,10 +371,10 @@
         "ECEF-X": "5109280.819",
         "ECEF-Y": "2007317.013",
         "ECEF-Z": "-3238800.999",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M033",
+        "Dish ID": "33",
         "Label": "M033",
         "Latitude": "-30.70326382",
         "Longitude": "21.44994929",
@@ -382,10 +382,10 @@
         "ECEF-X": "5109561.411",
         "ECEF-Y": "2007555.508",
         "ECEF-Z": "-3238207.174",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M034",
+        "Dish ID": "34",
         "Label": "M034",
         "Latitude": "-30.7113108",
         "Longitude": "21.44762358",
@@ -393,10 +393,10 @@
         "ECEF-X": "5109223.045",
         "ECEF-Y": "2007183.162",
         "ECEF-Z": "-3238977.047",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M035",
+        "Dish ID": "35",
         "Label": "M035",
         "Latitude": "-30.71268687",
         "Longitude": "21.44791946",
@@ -404,10 +404,10 @@
         "ECEF-X": "5109141.205",
         "ECEF-Y": "2007181.467",
         "ECEF-Z": "-3239108.906",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M036",
+        "Dish ID": "36",
         "Label": "M036",
         "Latitude": "-30.71367769",
         "Longitude": "21.44794146",
@@ -415,10 +415,10 @@
         "ECEF-X": "5109088.629",
         "ECEF-Y": "2007163.077",
         "ECEF-Z": "-3239203.63",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M037",
+        "Dish ID": "37",
         "Label": "M037",
         "Latitude": "-30.71519775",
         "Longitude": "21.44785832",
@@ -426,10 +426,10 @@
         "ECEF-X": "5109012.51",
         "ECEF-Y": "2007124.615",
         "ECEF-Z": "-3239349.236",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M038",
+        "Dish ID": "38",
         "Label": "M038",
         "Latitude": "-30.71618776",
         "Longitude": "21.44611543",
@@ -437,10 +437,10 @@
         "ECEF-X": "5109021.194",
         "ECEF-Y": "2006948.63",
         "ECEF-Z": "-3239443.497",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M039",
+        "Dish ID": "39",
         "Label": "M039",
         "Latitude": "-30.71639578",
         "Longitude": "21.44653755",
@@ -448,10 +448,10 @@
         "ECEF-X": "5108995.841",
         "ECEF-Y": "2006982.119",
         "ECEF-Z": "-3239463.581",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M040",
+        "Dish ID": "40",
         "Label": "M040",
         "Latitude": "-30.71747867",
         "Longitude": "21.44360854",
@@ -459,10 +459,10 @@
         "ECEF-X": "5109040.864",
         "ECEF-Y": "2006698.328",
         "ECEF-Z": "-3239566.503",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M041",
+        "Dish ID": "41",
         "Label": "M041",
         "Latitude": "-30.71702284",
         "Longitude": "21.44088742",
@@ -470,10 +470,10 @@
         "ECEF-X": "5109158.686",
         "ECEF-Y": "2006464.531",
         "ECEF-Z": "-3239522.088",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M042",
+        "Dish ID": "42",
         "Label": "M042",
         "Latitude": "-30.71520686",
         "Longitude": "21.44011331",
@@ -481,10 +481,10 @@
         "ECEF-X": "5109280.357",
         "ECEF-Y": "2006432.637",
         "ECEF-Z": "-3239348.227",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M043",
+        "Dish ID": "43",
         "Label": "M043",
         "Latitude": "-30.71221269",
         "Longitude": "21.43731466",
@@ -492,10 +492,10 @@
         "ECEF-X": "5109533.613",
         "ECEF-Y": "2006244.029",
         "ECEF-Z": "-3239061.145",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M044",
+        "Dish ID": "44",
         "Label": "M044",
         "Latitude": "-30.70563965",
         "Longitude": "21.43453559",
@@ -503,10 +503,10 @@
         "ECEF-X": "5109972.699",
         "ECEF-Y": "2006130.376",
         "ECEF-Z": "-3238431.522",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M045",
+        "Dish ID": "45",
         "Label": "M045",
         "Latitude": "-30.70864847",
         "Longitude": "21.42475868",
@@ -514,10 +514,10 @@
         "ECEF-X": "5110157.095",
         "ECEF-Y": "2005196.443",
         "ECEF-Z": "-3238718.843",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M046",
+        "Dish ID": "46",
         "Label": "M046",
         "Latitude": "-30.69525494",
         "Longitude": "21.42857583",
@@ -525,10 +525,10 @@
         "ECEF-X": "5110723.701",
         "ECEF-Y": "2005811.697",
         "ECEF-Z": "-3237438.291",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M047",
+        "Dish ID": "47",
         "Label": "M047",
         "Latitude": "-30.71572063",
         "Longitude": "21.43785258",
@@ -536,10 +536,10 @@
         "ECEF-X": "5109331.746",
         "ECEF-Y": "2006220.131",
         "ECEF-Z": "-3239396.764",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M048",
+        "Dish ID": "48",
         "Label": "M048",
         "Latitude": "-30.68682077",
         "Longitude": "21.41461184",
@@ -547,10 +547,10 @@
         "ECEF-X": "5111655.261",
         "ECEF-Y": "2004739.75",
         "ECEF-Z": "-3236633.105",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M049",
+        "Dish ID": "49",
         "Label": "M049",
         "Latitude": "-30.70711388",
         "Longitude": "21.40625285",
@@ -558,10 +558,10 @@
         "ECEF-X": "5110888.067",
         "ECEF-Y": "2003578.587",
         "ECEF-Z": "-3238574.255",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M050",
+        "Dish ID": "50",
         "Label": "M050",
         "Latitude": "-30.7186628",
         "Longitude": "21.42246573",
@@ -569,10 +569,10 @@
         "ECEF-X": "5109713.653",
         "ECEF-Y": "2004786.469",
         "ECEF-Z": "-3239676.24",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M051",
+        "Dish ID": "51",
         "Label": "M051",
         "Latitude": "-30.71799369",
         "Longitude": "21.43501363",
@@ -580,10 +580,10 @@
         "ECEF-X": "5109311.351",
         "ECEF-Y": "2005919.935",
         "ECEF-Z": "-3239613.475",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M052",
+        "Dish ID": "52",
         "Label": "M052",
         "Latitude": "-30.72141447",
         "Longitude": "21.43769673",
@@ -591,10 +591,10 @@
         "ECEF-X": "5109039.423",
         "ECEF-Y": "2006089.308",
         "ECEF-Z": "-3239941.073",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M053",
+        "Dish ID": "53",
         "Label": "M053",
         "Latitude": "-30.72281978",
         "Longitude": "21.44398664",
@@ -602,10 +602,10 @@
         "ECEF-X": "5108748.656",
         "ECEF-Y": "2006622.471",
         "ECEF-Z": "-3240077.321",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M054",
+        "Dish ID": "54",
         "Label": "M054",
         "Latitude": "-30.71556277",
         "Longitude": "21.45299068",
@@ -613,10 +613,10 @@
         "ECEF-X": "5108814.452",
         "ECEF-Y": "2007575.084",
         "ECEF-Z": "-3239384.668",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M055",
+        "Dish ID": "55",
         "Label": "M055",
         "Latitude": "-30.71018474",
         "Longitude": "21.45643247",
@@ -624,10 +624,10 @@
         "ECEF-X": "5108974.663",
         "ECEF-Y": "2007992.34",
         "ECEF-Z": "-3238870.287",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M056",
+        "Dish ID": "56",
         "Label": "M056",
         "Latitude": "-30.70684586",
         "Longitude": "21.46057166",
@@ -635,10 +635,10 @@
         "ECEF-X": "5109003.2",
         "ECEF-Y": "2008429.669",
         "ECEF-Z": "-3238550.478",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M057",
+        "Dish ID": "57",
         "Label": "M057",
         "Latitude": "-30.68165594",
         "Longitude": "21.44696335",
@@ -646,10 +646,10 @@
         "ECEF-X": "5110793.521",
         "ECEF-Y": "2007732.149",
         "ECEF-Z": "-3236139.972",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M058",
+        "Dish ID": "58",
         "Label": "M058",
         "Latitude": "-30.6868207",
         "Longitude": "21.47316707",
@@ -657,10 +657,10 @@
         "ECEF-X": "5109608.666",
         "ECEF-Y": "2009964.64",
         "ECEF-Z": "-3236636.209",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M059",
+        "Dish ID": "59",
         "Label": "M059",
         "Latitude": "-30.70420579",
         "Longitude": "21.4823636",
@@ -668,10 +668,10 @@
         "ECEF-X": "5108382.618",
         "ECEF-Y": "2010429.232",
         "ECEF-Z": "-3238301.702",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M060",
+        "Dish ID": "60",
         "Label": "M060",
         "Latitude": "-30.72764887",
         "Longitude": "21.4795882",
@@ -679,10 +679,10 @@
         "ECEF-X": "5107254.013",
         "ECEF-Y": "2009699.357",
         "ECEF-Z": "-3240542.587",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M061",
+        "Dish ID": "61",
         "Label": "M061",
         "Latitude": "-30.7320124",
         "Longitude": "21.44371759",
@@ -690,10 +690,10 @@
         "ECEF-X": "5108278.559",
         "ECEF-Y": "2006410.137",
         "ECEF-Z": "-3240956.885",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M062",
+        "Dish ID": "62",
         "Label": "M062",
         "Latitude": "-30.73363478",
         "Longitude": "21.42884868",
@@ -701,10 +701,10 @@
         "ECEF-X": "5108713.982",
         "ECEF-Y": "2005051.017",
         "ECEF-Z": "-3241111.829",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "M063",
+        "Dish ID": "63",
         "Label": "M063",
         "Latitude": "-30.72764891",
         "Longitude": "21.40819056",
@@ -712,10 +712,10 @@
         "ECEF-X": "5109748.526",
         "ECEF-Y": "2003331.232",
         "ECEF-Z": "-3240538.854",
-        "Project Stage": "MKAT"
+        "Project Stage": "MKT"
     },
     {
-        "Dish ID": "SKA001",
+        "Dish ID": "64",
         "Label": "SKA001",
         "Latitude": "-30.71329",
         "Longitude": "21.449412",
@@ -726,7 +726,7 @@
         "Project Stage": "AA0.5"
     },
     {
-        "Dish ID": "SKA002",
+        "Dish ID": "65",
         "Label": "SKA002",
         "Latitude": "-30.711544",
         "Longitude": "21.443214",
@@ -737,7 +737,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA003",
+        "Dish ID": "66",
         "Label": "SKA003",
         "Latitude": "-30.710966",
         "Longitude": "21.442342",
@@ -748,7 +748,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA004",
+        "Dish ID": "67",
         "Label": "SKA004",
         "Latitude": "-30.28088087",
         "Longitude": "22.22182798",
@@ -759,7 +759,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA005",
+        "Dish ID": "68",
         "Label": "SKA005",
         "Latitude": "-30.26224096",
         "Longitude": "20.89338592",
@@ -770,7 +770,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA006",
+        "Dish ID": "69",
         "Label": "SKA006",
         "Latitude": "-30.26067171",
         "Longitude": "21.1123432",
@@ -781,7 +781,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA007",
+        "Dish ID": "70",
         "Label": "SKA007",
         "Latitude": "-30.30307255",
         "Longitude": "21.28299042",
@@ -792,7 +792,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA008",
+        "Dish ID": "71",
         "Label": "SKA008",
         "Latitude": "-30.308528",
         "Longitude": "20.596389",
@@ -803,7 +803,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA009",
+        "Dish ID": "72",
         "Label": "SKA009",
         "Latitude": "-30.361861",
         "Longitude": "21.422333",
@@ -814,7 +814,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA010",
+        "Dish ID": "73",
         "Label": "SKA010",
         "Latitude": "-30.43735261",
         "Longitude": "21.48118527",
@@ -825,7 +825,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA011",
+        "Dish ID": "74",
         "Label": "SKA011",
         "Latitude": "-30.5015692",
         "Longitude": "22.16226869",
@@ -836,7 +836,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA012",
+        "Dish ID": "75",
         "Label": "SKA012",
         "Latitude": "-30.49523798",
         "Longitude": "21.53695202",
@@ -847,7 +847,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA013",
+        "Dish ID": "76",
         "Label": "SKA013",
         "Latitude": "-30.56085037",
         "Longitude": "21.57663527",
@@ -858,7 +858,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA014",
+        "Dish ID": "77",
         "Label": "SKA014",
         "Latitude": "-30.6223174",
         "Longitude": "21.56819629",
@@ -869,7 +869,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA015",
+        "Dish ID": "78",
         "Label": "SKA015",
         "Latitude": "-30.638584",
         "Longitude": "21.374214",
@@ -880,7 +880,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA016",
+        "Dish ID": "79",
         "Label": "SKA016",
         "Latitude": "-30.64372728",
         "Longitude": "21.32584356",
@@ -891,7 +891,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA017",
+        "Dish ID": "80",
         "Label": "SKA017",
         "Latitude": "-30.642963",
         "Longitude": "21.4063313",
@@ -899,10 +899,10 @@
         "ECEF-X": "5114236.455",
         "ECEF-Y": "2004899.307",
         "ECEF-Z": "-3232438.858",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA018",
+        "Dish ID": "81",
         "Label": "SKA018",
         "Latitude": "-30.65386189",
         "Longitude": "21.42589249",
@@ -910,10 +910,10 @@
         "ECEF-X": "5112983.321",
         "ECEF-Y": "2006422.197",
         "ECEF-Z": "-3233481.799",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA019",
+        "Dish ID": "82",
         "Label": "SKA019",
         "Latitude": "-30.65892183",
         "Longitude": "21.27685507",
@@ -924,7 +924,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA020",
+        "Dish ID": "83",
         "Label": "SKA020",
         "Latitude": "-30.65931641",
         "Longitude": "21.45176724",
@@ -932,10 +932,10 @@
         "ECEF-X": "5111793.22",
         "ECEF-Y": "2008619.623",
         "ECEF-Z": "-3234004.336",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA021",
+        "Dish ID": "84",
         "Label": "SKA021",
         "Latitude": "-30.65899",
         "Longitude": "22.04672",
@@ -946,7 +946,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA022",
+        "Dish ID": "85",
         "Label": "SKA022",
         "Latitude": "-30.66960267",
         "Longitude": "21.57385067",
@@ -957,7 +957,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA023",
+        "Dish ID": "86",
         "Label": "SKA023",
         "Latitude": "-30.67446849",
         "Longitude": "21.46088514",
@@ -965,10 +965,10 @@
         "ECEF-X": "5110683.867",
         "ECEF-Y": "2009122.65",
         "ECEF-Z": "-3235454.486",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA024",
+        "Dish ID": "87",
         "Label": "SKA024",
         "Latitude": "-30.68665739",
         "Longitude": "21.46210788",
@@ -979,7 +979,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA025",
+        "Dish ID": "88",
         "Label": "SKA025",
         "Latitude": "-30.68665",
         "Longitude": "21.23088",
@@ -990,7 +990,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA026",
+        "Dish ID": "89",
         "Label": "SKA026",
         "Latitude": "-30.69234894",
         "Longitude": "21.46402731",
@@ -1001,7 +1001,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA027",
+        "Dish ID": "90",
         "Label": "SKA027",
         "Latitude": "-30.69497333",
         "Longitude": "21.55113077",
@@ -1012,7 +1012,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA028",
+        "Dish ID": "91",
         "Label": "SKA028",
         "Latitude": "-30.70076",
         "Longitude": "21.43018",
@@ -1023,7 +1023,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA029",
+        "Dish ID": "92",
         "Label": "SKA029",
         "Latitude": "-30.701264",
         "Longitude": "21.4344917",
@@ -1034,7 +1034,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA030",
+        "Dish ID": "93",
         "Label": "SKA030",
         "Latitude": "-30.702356",
         "Longitude": "21.439049",
@@ -1045,7 +1045,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA031",
+        "Dish ID": "94",
         "Label": "SKA031",
         "Latitude": "-30.702581",
         "Longitude": "21.4215593",
@@ -1056,7 +1056,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA032",
+        "Dish ID": "95",
         "Label": "SKA032",
         "Latitude": "-30.702805",
         "Longitude": "21.4645868",
@@ -1067,7 +1067,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA033",
+        "Dish ID": "96",
         "Label": "SKA033",
         "Latitude": "-30.704982",
         "Longitude": "21.4444697",
@@ -1078,7 +1078,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA034",
+        "Dish ID": "97",
         "Label": "SKA034",
         "Latitude": "-30.706149",
         "Longitude": "21.4135728",
@@ -1089,7 +1089,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA035",
+        "Dish ID": "98",
         "Label": "SKA035",
         "Latitude": "-30.706517",
         "Longitude": "21.4409894",
@@ -1100,7 +1100,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA036",
+        "Dish ID": "99",
         "Label": "SKA036",
         "Latitude": "-30.707819",
         "Longitude": "21.4453007",
@@ -1111,7 +1111,7 @@
         "Project Stage": "AA0.5"
     },
     {
-        "Dish ID": "SKA037",
+        "Dish ID": "100",
         "Label": "SKA037",
         "Latitude": "-30.708744",
         "Longitude": "21.4622289",
@@ -1122,7 +1122,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA038",
+        "Dish ID": "101",
         "Label": "SKA038",
         "Latitude": "-30.708913",
         "Longitude": "21.4405906",
@@ -1133,7 +1133,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA039",
+        "Dish ID": "102",
         "Label": "SKA039",
         "Latitude": "-30.709254",
         "Longitude": "21.4436864",
@@ -1144,7 +1144,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA040",
+        "Dish ID": "103",
         "Label": "SKA040",
         "Latitude": "-30.70899275",
         "Longitude": "21.43507924",
@@ -1155,7 +1155,7 @@
         "Project Stage": "AA1"
     },
     {
-        "Dish ID": "SKA041",
+        "Dish ID": "104",
         "Label": "SKA041",
         "Latitude": "-30.710689",
         "Longitude": "21.4416387",
@@ -1166,7 +1166,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA042",
+        "Dish ID": "105",
         "Label": "SKA042",
         "Latitude": "-30.711168",
         "Longitude": "21.4451202",
@@ -1177,7 +1177,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA043",
+        "Dish ID": "106",
         "Label": "SKA043",
         "Latitude": "-30.711278",
         "Longitude": "21.4390904",
@@ -1188,7 +1188,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA044",
+        "Dish ID": "107",
         "Label": "SKA044",
         "Latitude": "-30.711281",
         "Longitude": "21.4437639",
@@ -1199,7 +1199,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA045",
+        "Dish ID": "108",
         "Label": "SKA045",
         "Latitude": "-30.711729",
         "Longitude": "21.4522796",
@@ -1210,7 +1210,7 @@
         "Project Stage": "AA1"
     },
     {
-        "Dish ID": "SKA046",
+        "Dish ID": "109",
         "Label": "SKA046",
         "Latitude": "-30.711825",
         "Longitude": "21.4443592",
@@ -1221,7 +1221,7 @@
         "Project Stage": "AA1"
     },
     {
-        "Dish ID": "SKA047",
+        "Dish ID": "110",
         "Label": "SKA047",
         "Latitude": "-30.711918",
         "Longitude": "21.4405425",
@@ -1232,7 +1232,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA048",
+        "Dish ID": "111",
         "Label": "SKA048",
         "Latitude": "-30.712025",
         "Longitude": "21.4423558",
@@ -1243,7 +1243,7 @@
         "Project Stage": "AA1"
     },
     {
-        "Dish ID": "SKA049",
+        "Dish ID": "112",
         "Label": "SKA049",
         "Latitude": "-30.712107",
         "Longitude": "21.4435744",
@@ -1254,7 +1254,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA050",
+        "Dish ID": "113",
         "Label": "SKA050",
         "Latitude": "-30.712193",
         "Longitude": "21.4444375",
@@ -1265,7 +1265,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA051",
+        "Dish ID": "114",
         "Label": "SKA051",
         "Latitude": "-30.712207",
         "Longitude": "21.4439168",
@@ -1276,7 +1276,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA052",
+        "Dish ID": "115",
         "Label": "SKA052",
         "Latitude": "-30.712211",
         "Longitude": "21.4426256",
@@ -1287,7 +1287,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA053",
+        "Dish ID": "116",
         "Label": "SKA053",
         "Latitude": "-30.712317",
         "Longitude": "21.4433231",
@@ -1298,7 +1298,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA054",
+        "Dish ID": "117",
         "Label": "SKA054",
         "Latitude": "-30.712406",
         "Longitude": "21.4473345",
@@ -1309,7 +1309,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA055",
+        "Dish ID": "118",
         "Label": "SKA055",
         "Latitude": "-30.712409",
         "Longitude": "21.4416585",
@@ -1320,7 +1320,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA056",
+        "Dish ID": "119",
         "Label": "SKA056",
         "Latitude": "-30.712428",
         "Longitude": "21.4436675",
@@ -1331,7 +1331,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA057",
+        "Dish ID": "120",
         "Label": "SKA057",
         "Latitude": "-30.71245",
         "Longitude": "21.4429691",
@@ -1342,7 +1342,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA058",
+        "Dish ID": "121",
         "Label": "SKA058",
         "Latitude": "-30.712485",
         "Longitude": "21.4422514",
@@ -1353,7 +1353,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA059",
+        "Dish ID": "122",
         "Label": "SKA059",
         "Latitude": "-30.712544",
         "Longitude": "21.4442278",
@@ -1364,7 +1364,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA060",
+        "Dish ID": "123",
         "Label": "SKA060",
         "Latitude": "-30.712547",
         "Longitude": "21.4052401",
@@ -1372,10 +1372,10 @@
         "ECEF-X": "5110639.711",
         "ECEF-Y": "2003377.01",
         "ECEF-Z": "-3239093.918",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA061",
+        "Dish ID": "124",
         "Label": "SKA061",
         "Latitude": "-30.712552",
         "Longitude": "21.445672",
@@ -1386,7 +1386,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA062",
+        "Dish ID": "125",
         "Label": "SKA062",
         "Latitude": "-30.712597",
         "Longitude": "21.4432796",
@@ -1397,7 +1397,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA063",
+        "Dish ID": "126",
         "Label": "SKA063",
         "Latitude": "-30.712648",
         "Longitude": "21.4352434",
@@ -1408,7 +1408,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA064",
+        "Dish ID": "127",
         "Label": "SKA064",
         "Latitude": "-30.712715",
         "Longitude": "21.4426044",
@@ -1419,7 +1419,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA065",
+        "Dish ID": "128",
         "Label": "SKA065",
         "Latitude": "-30.712722",
         "Longitude": "21.4429391",
@@ -1430,7 +1430,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA066",
+        "Dish ID": "129",
         "Label": "SKA066",
         "Latitude": "-30.71285",
         "Longitude": "21.4445107",
@@ -1441,7 +1441,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA067",
+        "Dish ID": "130",
         "Label": "SKA067",
         "Latitude": "-30.712941",
         "Longitude": "21.4451171",
@@ -1452,7 +1452,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA068",
+        "Dish ID": "131",
         "Label": "SKA068",
         "Latitude": "-30.71295",
         "Longitude": "21.4419132",
@@ -1463,7 +1463,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA069",
+        "Dish ID": "132",
         "Label": "SKA069",
         "Latitude": "-30.712981",
         "Longitude": "21.4426862",
@@ -1474,7 +1474,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA070",
+        "Dish ID": "133",
         "Label": "SKA070",
         "Latitude": "-30.71299125",
         "Longitude": "21.45839335",
@@ -1485,7 +1485,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA071",
+        "Dish ID": "134",
         "Label": "SKA071",
         "Latitude": "-30.712991",
         "Longitude": "21.4441059",
@@ -1496,7 +1496,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA072",
+        "Dish ID": "135",
         "Label": "SKA072",
         "Latitude": "-30.713089",
         "Longitude": "21.4423381",
@@ -1507,7 +1507,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA073",
+        "Dish ID": "136",
         "Label": "SKA073",
         "Latitude": "-30.713174",
         "Longitude": "21.4432221",
@@ -1518,7 +1518,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA074",
+        "Dish ID": "137",
         "Label": "SKA074",
         "Latitude": "-30.713281",
         "Longitude": "21.442917",
@@ -1529,7 +1529,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA075",
+        "Dish ID": "138",
         "Label": "SKA075",
         "Latitude": "-30.713328",
         "Longitude": "21.4439358",
@@ -1540,7 +1540,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA076",
+        "Dish ID": "139",
         "Label": "SKA076",
         "Latitude": "-30.713364",
         "Longitude": "21.4442883",
@@ -1551,7 +1551,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA077",
+        "Dish ID": "140",
         "Label": "SKA077",
         "Latitude": "-30.713405",
         "Longitude": "21.4400382",
@@ -1562,7 +1562,7 @@
         "Project Stage": "AA0.5"
     },
     {
-        "Dish ID": "SKA078",
+        "Dish ID": "141",
         "Label": "SKA078",
         "Latitude": "-30.713413",
         "Longitude": "21.4422628",
@@ -1573,7 +1573,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA079",
+        "Dish ID": "142",
         "Label": "SKA079",
         "Latitude": "-30.713434",
         "Longitude": "21.4435953",
@@ -1584,7 +1584,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA080",
+        "Dish ID": "143",
         "Label": "SKA080",
         "Latitude": "-30.713481",
         "Longitude": "21.4432548",
@@ -1595,7 +1595,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA081",
+        "Dish ID": "144",
         "Label": "SKA081",
         "Latitude": "-30.713603",
         "Longitude": "21.4446124",
@@ -1606,7 +1606,7 @@
         "Project Stage": "AA1"
     },
     {
-        "Dish ID": "SKA082",
+        "Dish ID": "145",
         "Label": "SKA082",
         "Latitude": "-30.713665",
         "Longitude": "21.4440499",
@@ -1617,7 +1617,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA083",
+        "Dish ID": "146",
         "Label": "SKA083",
         "Latitude": "-30.713717",
         "Longitude": "21.4377571",
@@ -1628,7 +1628,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA084",
+        "Dish ID": "147",
         "Label": "SKA084",
         "Latitude": "-30.713786",
         "Longitude": "21.4418779",
@@ -1639,7 +1639,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA085",
+        "Dish ID": "148",
         "Label": "SKA085",
         "Latitude": "-30.713809",
         "Longitude": "21.4424806",
@@ -1650,7 +1650,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA086",
+        "Dish ID": "149",
         "Label": "SKA086",
         "Latitude": "-30.713858",
         "Longitude": "21.4434036",
@@ -1661,7 +1661,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA087",
+        "Dish ID": "150",
         "Label": "SKA087",
         "Latitude": "-30.714023",
         "Longitude": "21.4427442",
@@ -1672,7 +1672,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA088",
+        "Dish ID": "151",
         "Label": "SKA088",
         "Latitude": "-30.714159",
         "Longitude": "21.4436833",
@@ -1683,7 +1683,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA089",
+        "Dish ID": "152",
         "Label": "SKA089",
         "Latitude": "-30.714161",
         "Longitude": "21.4457952",
@@ -1694,7 +1694,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA090",
+        "Dish ID": "153",
         "Label": "SKA090",
         "Latitude": "-30.714684",
         "Longitude": "21.4410498",
@@ -1705,7 +1705,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA091",
+        "Dish ID": "154",
         "Label": "SKA091",
         "Latitude": "-30.714778",
         "Longitude": "21.4435517",
@@ -1716,7 +1716,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA092",
+        "Dish ID": "155",
         "Label": "SKA092",
         "Latitude": "-30.714879",
         "Longitude": "21.4474835",
@@ -1727,7 +1727,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA093",
+        "Dish ID": "156",
         "Label": "SKA093",
         "Latitude": "-30.714887",
         "Longitude": "21.4421612",
@@ -1738,7 +1738,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA094",
+        "Dish ID": "157",
         "Label": "SKA094",
         "Latitude": "-30.715123",
         "Longitude": "21.4442517",
@@ -1749,7 +1749,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA095",
+        "Dish ID": "158",
         "Label": "SKA095",
         "Latitude": "-30.715681",
         "Longitude": "21.4398972",
@@ -1760,7 +1760,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA096",
+        "Dish ID": "159",
         "Label": "SKA096",
         "Latitude": "-30.715743",
         "Longitude": "21.4555383",
@@ -1771,7 +1771,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA097",
+        "Dish ID": "160",
         "Label": "SKA097",
         "Latitude": "-30.716027",
         "Longitude": "21.4439389",
@@ -1782,7 +1782,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA098",
+        "Dish ID": "161",
         "Label": "SKA098",
         "Latitude": "-30.716174",
         "Longitude": "21.4376419",
@@ -1793,7 +1793,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA099",
+        "Dish ID": "162",
         "Label": "SKA099",
         "Latitude": "-30.716377",
         "Longitude": "21.4449919",
@@ -1804,7 +1804,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA100",
+        "Dish ID": "163",
         "Label": "SKA100",
         "Latitude": "-30.717223",
         "Longitude": "21.4490364",
@@ -1815,7 +1815,7 @@
         "Project Stage": "AA0.5"
     },
     {
-        "Dish ID": "SKA101",
+        "Dish ID": "164",
         "Label": "SKA101",
         "Latitude": "-30.718358",
         "Longitude": "21.444662",
@@ -1826,7 +1826,7 @@
         "Project Stage": "AA1"
     },
     {
-        "Dish ID": "SKA102",
+        "Dish ID": "165",
         "Label": "SKA102",
         "Latitude": "-30.718739",
         "Longitude": "21.4363558",
@@ -1837,7 +1837,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA103",
+        "Dish ID": "166",
         "Label": "SKA103",
         "Latitude": "-30.719265",
         "Longitude": "21.4402166",
@@ -1848,7 +1848,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA104",
+        "Dish ID": "167",
         "Label": "SKA104",
         "Latitude": "-30.720233",
         "Longitude": "21.4472659",
@@ -1859,7 +1859,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA105",
+        "Dish ID": "168",
         "Label": "SKA105",
         "Latitude": "-30.72375434",
         "Longitude": "21.53229856",
@@ -1867,10 +1867,10 @@
         "ECEF-X": "5105632.868",
         "ECEF-Y": "2014487.724",
         "ECEF-Z": "-3240187.106",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA106",
+        "Dish ID": "169",
         "Label": "SKA106",
         "Latitude": "-30.72091251",
         "Longitude": "21.43284944",
@@ -1881,7 +1881,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA107",
+        "Dish ID": "170",
         "Label": "SKA107",
         "Latitude": "-30.722426",
         "Longitude": "21.3974997",
@@ -1889,10 +1889,10 @@
         "ECEF-X": "5110395.32",
         "ECEF-Y": "2002484.77",
         "ECEF-Z": "-3240039.468",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA108",
+        "Dish ID": "171",
         "Label": "SKA108",
         "Latitude": "-30.72517868",
         "Longitude": "21.43389914",
@@ -1903,7 +1903,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA109",
+        "Dish ID": "172",
         "Label": "SKA109",
         "Latitude": "-30.729515",
         "Longitude": "21.4376456",
@@ -1914,7 +1914,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA110",
+        "Dish ID": "173",
         "Label": "SKA110",
         "Latitude": "-30.73479045",
         "Longitude": "21.51112423",
@@ -1922,10 +1922,10 @@
         "ECEF-X": "5105788.386",
         "ECEF-Y": "2012368.748",
         "ECEF-Z": "-3241234.636",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA111",
+        "Dish ID": "174",
         "Label": "SKA111",
         "Latitude": "-30.734251",
         "Longitude": "21.4424172",
@@ -1936,7 +1936,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA112",
+        "Dish ID": "175",
         "Label": "SKA112",
         "Latitude": "-30.72881114",
         "Longitude": "21.18376996",
@@ -1947,7 +1947,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA113",
+        "Dish ID": "176",
         "Label": "SKA113",
         "Latitude": "-30.736333",
         "Longitude": "21.3917083",
@@ -1958,7 +1958,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA114",
+        "Dish ID": "177",
         "Label": "SKA114",
         "Latitude": "-30.73975934",
         "Longitude": "21.45243193",
@@ -1969,7 +1969,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA115",
+        "Dish ID": "178",
         "Label": "SKA115",
         "Latitude": "-30.736932",
         "Longitude": "21.493833",
@@ -1977,10 +1977,10 @@
         "ECEF-X": "5106278.991",
         "ECEF-Y": "2010781.92",
         "ECEF-Z": "-3241436.477",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA116",
+        "Dish ID": "179",
         "Label": "SKA116",
         "Latitude": "-30.742016",
         "Longitude": "21.4602722",
@@ -1988,10 +1988,10 @@
         "ECEF-X": "5107185.632",
         "ECEF-Y": "2007684.337",
         "ECEF-Z": "-3241919.654",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA117",
+        "Dish ID": "180",
         "Label": "SKA117",
         "Latitude": "-30.736715",
         "Longitude": "21.4728481",
@@ -1999,10 +1999,10 @@
         "ECEF-X": "5107019.725",
         "ECEF-Y": "2008913.398",
         "ECEF-Z": "-3241411.432",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA118",
+        "Dish ID": "181",
         "Label": "SKA118",
         "Latitude": "-30.75229296",
         "Longitude": "21.39467576",
@@ -2010,10 +2010,10 @@
         "ECEF-X": "5108932.005",
         "ECEF-Y": "2001620.916",
         "ECEF-Z": "-3242894.955",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA119",
+        "Dish ID": "182",
         "Label": "SKA119",
         "Latitude": "-30.77855145",
         "Longitude": "21.3971606",
@@ -2021,10 +2021,10 @@
         "ECEF-X": "5107476.731",
         "ECEF-Y": "2001306.265",
         "ECEF-Z": "-3245408.552",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA120",
+        "Dish ID": "183",
         "Label": "SKA120",
         "Latitude": "-30.75980972",
         "Longitude": "21.88741798",
@@ -2035,7 +2035,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA121",
+        "Dish ID": "184",
         "Label": "SKA121",
         "Latitude": "-30.80198",
         "Longitude": "21.41272",
@@ -2043,10 +2043,10 @@
         "ECEF-X": "5105726.112",
         "ECEF-Y": "2002219.884",
         "ECEF-Z": "-3247660.186",
-        "Project Stage": "AA*"
+        "Project Stage": "AAstar"
     },
     {
-        "Dish ID": "SKA122",
+        "Dish ID": "185",
         "Label": "SKA122",
         "Latitude": "-30.80984136",
         "Longitude": "21.1448195",
@@ -2057,7 +2057,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA123",
+        "Dish ID": "186",
         "Label": "SKA123",
         "Latitude": "-30.84174957",
         "Longitude": "21.42351217",
@@ -2068,7 +2068,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA124",
+        "Dish ID": "187",
         "Label": "SKA124",
         "Latitude": "-30.84449024",
         "Longitude": "21.80449227",
@@ -2079,7 +2079,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA125",
+        "Dish ID": "188",
         "Label": "SKA125",
         "Latitude": "-30.8652901",
         "Longitude": "21.4589582",
@@ -2090,7 +2090,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA126",
+        "Dish ID": "189",
         "Label": "SKA126",
         "Latitude": "-30.879667",
         "Longitude": "21.508972",
@@ -2101,7 +2101,7 @@
         "Project Stage": "AA2"
     },
     {
-        "Dish ID": "SKA127",
+        "Dish ID": "190",
         "Label": "SKA127",
         "Latitude": "-30.883676",
         "Longitude": "21.6973379",
@@ -2112,7 +2112,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA128",
+        "Dish ID": "191",
         "Label": "SKA128",
         "Latitude": "-30.86917657",
         "Longitude": "21.63561248",
@@ -2123,7 +2123,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA129",
+        "Dish ID": "192",
         "Label": "SKA129",
         "Latitude": "-30.91061099",
         "Longitude": "21.10890461",
@@ -2134,7 +2134,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA130",
+        "Dish ID": "193",
         "Label": "SKA130",
         "Latitude": "-31.04189381",
         "Longitude": "21.0771837",
@@ -2145,7 +2145,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA131",
+        "Dish ID": "194",
         "Label": "SKA131",
         "Latitude": "-31.20125506",
         "Longitude": "21.16952104",
@@ -2156,7 +2156,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA132",
+        "Dish ID": "195",
         "Label": "SKA132",
         "Latitude": "-31.337997",
         "Longitude": "21.267511",
@@ -2167,7 +2167,7 @@
         "Project Stage": "AA4"
     },
     {
-        "Dish ID": "SKA133",
+        "Dish ID": "196",
         "Label": "SKA133",
         "Latitude": "-31.5195923",
         "Longitude": "21.49901372",
