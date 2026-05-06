@@ -252,10 +252,12 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     async _handleEventResize(args) {
+        const user = await this.eventService.getCurrentUser();
         const events = this.getSiblings(args.e.data);
         const updatedData = {
             start: args.newStart,
-            end: args.newEnd
+            end: args.newEnd,
+            creator: user.displayName,
         };
         events.forEach(ev => {
             this._updateEventInstance(ev.id, updatedData);
@@ -288,21 +290,23 @@ class CalendarRenderer {
         }
 
         // update moved event identity
-        args.e.data.id = newId;
-        args.e.data.resource = args.newResource;
-        args.e.data.start = args.newStart;
-        args.e.data.end = args.newEnd;
+        //args.e.data.id = newId;
+        //args.e.data.resource = args.newResource;
+        //args.e.data.start = args.newStart;
+        //args.e.data.end = args.newEnd;
+
+        const user = await this.eventService.getCurrentUser();
+        //args.e.data.creator = user.displayName;
 
         // update sibling times only
-        const siblings = this.getSiblings(args.e.data);
-
         siblings.forEach(ev => {
-
-            if (ev.id === args.e.data.id) return;
-
+            //if (ev.id === args.e.data.id) return;
             this._updateEventInstance(ev.id, {
                 start: args.newStart,
                 end: args.newEnd,
+                //resource: args.newResource,
+                //id: newId,
+                creator: user.displayName,
             });
         });
 
@@ -356,16 +360,31 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     async _handleEventClick(args) {
+        const user = await this.eventService.getCurrentUser();
         let event = { ...args.e.data };
-        event.resource = this.getSiblings(event).map(ev => ev.resource);
+        const siblings = this.getSiblings(event);
         const result = await this.eventFormManager.show(event, this.calendar.events.list);
         if (!result) return;
+
+        const uuid = this.eventService.getUUIDFromEventId(event.id);
+        siblings.forEach(ev => {
+            //if (ev.id === args.e.data.id) return;
+            this._removeEventInstance(ev.id);
+            this._addEventInstance(result, uuid, ev.resource);
+        });
 
         //await this.eventService.updateEvent(result, event);
 
         //this.calendar.events.list = await this.eventService.fetchAllEvents();
+        //result.resource.forEach(ev => {
+        //    this._updateEventInstance(ev.id, result);
+        //});
+
+        // need to delete the old event and make the new one
+        
+
         this.refresh();
-        return
+        return;
 
         // The below code was an attempt to update events without refetching all events 
         // from Confluence, but due to the complexity of handling recurring events and 
