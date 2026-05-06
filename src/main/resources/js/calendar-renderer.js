@@ -157,27 +157,28 @@ class CalendarRenderer {
     /**
      * Updates an existing DayPilot calendar event instance
      * @private
-     * @param {Array} resource - Resource/dish ID
+     * @param {Array} eventId - event ID
      * @param {Object} updatedData - Updated event properties
      * @returns {Object|null} Updated event or null if not found
      */
-    _updateEventInstance(resource, updatedData) {
-        const id = this.eventService.makeEventId(resource);
-        const ev = this.calendar.events.find(id);
+    _updateEventInstance(eventId, updatedData) {
+        const ev = this.calendar.events.find(eventId);
+
         if (ev) {
             Object.assign(ev.data, updatedData);
         }
+
         return ev;
     }
 
     /**
      * Removes an existing DayPilot calendar event instance
      * @private
-     * @param {Array} resource - Resource/dish ID
+     * @param {Array} eventId - event ID
      */
-    _removeEventInstance(resource) {
-        const id = this.eventService.makeEventId(resource);
-        const ev = this.calendar.events.find(id);
+    _removeEventInstance(eventId) {
+        const ev = this.calendar.events.find(eventId);
+
         if (ev) {
             this.calendar.events.remove(ev);
         }
@@ -186,26 +187,29 @@ class CalendarRenderer {
     /**
      * Adds a new DayPilot calendar event instance
      * @private
-     * @param {string} dish - Dish/resource identifier
+     * @param {string} seriesUuid - event series uuid
      * @param {Object} eventData - Event data object
+     * @param {Object} dish - dish
      */
-    _addEventInstance(eventData, dish) {
-        const id = this.eventService.makeEventId(dish);
-        if (!this.calendar.events.find(id)) {
+    _addEventInstance(eventData, seriesUuid, dish) {
 
-            const newEvent = new DayPilot.Event({
-                id: id,
-                text: eventData.text,
-                start: eventData.start,
-                end: eventData.end,
-                resource: dish,
-                customEventTypeId: eventData.customEventTypeId,
-                description: eventData.description,
-            });
+    const eventId = this.eventService.makeEventId(seriesUuid, dish);
 
-            this.calendar.events.add(newEvent);
-        }
+    if (!this.calendar.events.find(eventId)) {
+
+        const newEvent = new DayPilot.Event({
+            id: eventId,
+            text: eventData.text,
+            start: eventData.start,
+            end: eventData.end,
+            resource: dish,
+            customEventTypeId: eventData.customEventTypeId,
+            description: eventData.description,
+        });
+
+        this.calendar.events.add(newEvent);
     }
+}
 
     /**
      * Handles event deletion
@@ -222,7 +226,7 @@ class CalendarRenderer {
         if (result.deleteScope == "single") {
             // handle single delete without confluence request for faster response
             const events = this.getSiblings(args.e.data);
-            events.forEach(ev => this._removeEventInstance(ev.resource));
+            events.forEach(ev => this._removeEventInstance(ev.id));
             //await this.eventService.deleteEvent(args.e.data, result.deleteScope);
         }
         else {
@@ -253,7 +257,9 @@ class CalendarRenderer {
             start: args.newStart,
             end: args.newEnd
         };
-        events.forEach(ev => this._updateEventInstance(ev.resource, updatedData));
+        events.forEach(ev => {
+            this._updateEventInstance(ev.id, updatedData);
+        });
         this.refresh();
         // Prepare form data with all sibling resources for the Confluence API
         //const formData = {
@@ -265,43 +271,42 @@ class CalendarRenderer {
         //await this.eventService.updateEvent(formData, args.e.data);
     }
 
-    /**
-     * Handles event moving
-     * moves all sibling events and updates confluence event
-     * @private
-     * @param {Object} args - Event arguments
-     */
     async _handleEventMove(args) {
-        const newId = this.eventService.makeEventId(args.newResource);
-        // const newId = `${args.e.data.confluenceId}-${args.newResource}`; // fallback without eventService
+        const newId = this.eventService.makeEventId(
+            this.eventService.getUUIDFromEventId(args.e.data.id),
+            args.newResource
+        );
 
-        // catch for moving an event to a resource where a sibling exists
-        // (would result in duplicate id)
-        if (args.e.data.id != newId && this.calendar.events.find(newId)) {
+        // prevent duplicate sibling resource assignment
+        const duplicate = this.calendar.events.list.find(ev =>
+            ev.id === newId && ev.id !== args.e.data.id
+        );
+        if (duplicate) {
             args.preventDefault();
             DayPilot.Modal.alert("This booking is already assigned to that dish.");
             return;
         }
-        args.e.data.id = newId;
-        args.e.data.resource = args.newResource
 
-        const events = this.getSiblings(args.e.data);
-        const updatedData = {
-            start: args.newStart,
-            end: args.newEnd
-        };
-        events.forEach(ev => {
-            this._updateEventInstance(ev.resource, updatedData);
+        // update moved event identity
+        args.e.data.id = newId;
+        args.e.data.resource = args.newResource;
+        args.e.data.start = args.newStart;
+        args.e.data.end = args.newEnd;
+
+        // update sibling times only
+        const siblings = this.getSiblings(args.e.data);
+
+        siblings.forEach(ev => {
+
+            if (ev.id === args.e.data.id) return;
+
+            this._updateEventInstance(ev.id, {
+                start: args.newStart,
+                end: args.newEnd,
+            });
         });
+
         this.refresh();
-        // Prepare form data with all sibling resources for the Confluence API
-        //const formData = {
-        //    ...args.e.data,
-        //    start: args.newStart,
-        //    end: args.newEnd,
-        //    resource: events.map(ev => String(ev.resource)).filter(Boolean)
-        //};
-        //await this.eventService.updateEvent(formData, args.e.data);
     }
 
     /**
@@ -336,8 +341,9 @@ class CalendarRenderer {
         //this.refresh();
 
         // Add new DayPilot events for each selected dish
+        const seriesUuid = this.eventService.createSeriesUUID();
         result.resource.forEach(dish => {
-            this._addEventInstance(result, dish);
+            this._addEventInstance(result, seriesUuid, dish);
         });
 
         this.refresh();
@@ -508,13 +514,13 @@ class CalendarRenderer {
      * Finds siblings of a given event
      * Events can only be assigned to one resource in DayPilot
      * When a booking uses multiple dishes, an event is made for each dish
-     * These events are siblings and are related through identical confluenceId fields
+     * These events are siblings and are related through identical uuid fields
      * @param {DayPilot.Event} event - The event to find siblings for
      * @returns {Array} Array of sibling events
      */
     getSiblings(event) {
         return this.calendar.events.list.filter(
-            ev => ev.confluenceId === event.confluenceId
+            ev => this.eventService.getUUIDFromEventId(ev.id) === this.eventService.getUUIDFromEventId(event.id)
         );
     }
 

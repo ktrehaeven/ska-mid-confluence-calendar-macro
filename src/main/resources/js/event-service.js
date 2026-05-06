@@ -92,11 +92,42 @@ class EventService {
     }
 
     /**
-     * Creates unique event ID combining a random UUID and resource ID
+     * Creates a seriesUUID (generated once per booking)
+     * This UUID is shared by all events from the same series,
+     * making them siblings with different resourceIds.
+     * @returns {string} The unique UUID for this service instance
      */
-    makeEventId(resourceId) {
-        const uuid = crypto.randomUUID();
-        return `${uuid}:${resourceId}`;
+    createSeriesUUID() {
+        return crypto.randomUUID();
+    }
+
+    /**
+     * Creates unique event ID combining the stored instance UUID and resource ID.
+     * All events from the same instance share the same UUID prefix
+     */
+    makeEventId(seriesUuid, resourceId) {
+        return `${seriesUuid}:${resourceId}`;
+    }
+
+    /**
+     * Extracts the UUID prefix from an event ID
+     * Useful for finding the shared UUID among sibling events.
+     * 
+     * @param {string} eventId - Full event ID in format "uuid:resourceId"
+     * @returns {string} Just the UUID part before the colon
+     */
+    getUUIDFromEventId(eventId) {
+        return eventId.split(':')[0];
+    }
+ 
+    /**
+     * Extracts the resourceId from an event ID
+     * 
+     * @param {string} eventId - Full event ID in format "uuid:resourceId"
+     * @returns {string} Just the resourceId part after the colon
+     */
+    getResourceIdFromEventId(eventId) {
+        return eventId.split(':')[1];
     }
 
     /**
