@@ -41,7 +41,6 @@ class CalendarRenderer {
         const xhair = new DayPilotCrosshair(this.calendar);
         xhair.attach();
 
-        await this.eventService.getCurrentUser();
         //this._startAutoRefresh();
         this.refresh();
     }
@@ -158,7 +157,7 @@ class CalendarRenderer {
     /**
      * Updates an existing DayPilot calendar event instance
      * @private
-     * @param {string} resource - Resource/dish ID
+     * @param {Array} resource - Resource/dish ID
      * @param {Object} updatedData - Updated event properties
      * @returns {Object|null} Updated event or null if not found
      */
@@ -174,7 +173,7 @@ class CalendarRenderer {
     /**
      * Removes an existing DayPilot calendar event instance
      * @private
-     * @param {string} resource - Resource/dish ID
+     * @param {Array} resource - Resource/dish ID
      */
     _removeEventInstance(resource) {
         const id = this.eventService.makeEventId(resource);
@@ -190,12 +189,12 @@ class CalendarRenderer {
      * @param {string} dish - Dish/resource identifier
      * @param {Object} eventData - Event data object
      */
-    _addEventInstance(dish, eventData) {
+    _addEventInstance(eventData, dish) {
         const id = this.eventService.makeEventId(dish);
         if (!this.calendar.events.find(id)) {
 
             const newEvent = new DayPilot.Event({
-                id: this.eventService.makeEventId(dish),
+                id: id,
                 text: eventData.text,
                 start: eventData.start,
                 end: eventData.end,
@@ -312,10 +311,11 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     async _handleTimeRangeSelected(args) {
+        const user = await this.eventService.getCurrentUser();
         const result = await this.eventFormManager.show({
             start: args.start,
             customEventTypeId: this.eventService.customEventTypes.find(e => e.name === "Other").id,
-            creator: this.eventService.user.displayName,
+            creator: user.displayName,
             end: args.end,
             resource: args.resource,
         }, this.calendar.events.list);
@@ -335,12 +335,12 @@ class CalendarRenderer {
         //];
         //this.refresh();
 
-        // // Add new DayPilot events for each selected dish
-        // result.resource.forEach(dish => {
-        //     this._addEventInstance(postedEvent.event.id, dish, result);
-        // });
+        // Add new DayPilot events for each selected dish
+        result.resource.forEach(dish => {
+            this._addEventInstance(result, dish);
+        });
 
-        // this.refresh();
+        this.refresh();
     }
 
     /**
@@ -512,11 +512,11 @@ class CalendarRenderer {
      * @param {DayPilot.Event} event - The event to find siblings for
      * @returns {Array} Array of sibling events
      */
-    //getSiblings(event) {
-    //    return this.calendar.events.list.filter(
-    //        ev => ev.confluenceId === event.confluenceId
-    //    );
-    //}
+    getSiblings(event) {
+        return this.calendar.events.list.filter(
+            ev => ev.confluenceId === event.confluenceId
+        );
+    }
 
     /**
      * Selects a dish, updating selection state and syncing the map

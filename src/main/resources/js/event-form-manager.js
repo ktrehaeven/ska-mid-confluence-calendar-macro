@@ -458,13 +458,17 @@ class EventFormManager {
      * Builds the dish selection HTML form field.
      */
     _buildDishSelect(data, eventsList = []) {
-        const phaseFilters = ["Airstrip", "MKT", "AA0_5", "AA1", "AA2", "AAstar", "AA4"];
+        const phaseFilters = ["Airstrip", "MKT", "AA0.5", "AA1", "AA2", "AAstar", "AA4"];
         //const clusterFilters = ["S8", "S9", "S10"];
         const dishes = this.dishDataManager.getDishesByPhase(phaseFilters);
 
-        const phaseOptionsHtml = phaseFilters.map(phase =>
-            `<option value="${phase}">${phase}</option>`
-        ).join("");
+        const phaseOptionsHtml = this.dishDataManager.getIncludedPhases(phaseFilters.indexOf("AA4"), phaseFilters)
+            .map(phase => `<option value="${phase}">${phase}</option>`)
+            .join("");
+
+        //const phaseOptionsHtml = phaseFilters.map(phase =>
+        //    `<option value="${phase}">${phase}</option>`
+        //).join("");
 
         //const clusterOptionsHtml = clusterFilters.map(cluster =>
         //    `<option value="${cluster}">${cluster}</option>`
