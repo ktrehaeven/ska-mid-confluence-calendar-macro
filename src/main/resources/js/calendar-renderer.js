@@ -41,7 +41,7 @@ class CalendarRenderer {
         const xhair = new DayPilotCrosshair(this.calendar);
         xhair.attach();
 
-        //this._startAutoRefresh();
+        this._startAutoRefresh();
         this.refresh();
     }
 
