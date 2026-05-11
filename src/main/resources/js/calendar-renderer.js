@@ -278,6 +278,8 @@ class CalendarRenderer {
             this.eventService.getUUIDFromEventId(args.e.data.id),
             args.newResource
         );
+        const event = args.e.data;
+        const siblings = this.getSiblings(event);
 
         // prevent duplicate sibling resource assignment
         const duplicate = this.calendar.events.list.find(ev =>
@@ -301,11 +303,11 @@ class CalendarRenderer {
         // update sibling times only
         siblings.forEach(ev => {
             //if (ev.id === args.e.data.id) return;
-            this._updateEventInstance(ev.id, {
+            this._updateEventInstance(args.e.data.id, {
                 start: args.newStart,
                 end: args.newEnd,
-                //resource: args.newResource,
-                //id: newId,
+                resource: args.newResource,
+                id: newId,
                 creator: user.displayName,
             });
         });
