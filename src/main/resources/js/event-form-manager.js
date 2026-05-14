@@ -25,7 +25,13 @@ class EventFormManager {
             scrollWithPage: false,
             autoStretch: true,
             zIndex: 1000,
-            onClose: (modal) => this._handleFormClose(modal)
+            onClose: (modal) => {
+                const rruleOut = document.getElementById('rfm-rrule-out');
+                if (rruleOut && modal.result) {
+                    modal.result.rruleStr = rruleOut.value;
+                }
+                this._handleFormClose(modal);
+            }
         });
         if (modal.canceled) return null;
         return modal.result;
@@ -60,7 +66,40 @@ class EventFormManager {
     // ─────────────────────────────────────────────────────────────────────────
     // RECURRENCE
     // ─────────────────────────────────────────────────────────────────────────
+ 
+    _buildRruleString() {
+        const freq = document.getElementById('rfm-freq').value;
+        if (!freq) return '';
 
+        const interval = parseInt(document.getElementById('rfm-interval-val').value) || 1;
+        const endTimes = document.getElementById('rfm-end-times').checked;
+        const endUntil = document.getElementById('rfm-end-until').checked;
+
+        let rrule = `FREQ=${freq};INTERVAL=${interval}`;
+
+        if (freq === 'WEEKLY') {
+            const activeDays = [...document.querySelectorAll('.rfm-day-btn.rfm-day-active')]
+                .map(btn => btn.dataset.day);
+            if (activeDays.length > 0) rrule += `;BYDAY=${activeDays.join(',')}`;
+        }
+
+        if (freq === 'MONTHLY') {
+            const isWeekday = document.getElementById('rfm-monthly-weekday').checked;
+            if (isWeekday) {
+                const byday = this._getMonthlyWeekdayRule();
+                if (byday) rrule += `;BYDAY=${byday}`;
+            }
+        }
+
+        if (endTimes) {
+            const count = parseInt(document.getElementById('rfm-end-times-val').value) || 1;
+            rrule += `;COUNT=${count}`;
+        } else if (endUntil && this._untilValue) {
+            rrule += `;UNTIL=${this._untilValue}`;
+        }
+
+        return rrule;
+    }
     /**
      * Builds the recurrence HTML form field.
      * Pre-selects values from data.rruleStr if present.
@@ -278,6 +317,10 @@ class EventFormManager {
 
         const INTERVAL_LABELS = { DAILY: 'days', WEEKLY: 'weeks', MONTHLY: 'months', YEARLY: 'years' };
 
+        const syncRrule = () => {
+            const out = document.getElementById('rfm-rrule-out');
+            if (out) out.value = this._buildRruleString();
+        };
         // Populate monthly labels from whatever start date is currently in the form
         this._updateMonthlyLabels();
 
@@ -293,13 +336,20 @@ class EventFormManager {
             if (show) intervalLbl.textContent = INTERVAL_LABELS[freq] || '';
         };
 
-        freqEl.addEventListener('change', updateVisibility);
+        // freqEl.addEventListener('change', updateVisibility);
+        freqEl.addEventListener('change', () => { updateVisibility(); syncRrule(); });
         updateVisibility(); // run once in case of pre-populated freq
 
         // Day toggle buttons
         document.querySelectorAll('.rfm-day-btn').forEach(btn => {
-            btn.addEventListener('click', () => btn.classList.toggle('rfm-day-active'));
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('rfm-day-active');
+                syncRrule();
+            });
         });
+        // document.querySelectorAll('.rfm-day-btn').forEach(btn => {
+        //     btn.addEventListener('click', () => btn.classList.toggle('rfm-day-active'));
+        // });
 
         // Enable/disable end-repeat sub-inputs
         const syncEndInputs = () => {
@@ -309,14 +359,22 @@ class EventFormManager {
         };
 
         document.querySelectorAll('input[name="rfm-end"]').forEach(r =>
-            r.addEventListener('change', syncEndInputs)
+            r.addEventListener('change', () => { syncEndInputs(); syncRrule(); })
         );
+        // document.querySelectorAll('input[name="rfm-end"]').forEach(r =>
+        //     r.addEventListener('change', syncEndInputs)
+        // );
 
-        // Interval validation
         intervalVal.addEventListener('input', () => {
             const v = parseInt(intervalVal.value);
             intervalErr.style.display = (v > 0 && v < 100) ? 'none' : 'block';
+            syncRrule();
         });
+        // // Interval validation
+        // intervalVal.addEventListener('input', () => {
+        //     const v = parseInt(intervalVal.value);
+        //     intervalErr.style.display = (v > 0 && v < 100) ? 'none' : 'block';
+        // });
 
         // Inline date picker for "until" field
         if (endUntilPickerBtn) {
@@ -328,7 +386,8 @@ class EventFormManager {
                     zIndex: 1100,
                     onTimeRangeSelected: args => {
                         this._untilValue = args.date.toString("yyyyMMdd");
-                        endUntilVal.value = args.date.toString("dd/MM/yyyy");;
+                        endUntilVal.value = args.date.toString("dd/MM/yyyy");
+                        syncRrule();
                     }
                 });
 

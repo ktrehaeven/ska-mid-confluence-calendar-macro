@@ -218,30 +218,19 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     async _handleEventDelete(args) {
-
         args.preventDefault();
-        const result = await this.eventFormManager.confirmDelete(args.e.data)
-        if (!result) return
+        const result = await this.eventFormManager.confirmDelete(args.e.data);
+        if (!result) return;
 
-        if (result.deleteScope == "single") {
-            // handle single delete without confluence request for faster response
-            const events = this.getSiblings(args.e.data);
-            events.forEach(ev => this._removeEventInstance(ev.id));
-            //await this.eventService.deleteEvent(args.e.data, result.deleteScope);
+        if (result.deleteScope === "single") {
+            // only remove the clicked event, not siblings
+            this._removeEventInstance(args.e.data.id);
+        } else {
+            // remove all siblings
+            const siblings = this.getSiblings(args.e.data);
+            siblings.forEach(ev => this._removeEventInstance(ev.id));
         }
-        else {
-            // request events from the subcalendar of updated event to update recurrence
-            //await this.eventService.deleteEvent(args.e.data, result.deleteScope);
-            const eventId = args.e.data.customEventTypeId
-            //if (eventId) {
-            //const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
-            this.calendar.events.list = [
-                ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId)
-            ];
-            //    ...updatedEvents
-            }
-            //else { this.calendar.events.list = await this.eventService.fetchAllEvents(); }
-        
+
         this.refresh();
     }
 
@@ -273,6 +262,15 @@ class CalendarRenderer {
         //await this.eventService.updateEvent(formData, args.e.data);
     }
 
+    async _promptScope(siblings) {
+        if (siblings.length <= 1) return "all";
+        const scope = await DayPilot.Modal.confirm(
+            "Apply to this dish only, or all dishes in this booking?",
+            { okText: "All dishes", cancelText: "This dish only" }
+        );
+        return scope.result ? "all" : "single";
+    }
+
     async _handleEventMove(args) {
         const newId = this.eventService.makeEventId(
             this.eventService.getUUIDFromEventId(args.e.data.id),
@@ -291,25 +289,41 @@ class CalendarRenderer {
             return;
         }
 
-        // update moved event identity
-        //args.e.data.id = newId;
-        //args.e.data.resource = args.newResource;
-        //args.e.data.start = args.newStart;
-        //args.e.data.end = args.newEnd;
-
         const user = await this.eventService.getCurrentUser();
-        //args.e.data.creator = user.displayName;
+        const scope = await this._promptScope(siblings);
+        const targets = scope === "all" ? siblings : [event];
 
-        // update sibling times only
-        siblings.forEach(ev => {
-            //if (ev.id === args.e.data.id) return;
-            this._updateEventInstance(args.e.data.id, {
+        targets.forEach(ev => {
+            this._updateEventInstance(ev.id, {
                 start: args.newStart,
                 end: args.newEnd,
-                resource: args.newResource,
-                id: newId,
                 creator: user.displayName,
+                // only update resource and id for the actually dragged event
+                ...(ev.id === args.e.data.id && {
+                    resource: args.newResource,
+                    id: newId,
+                }),
             });
+        });
+
+        this.refresh();
+    }
+
+    async _handleEventClick(args) {
+        const user = await this.eventService.getCurrentUser();
+        let event = { ...args.e.data };
+        const siblings = this.getSiblings(event);
+
+        const result = await this.eventFormManager.show(event, this.calendar.events.list);
+        if (!result) return;
+
+        const scope = await this._promptScope(siblings);
+        const targets = scope === "all" ? siblings : [event];
+
+        const uuid = this.eventService.getUUIDFromEventId(event.id);
+        targets.forEach(ev => {
+            this._removeEventInstance(ev.id);
+            this._addEventInstance(result, uuid, ev.resource);
         });
 
         this.refresh();
@@ -334,91 +348,115 @@ class CalendarRenderer {
         this.calendar.clearSelection();
         if (!result) return;
 
-        //retrieve confluence response so we can use the event id generated
-        //const postedEvent = await this.eventService.createEvent(result);
-        //if (!postedEvent?.success) return;
 
-        //const eventId = result.customEventTypeId
-        //const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
-        //this.calendar.events.list = [
-        //    ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
-        //    ...updatedEvents
-        //];
-        //this.refresh();
-
-        // Add new DayPilot events for each selected dish
         const seriesUuid = this.eventService.createSeriesUUID();
-        result.resource.forEach(dish => {
-            this._addEventInstance(result, seriesUuid, dish);
+
+        // generate occurrences from rrule if recurring
+        const instances = this._expandEvent(result, seriesUuid);
+
+        instances.forEach(instance => {
+            result.resource.forEach(dish => {
+                this._addEventInstance(instance, seriesUuid, dish);
+            });
         });
 
         this.refresh();
     }
 
+    _expandEvent(result, uuid) {
+        if (!result.rruleStr) return [result]; // not recurring, just return as-is
+
+        const parsed = this.eventFormManager._parseRrule(result.rruleStr);
+        if (!parsed.FREQ) return [result];
+
+        const freq = parsed.FREQ;
+        const interval = parseInt(parsed.INTERVAL) || 1;
+        const byday = parsed.BYDAY ? parsed.BYDAY.split(',') : [];
+        const count = parsed.COUNT ? parseInt(parsed.COUNT) : null;
+        const until = parsed.UNTIL
+            ? new DayPilot.Date(this.eventFormManager._rruleDateToInput(parsed.UNTIL))
+            : null;
+
+        const DAY_MAP = { MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6, SU: 0 };
+
+        const startDate = new DayPilot.Date(result.start);
+        const endDate = new DayPilot.Date(result.end);
+        const duration = endDate.getTime() - startDate.getTime();
+
+        // cap expansion to 1 year ahead to avoid infinite loops
+        const hardLimit = startDate.addDays(365);
+        const rangeEnd = until
+            ? (until.getTime() < hardLimit.getTime() ? until : hardLimit)
+            : hardLimit;
+
+        const instances = [];
+        let current = startDate;
+        let countSoFar = 0;
+
+        while (current.getTime() <= rangeEnd.getTime()) {
+            if (count && countSoFar >= count) break;
+
+            const jsDate = current.toDate();
+            const dayOfWeek = jsDate.getDay();
+
+            let matches = false;
+            if (freq === 'DAILY') {
+                matches = true;
+            }
+            if (freq === 'WEEKLY') {
+                matches = byday.length === 0 || byday.some(d => DAY_MAP[d] === dayOfWeek);
+            }
+            if (freq === 'MONTHLY') {
+                matches = jsDate.getDate() === startDate.toDate().getDate();
+            }
+            if (freq === 'YEARLY') {
+                const orig = startDate.toDate();
+                matches = jsDate.getDate() === orig.getDate() &&
+                        jsDate.getMonth() === orig.getMonth();
+            }
+
+            if (matches) {
+                instances.push({
+                    ...result,
+                    start: current.toString(),
+                    end: new DayPilot.Date(current.getTime() + duration).toString(),
+                });
+                countSoFar++;
+            }
+
+            // advance by interval only when we hit a freq boundary
+            if (freq === 'DAILY' && matches) {
+                current = current.addDays(interval);
+            } else if (freq === 'WEEKLY') {
+                // advance day by day, jump by interval weeks after completing a week
+                const next = current.addDays(1);
+                const crossedWeek = next.toDate().getDay() === startDate.toDate().getDay()
+                    && next.getTime() > current.getTime();
+                current = crossedWeek ? current.addDays((interval - 1) * 7 + 1) : next;
+            } else if (freq === 'MONTHLY' && matches) {
+                current = current.addDays(1); // let it find next matching date
+                // jump ahead by interval months minus remaining days
+                const nextMonth = new DayPilot.Date(
+                    new Date(jsDate.getFullYear(), jsDate.getMonth() + interval, jsDate.getDate())
+                );
+                current = nextMonth;
+            } else if (freq === 'YEARLY' && matches) {
+                current = new DayPilot.Date(
+                    new Date(jsDate.getFullYear() + interval, jsDate.getMonth(), jsDate.getDate())
+                );
+            } else {
+                current = current.addDays(1);
+            }
+        }
+
+        return instances;
+    }
     /**
      * Handles event click
      * updates event, all siblings and corresponding confluence event
      * @private
      * @param {Object} args - Event arguments
      */
-    async _handleEventClick(args) {
-        const user = await this.eventService.getCurrentUser();
-        let event = { ...args.e.data };
-        const siblings = this.getSiblings(event);
-        const result = await this.eventFormManager.show(event, this.calendar.events.list);
-        if (!result) return;
-
-        const uuid = this.eventService.getUUIDFromEventId(event.id);
-        siblings.forEach(ev => {
-            //if (ev.id === args.e.data.id) return;
-            this._removeEventInstance(ev.id);
-            this._addEventInstance(result, uuid, ev.resource);
-        });
-
-        //await this.eventService.updateEvent(result, event);
-
-        //this.calendar.events.list = await this.eventService.fetchAllEvents();
-        //result.resource.forEach(ev => {
-        //    this._updateEventInstance(ev.id, result);
-        //});
-
-        // need to delete the old event and make the new one
-        
-
-        this.refresh();
-        return;
-
-        // The below code was an attempt to update events without refetching all events 
-        // from Confluence, but due to the complexity of handling recurring events and 
-        // event types it is less error-prone to simply refetch all events after an update.
-
-        // const currentResources = event.resource
-        // const nextResources = result.resource;
-        // const toAdd = nextResources.filter(r => !currentResources.includes(r));
-        // const toRemove = currentResources.filter(r => !nextResources.includes(r));
-        // const toKeep = nextResources.filter(r => currentResources.includes(r));
-
-        // toKeep.forEach(resource => {
-        //     this._updateEventInstance(event.confluenceId, resource, {
-        //         text: result.text,
-        //         customEventTypeId: result.customEventTypeId || "",
-        //         start: result.start,
-        //         end: result.end,
-        //         resource: resource,
-        //         description: result.description
-        //     });
-        // });
-
-        // toRemove.forEach(resource => {
-        //     this._removeEventInstance(event.confluenceId, resource);
-        // });
-
-        // toAdd.forEach(resource => {
-        //     this._addEventInstance(event.confluenceId, resource, result);
-        // });
-
-        // this.refresh();
-    }
 
     /**
      * Handles row/resource click
