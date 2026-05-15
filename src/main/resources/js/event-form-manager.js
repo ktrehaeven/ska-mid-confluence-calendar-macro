@@ -459,6 +459,9 @@ class EventFormManager {
      * @returns {string}
      */
     _rruleDateToInput(rruleDate) {
+        // Return empty string if rruleDate is undefined or null
+        if (!rruleDate) return '';
+        console.log('rruleDate value:', rruleDate);
         const d = rruleDate.replace(/T.*$/, ''); // e.g. "20260301"
         return `${d.slice(6, 8)}/${d.slice(4, 6)}/${d.slice(0, 4)}`; // "01/03/2026"
     }
@@ -677,7 +680,7 @@ class EventFormManager {
         console.log('_handleFormClose called');
         console.log('rfm-rrule-out value:', document.getElementById('rfm-rrule-out')?.value);
         console.log('_buildRruleFromForm result:', this._buildRruleFromForm());
-        
+
         const selectEl = document.getElementById("dish-multiselect");
         if (selectEl && modal.result) {
             modal.result.resource = Array.from(selectEl.selectedOptions).map(opt => opt.value);
