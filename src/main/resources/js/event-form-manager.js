@@ -373,6 +373,9 @@ class EventFormManager {
         // });
 
         // Inline date picker for "until" field
+        console.log('end-never checked:', document.getElementById('rfm-end-never')?.checked);
+        console.log('end-times checked:', document.getElementById('rfm-end-times')?.checked);
+        console.log('end-until checked:', document.getElementById('rfm-end-until')?.checked);
         if (endUntilPickerBtn) {
             endUntilPickerBtn.addEventListener('click', () => {
 
@@ -434,7 +437,7 @@ class EventFormManager {
             if (count > 0) parts.push(`COUNT=${count}`);
         }
 
-        if (endType === 'until') {
+        else if (endType === 'until') {
             if (this._untilValue) parts.push(`UNTIL=${this._untilValue}`);
         }
         return parts.join(';');

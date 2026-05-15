@@ -449,10 +449,10 @@ class CalendarRenderer {
                 current = current.addDays(interval);
             } else if (freq === 'WEEKLY') {
                 // advance day by day, jump by interval weeks after completing a week
-                const next = current.addDays(1);
-                const crossedWeek = next.toDate().getDay() === startDate.toDate().getDay()
-                    && next.getTime() > current.getTime();
-                current = crossedWeek ? current.addDays((interval - 1) * 7 + 1) : next;
+                current = current.addDays(1);
+                if (current.toDate().getDay() === startDate.toDate().getDay() && instances.length > 0) {
+                    current = current.addDays((interval - 1) * 7);
+                }
             } else if (freq === 'MONTHLY' && matches) {
                 current = current.addDays(1); // let it find next matching date
                 // jump ahead by interval months minus remaining days
