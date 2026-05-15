@@ -373,7 +373,7 @@ class CalendarRenderer {
 
         const parsed = this.eventFormManager._parseRrule(result.rruleStr);
         console.log('parsed rrule:', parsed);  // ← add this
-        new DayPilot.Date(this.eventFormManager._rruleDateToInput(parsed.UNTIL));
+        // new DayPilot.Date(this.eventFormManager._rruleDateToInput(parsed.UNTIL));
         if (!parsed.FREQ) {
             console.log('_expandEvent: no FREQ after parsing, returning as-is');
             return [result];
