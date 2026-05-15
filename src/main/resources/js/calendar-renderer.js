@@ -380,7 +380,12 @@ class CalendarRenderer {
 
         const DAY_MAP = { MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6, SU: 0 };
 
+        // guard against invalid start
         const startDate = new DayPilot.Date(result.start);
+        if (!startDate || !startDate.getTime()) {
+            console.warn('_expandEvent: invalid start date', result.start);
+            return [result];
+        }
         const endDate = new DayPilot.Date(result.end);
         const duration = endDate.getTime() - startDate.getTime();
 
@@ -448,6 +453,11 @@ class CalendarRenderer {
             } else {
                 current = current.addDays(1);
             }
+        console.log('freq:', freq);
+        console.log('byday:', byday);
+        console.log('startDate:', startDate.toString());
+        console.log('startDate dayOfWeek:', startDate.toDate().getDay());
+        console.log('DAY_MAP MO:', DAY_MAP['MO']);
         }
 
         return instances;
