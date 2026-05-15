@@ -194,9 +194,9 @@ class CalendarRenderer {
     _addEventInstance(eventData, seriesUuid, dish) {
         // include date in ID to make each occurrence unique
         const dateStr = new DayPilot.Date(eventData.start).toString('yyyyMMdd');
-        const eventId = this.eventService.makeEventId(seriesUuid, dish);
-
-    if (!this.calendar.events.find(eventId)) {
+        const eventId = this.eventService.makeEventId(seriesUuid, dish) + '_' + dateStr;
+        console.log('adding event:', eventId, 'exists:', !!this.calendar.events.find(eventId));
+        if (!this.calendar.events.find(eventId)) {
 
         const newEvent = new DayPilot.Event({
             id: eventId,
