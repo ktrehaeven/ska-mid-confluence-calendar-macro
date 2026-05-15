@@ -384,7 +384,7 @@ class CalendarRenderer {
         const byday = parsed.BYDAY ? parsed.BYDAY.split(',') : [];
         const count = parsed.COUNT ? parseInt(parsed.COUNT) : null;
         console.log('parsed.UNTIL:', parsed.UNTIL);
-        const until = parsed.UNTIL
+        const until = (parsed.UNTIL && typeof parsed.UNTIL === 'string')
             ? new DayPilot.Date(this.eventFormManager._rruleDateToInput(parsed.UNTIL))
             : null;
 
