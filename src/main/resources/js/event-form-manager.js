@@ -674,6 +674,10 @@ class EventFormManager {
      */
     _handleFormClose(modal) {
         // Capture dish selections
+        console.log('_handleFormClose called');
+        console.log('rfm-rrule-out value:', document.getElementById('rfm-rrule-out')?.value);
+        console.log('_buildRruleFromForm result:', this._buildRruleFromForm());
+        
         const selectEl = document.getElementById("dish-multiselect");
         if (selectEl && modal.result) {
             modal.result.resource = Array.from(selectEl.selectedOptions).map(opt => opt.value);
