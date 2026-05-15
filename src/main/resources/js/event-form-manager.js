@@ -26,10 +26,6 @@ class EventFormManager {
             autoStretch: true,
             zIndex: 1000,
             onClose: (modal) => {
-                const rruleOut = document.getElementById('rfm-rrule-out');
-                if (rruleOut && modal.result) {
-                    modal.result.rruleStr = rruleOut.value;
-                }
                 this._handleFormClose(modal);
             }
         });
@@ -67,39 +63,39 @@ class EventFormManager {
     // RECURRENCE
     // ─────────────────────────────────────────────────────────────────────────
  
-    _buildRruleString() {
-        const freq = document.getElementById('rfm-freq').value;
-        if (!freq) return '';
+    // _buildRruleString() {
+    //     const freq = document.getElementById('rfm-freq').value;
+    //     if (!freq) return '';
 
-        const interval = parseInt(document.getElementById('rfm-interval-val').value) || 1;
-        const endTimes = document.getElementById('rfm-end-times').checked;
-        const endUntil = document.getElementById('rfm-end-until').checked;
+    //     const interval = parseInt(document.getElementById('rfm-interval-val').value) || 1;
+    //     const endTimes = document.getElementById('rfm-end-times').checked;
+    //     const endUntil = document.getElementById('rfm-end-until').checked;
 
-        let rrule = `FREQ=${freq};INTERVAL=${interval}`;
+    //     let rrule = `FREQ=${freq};INTERVAL=${interval}`;
 
-        if (freq === 'WEEKLY') {
-            const activeDays = [...document.querySelectorAll('.rfm-day-btn.rfm-day-active')]
-                .map(btn => btn.dataset.day);
-            if (activeDays.length > 0) rrule += `;BYDAY=${activeDays.join(',')}`;
-        }
+    //     if (freq === 'WEEKLY') {
+    //         const activeDays = [...document.querySelectorAll('.rfm-day-btn.rfm-day-active')]
+    //             .map(btn => btn.dataset.day);
+    //         if (activeDays.length > 0) rrule += `;BYDAY=${activeDays.join(',')}`;
+    //     }
 
-        if (freq === 'MONTHLY') {
-            const isWeekday = document.getElementById('rfm-monthly-weekday').checked;
-            if (isWeekday) {
-                const byday = this._getMonthlyWeekdayRule();
-                if (byday) rrule += `;BYDAY=${byday}`;
-            }
-        }
+    //     if (freq === 'MONTHLY') {
+    //         const isWeekday = document.getElementById('rfm-monthly-weekday').checked;
+    //         if (isWeekday) {
+    //             const byday = this._getMonthlyWeekdayRule();
+    //             if (byday) rrule += `;BYDAY=${byday}`;
+    //         }
+    //     }
 
-        if (endTimes) {
-            const count = parseInt(document.getElementById('rfm-end-times-val').value) || 1;
-            rrule += `;COUNT=${count}`;
-        } else if (endUntil && this._untilValue) {
-            rrule += `;UNTIL=${this._untilValue}`;
-        }
+    //     if (endTimes) {
+    //         const count = parseInt(document.getElementById('rfm-end-times-val').value) || 1;
+    //         rrule += `;COUNT=${count}`;
+    //     } else if (endUntil && this._untilValue) {
+    //         rrule += `;UNTIL=${this._untilValue}`;
+    //     }
 
-        return rrule;
-    }
+    //     return rrule;
+    // }
     /**
      * Builds the recurrence HTML form field.
      * Pre-selects values from data.rruleStr if present.
@@ -319,7 +315,7 @@ class EventFormManager {
 
         const syncRrule = () => {
             const out = document.getElementById('rfm-rrule-out');
-            if (out) out.value = this._buildRruleString();
+            if (out) out.value = this._buildRruleFromForm();
         };
         // Populate monthly labels from whatever start date is currently in the form
         this._updateMonthlyLabels();
@@ -438,6 +434,9 @@ class EventFormManager {
             if (count > 0) parts.push(`COUNT=${count}`);
         }
 
+        if (endType === 'until') {
+            if (this._untilValue) parts.push(`UNTIL=${this._untilValue}`);
+        }
         return parts.join(';');
     }
 
