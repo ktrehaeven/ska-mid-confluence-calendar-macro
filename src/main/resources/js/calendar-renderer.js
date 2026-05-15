@@ -350,10 +350,11 @@ class CalendarRenderer {
 
 
         const seriesUuid = this.eventService.createSeriesUUID();
-
+        console.log('result.rruleStr before expand:', result.rruleStr);
         // generate occurrences from rrule if recurring
         const instances = this._expandEvent(result, seriesUuid);
-
+        console.log('instances after expand:', instances.length);
+        
         instances.forEach(instance => {
             result.resource.forEach(dish => {
                 this._addEventInstance(instance, seriesUuid, dish);
@@ -364,11 +365,19 @@ class CalendarRenderer {
     }
 
     _expandEvent(result, uuid) {
-        if (!result.rruleStr) return [result]; // not recurring, just return as-is
+        console.log('_expandEvent called', result);
+        if (!result.rruleStr) {
+            console.log('_expandEvent: no rruleStr, returning as-is');
+            return [result]; // not recurring, just return as-is
+        }
 
         const parsed = this.eventFormManager._parseRrule(result.rruleStr);
+        console.log('parsed rrule:', parsed);  // ← add this
         new DayPilot.Date(this.eventFormManager._rruleDateToInput(parsed.UNTIL));
-        if (!parsed.FREQ) return [result];
+        if (!parsed.FREQ) {
+            console.log('_expandEvent: no FREQ after parsing, returning as-is');
+            return [result];
+        }
 
         const freq = parsed.FREQ;
         const interval = parseInt(parsed.INTERVAL) || 1;
