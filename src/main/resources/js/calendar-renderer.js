@@ -438,8 +438,8 @@ class CalendarRenderer {
             if (matches) {
                 instances.push({
                     ...result,
-                    start: current.toString(),
-                    end: new DayPilot.Date(current.getTime() + duration).toString(),
+                    start: current,
+                    end: new DayPilot.Date(current.getTime() + duration),
                 });
                 countSoFar++;
             }
