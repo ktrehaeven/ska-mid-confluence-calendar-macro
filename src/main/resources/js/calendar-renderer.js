@@ -436,11 +436,14 @@ class CalendarRenderer {
             }
 
             if (matches) {
+                console.log('match found at:', current.toString());
                 instances.push({
                     ...result,
                     start: current,
                     end: new DayPilot.Date(current.getTime() + duration),
                 });
+                console.log('total instances:', instances.length);
+                console.log('instance dates:', instances.map(i => i.start.toString()));
                 countSoFar++;
             }
 
