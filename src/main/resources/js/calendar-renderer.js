@@ -367,6 +367,7 @@ class CalendarRenderer {
         if (!result.rruleStr) return [result]; // not recurring, just return as-is
 
         const parsed = this.eventFormManager._parseRrule(result.rruleStr);
+        new DayPilot.Date(this.eventFormManager._rruleDateToInput(parsed.UNTIL));
         if (!parsed.FREQ) return [result];
 
         const freq = parsed.FREQ;
