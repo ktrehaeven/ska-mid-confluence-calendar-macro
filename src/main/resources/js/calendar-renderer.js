@@ -257,27 +257,45 @@ class CalendarRenderer {
         console.log('resize siblings count:', siblings.length);
         console.log('resize siblings ids:', siblings.map(s => s.id));
         const scope = await this._promptScope(siblings);
+        // calculate the new duration from the resized event
+        const newDuration = new DayPilot.Date(args.newEnd).getTime() - 
+                        new DayPilot.Date(args.newStart).getTime();
         const targets = scope === "all" ? siblings : [args.e.data];
         console.log('resize targets:', targets.map(t => t.id));
-        
-        const updatedData = {
-            start: args.newStart,
-            end: args.newEnd,
-            creator: user.displayName,
-        };
+
         targets.forEach(ev => {
-            this._updateEventInstance(ev.id, updatedData);
+            if (scope === "all") {
+                // preserve each occurrence's own start, just apply new duration
+                const evStart = ev.start instanceof DayPilot.Date 
+                    ? ev.start 
+                    : new DayPilot.Date(ev.start);
+                const newEnd = new DayPilot.Date(evStart.getTime() + newDuration);
+                this._updateEventInstance(ev.id, {
+                    end: newEnd,
+                    creator: user.displayName,
+                });
+            } else {
+                // single — update both start and end as dragged
+                this._updateEventInstance(ev.id, {
+                    start: args.newStart,
+                    end: args.newEnd,
+                    creator: user.displayName,
+                });
+            }
         });
+
         this.refresh();
-        // Prepare form data with all sibling resources for the Confluence API
-        //const formData = {
-        //    ...args.e.data,
-        //    start: args.newStart,
-        //    end: args.newEnd,
-        //    resource: events.map(ev => String(ev.resource)).filter(Boolean)
-        //};
-        //await this.eventService.updateEvent(formData, args.e.data);
     }
+    //     const updatedData = {
+    //         start: args.newStart,
+    //         end: args.newEnd,
+    //         creator: user.displayName,
+    //     };
+    //     targets.forEach(ev => {
+    //         this._updateEventInstance(ev.id, updatedData);
+    //     });
+    //     this.refresh();
+    // }
 
     async _promptScope(siblings) {
         if (siblings.length <= 1) return "all";
