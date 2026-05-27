@@ -193,24 +193,33 @@ class CalendarRenderer {
      */
     _addEventInstance(eventData, seriesUuid, dish) {
         // include date in ID to make each occurrence unique
-        const dateStr = new DayPilot.Date(eventData.start).toString('yyyyMMdd');
-        const eventId = this.eventService.makeEventId(seriesUuid, dish) + '_' + dateStr;
+        // const dateStr = new DayPilot.Date(eventData.start).toString('yyyyMMdd');
+        const dateStr = eventData.start instanceof DayPilot.Date
+            ? eventData.start.toString('yyyyMMdd')
+            : new DayPilot.Date(eventData.start).toString('yyyyMMdd');
+
+        // keep base ID for sibling lookups, add date only for uniqueness
+        const baseId = this.eventService.makeEventId(seriesUuid, dish);
+        const eventId = `${baseId}_${dateStr}`;
+        // const eventId = this.eventService.makeEventId(seriesUuid, dish) + '_' + dateStr;
         console.log('adding event:', eventId, 'exists:', !!this.calendar.events.find(eventId));
         if (!this.calendar.events.find(eventId)) {
 
-        const newEvent = new DayPilot.Event({
-            id: eventId,
-            text: eventData.text,
-            start: eventData.start,
-            end: eventData.end,
-            resource: dish,
-            customEventTypeId: eventData.customEventTypeId,
-            description: eventData.description,
-        });
+            const newEvent = new DayPilot.Event({
+                id: eventId,
+                text: eventData.text,
+                start: eventData.start,
+                end: eventData.end,
+                resource: dish,
+                customEventTypeId: eventData.customEventTypeId,
+                description: eventData.description,
+                seriesUuid: seriesUuid,
+                baseid: baseid,
+            });
 
-        this.calendar.events.add(newEvent);
+            this.calendar.events.add(newEvent);
+        }
     }
-}
 
     /**
      * Handles event deletion
@@ -277,9 +286,11 @@ class CalendarRenderer {
     }
 
     async _handleEventMove(args) {
+        const dateStr = args.e.data.id.split('_').pop(); // extract existing date suffix
         const newId = this.eventService.makeEventId(
             this.eventService.getUUIDFromEventId(args.e.data.id),
             args.newResource
+            ) + (dateStr?.match(/^\d{8}$/) ? `_${dateStr}` : ''
         );
         const event = args.e.data;
         const siblings = this.getSiblings(event);
@@ -611,9 +622,16 @@ class CalendarRenderer {
      * @returns {Array} Array of sibling events
      */
     getSiblings(event) {
-        return this.calendar.events.list.filter(
-            ev => this.eventService.getUUIDFromEventId(ev.id) === this.eventService.getUUIDFromEventId(event.id)
-        );
+        // for recurring events, match by seriesUuid stored in event data
+        const uuid = event.seriesUuid || this.eventService.getUUIDFromEventId(event.id);
+        console.log('getSiblings uuid:', uuid);
+        return this.calendar.events.list.filter(ev => {
+            const evUuid = ev.seriesUuid || this.eventService.getUUIDFromEventId(ev.id);
+            return evUuid === uuid;
+        });
+        // return this.calendar.events.list.filter(
+        //     ev => this.eventService.getUUIDFromEventId(ev.id) === this.eventService.getUUIDFromEventId(event.id)
+        // );
     }
 
     /**
