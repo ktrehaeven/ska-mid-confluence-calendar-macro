@@ -243,13 +243,17 @@ class CalendarRenderer {
      */
     async _handleEventResize(args) {
         const user = await this.eventService.getCurrentUser();
-        const events = this.getSiblings(args.e.data);
+        // const events = this.getSiblings(args.e.data);
+        const siblings = this.getSiblings(args.e.data);
+        const scope = await this._promptScope(siblings);
+        const targets = scope === "all" ? siblings : [args.e.data];
+
         const updatedData = {
             start: args.newStart,
             end: args.newEnd,
             creator: user.displayName,
         };
-        events.forEach(ev => {
+        targets.forEach(ev => {
             this._updateEventInstance(ev.id, updatedData);
         });
         this.refresh();
