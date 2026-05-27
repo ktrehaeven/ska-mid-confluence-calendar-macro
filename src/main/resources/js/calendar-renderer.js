@@ -214,7 +214,7 @@ class CalendarRenderer {
                 customEventTypeId: eventData.customEventTypeId,
                 description: eventData.description,
                 seriesUuid: seriesUuid,
-                baseid: baseid,
+                baseId: baseId,
             });
 
             this.calendar.events.add(newEvent);
@@ -254,9 +254,12 @@ class CalendarRenderer {
         const user = await this.eventService.getCurrentUser();
         // const events = this.getSiblings(args.e.data);
         const siblings = this.getSiblings(args.e.data);
+        console.log('resize siblings count:', siblings.length);
+        console.log('resize siblings ids:', siblings.map(s => s.id));
         const scope = await this._promptScope(siblings);
         const targets = scope === "all" ? siblings : [args.e.data];
-
+        console.log('resize targets:', targets.map(t => t.id));
+        
         const updatedData = {
             start: args.newStart,
             end: args.newEnd,
