@@ -306,13 +306,52 @@ class CalendarRenderer {
         return scope.result ? "all" : "single";
     }
 
+    // async _handleEventMove(args) {
+    //     const dateStr = args.e.data.id.split('_').pop(); // extract existing date suffix
+    //     const newId = this.eventService.makeEventId(
+    //         this.eventService.getUUIDFromEventId(args.e.data.id),
+    //         args.newResource
+    //         ) + (dateStr?.match(/^\d{8}$/) ? `_${dateStr}` : ''
+    //     );
+    //     const event = args.e.data;
+    //     const siblings = this.getSiblings(event);
+
+    //     // prevent duplicate sibling resource assignment
+    //     const duplicate = this.calendar.events.list.find(ev =>
+    //         ev.id === newId && ev.id !== args.e.data.id
+    //     );
+    //     if (duplicate) {
+    //         args.preventDefault();
+    //         DayPilot.Modal.alert("This booking is already assigned to that dish.");
+    //         return;
+    //     }
+
+    //     const user = await this.eventService.getCurrentUser();
+    //     const scope = await this._promptScope(siblings);
+    //     const targets = scope === "all" ? siblings : [event];
+
+    //     targets.forEach(ev => {
+    //         this._updateEventInstance(ev.id, {
+    //             start: args.newStart,
+    //             end: args.newEnd,
+    //             creator: user.displayName,
+    //             // only update resource and id for the actually dragged event
+    //             ...(ev.id === args.e.data.id && {
+    //                 resource: args.newResource,
+    //                 id: newId,
+    //             }),
+    //         });
+    //     });
+
+    //     this.refresh();
+    // }
     async _handleEventMove(args) {
-        const dateStr = args.e.data.id.split('_').pop(); // extract existing date suffix
+        const dateStr = args.e.data.id.split('_').pop();
         const newId = this.eventService.makeEventId(
             this.eventService.getUUIDFromEventId(args.e.data.id),
             args.newResource
-            ) + (dateStr?.match(/^\d{8}$/) ? `_${dateStr}` : ''
-        );
+        ) + (dateStr?.match(/^\d{8}$/) ? `_${dateStr}` : '');
+
         const event = args.e.data;
         const siblings = this.getSiblings(event);
 
@@ -330,17 +369,60 @@ class CalendarRenderer {
         const scope = await this._promptScope(siblings);
         const targets = scope === "all" ? siblings : [event];
 
+        // calculate time delta from the dragged event
+        const originalStart = event.start instanceof DayPilot.Date
+            ? event.start : new DayPilot.Date(event.start);
+        const newStart = args.newStart instanceof DayPilot.Date
+            ? args.newStart : new DayPilot.Date(args.newStart);
+        const newEnd = args.newEnd instanceof DayPilot.Date
+            ? args.newEnd : new DayPilot.Date(args.newEnd);
+
+        const deltaMs = newStart.getTime() - originalStart.getTime();
+        const duration = newEnd.getTime() - newStart.getTime();
+
+        // detect if this is a vertical move (dish change) or horizontal (time shift)
+        const isVerticalMove = args.newResource !== event.resource;
+
         targets.forEach(ev => {
-            this._updateEventInstance(ev.id, {
-                start: args.newStart,
-                end: args.newEnd,
-                creator: user.displayName,
-                // only update resource and id for the actually dragged event
-                ...(ev.id === args.e.data.id && {
+            const evStart = ev.start instanceof DayPilot.Date
+                ? ev.start : new DayPilot.Date(ev.start);
+
+            if (isVerticalMove && scope === "all") {
+                // vertical move — shift this dish across all dates to new dish
+                const evDateStr = ev.id.split('_').pop();
+                const newEvId = this.eventService.makeEventId(
+                    this.eventService.getUUIDFromEventId(ev.id),
+                    args.newResource
+                ) + (evDateStr?.match(/^\d{8}$/) ? `_${evDateStr}` : '');
+
+                this._updateEventInstance(ev.id, {
                     resource: args.newResource,
-                    id: newId,
-                }),
-            });
+                    id: newEvId,
+                    creator: user.displayName,
+                });
+
+            } else if (!isVerticalMove && scope === "all") {
+                // horizontal move — shift each occurrence by same delta
+                const shiftedStart = new DayPilot.Date(evStart.getTime() + deltaMs);
+                const shiftedEnd = new DayPilot.Date(shiftedStart.getTime() + duration);
+                this._updateEventInstance(ev.id, {
+                    start: shiftedStart,
+                    end: shiftedEnd,
+                    creator: user.displayName,
+                });
+
+            } else {
+                // single event — move exactly as dragged
+                this._updateEventInstance(ev.id, {
+                    start: args.newStart,
+                    end: args.newEnd,
+                    creator: user.displayName,
+                    ...(ev.id === args.e.data.id && {
+                        resource: args.newResource,
+                        id: newId,
+                    }),
+                });
+            }
         });
 
         this.refresh();
