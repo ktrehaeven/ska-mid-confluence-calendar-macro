@@ -345,7 +345,12 @@ class CalendarRenderer {
 
     //     this.refresh();
     // }
+
     async _handleEventMove(args) {
+        // capture BEFORE any await — DayPilot mutates after async points
+        const originalStartMs = new DayPilot.Date(args.e.data.start).getTime();
+        const originalResource = args.e.data.resource;
+
         const dateStr = args.e.data.id.split('_').pop();
         const newId = this.eventService.makeEventId(
             this.eventService.getUUIDFromEventId(args.e.data.id),
@@ -355,7 +360,6 @@ class CalendarRenderer {
         const event = args.e.data;
         const siblings = this.getSiblings(event);
 
-        // prevent duplicate sibling resource assignment
         const duplicate = this.calendar.events.list.find(ev =>
             ev.id === newId && ev.id !== args.e.data.id
         );
@@ -369,40 +373,35 @@ class CalendarRenderer {
         const scope = await this._promptScope(siblings);
         const targets = scope === "all" ? siblings : [event];
 
-        // calculate time delta from the dragged event
-        const originalStart = event.start instanceof DayPilot.Date
-            ? event.start : new DayPilot.Date(event.start);
         const newStart = args.newStart instanceof DayPilot.Date
             ? args.newStart : new DayPilot.Date(args.newStart);
         const newEnd = args.newEnd instanceof DayPilot.Date
             ? args.newEnd : new DayPilot.Date(args.newEnd);
 
-        const deltaMs = newStart.getTime() - originalStart.getTime();
+        const deltaMs = newStart.getTime() - originalStartMs;
         const duration = newEnd.getTime() - newStart.getTime();
+        const isVerticalMove = args.newResource !== originalResource;
 
-        // detect if this is a vertical move (dish change) or horizontal (time shift)
-        const isVerticalMove = args.newResource !== event.resource;
+        console.log('deltaMs:', deltaMs, 'isVerticalMove:', isVerticalMove,
+                    'originalResource:', originalResource, 'newResource:', args.newResource);
 
         targets.forEach(ev => {
             const evStart = ev.start instanceof DayPilot.Date
                 ? ev.start : new DayPilot.Date(ev.start);
 
-            if (isVerticalMove && scope === "all") {
-                // vertical move — shift this dish across all dates to new dish
+            if (scope === "all" && isVerticalMove) {
                 const evDateStr = ev.id.split('_').pop();
                 const newEvId = this.eventService.makeEventId(
                     this.eventService.getUUIDFromEventId(ev.id),
                     args.newResource
                 ) + (evDateStr?.match(/^\d{8}$/) ? `_${evDateStr}` : '');
-
                 this._updateEventInstance(ev.id, {
                     resource: args.newResource,
                     id: newEvId,
                     creator: user.displayName,
                 });
-
-            } else if (!isVerticalMove && scope === "all") {
-                // horizontal move — shift each occurrence by same delta
+            } else if (scope === "all" && !isVerticalMove) {
+                if (ev.id === args.e.data.id) return; // Skip the original event
                 const shiftedStart = new DayPilot.Date(evStart.getTime() + deltaMs);
                 const shiftedEnd = new DayPilot.Date(shiftedStart.getTime() + duration);
                 this._updateEventInstance(ev.id, {
@@ -410,9 +409,7 @@ class CalendarRenderer {
                     end: shiftedEnd,
                     creator: user.displayName,
                 });
-
             } else {
-                // single event — move exactly as dragged
                 this._updateEventInstance(ev.id, {
                     start: args.newStart,
                     end: args.newEnd,
