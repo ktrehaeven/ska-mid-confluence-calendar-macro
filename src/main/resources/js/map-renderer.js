@@ -117,6 +117,54 @@ class MapRenderer {
     }
 
     /**
+     * Updates dish marker colors based on current bookings
+    * @param {Array} eventsList - All calendar events
+    * @param {Array} eventTypes - Custom event types with colors
+    */
+    updateDishColors(eventsList, eventTypes) {
+        if (!this.map) return;
+
+        // reset all dishes to default color first
+        Object.values(this.dishDataManager.dishData).forEach(dish => {
+            if (!dish.marker || !dish.marker.setStyle) return;
+            dish.marker.setStyle({ fillColor: '#ffffff', fillOpacity: 0.8 });
+        });
+
+        // get current time
+        const now = new Date().getTime();
+
+        // group events by resource
+        const bookedDishes = {};
+        eventsList.forEach(ev => {
+            const evStart = new DayPilot.Date(ev.start).getTime();
+            const evEnd = new DayPilot.Date(ev.end).getTime();
+            const resource = ev.resource;
+
+            if (!bookedDishes[resource]) bookedDishes[resource] = [];
+            bookedDishes[resource].push({
+                ...ev,
+                isActive: evStart <= now && evEnd >= now,
+            });
+        });
+
+        // apply colors
+        Object.entries(bookedDishes).forEach(([dishId, events]) => {
+            const dish = this.dishDataManager.getDish(dishId);
+            if (!dish?.marker?.setStyle) return;
+
+            // prefer active booking, else use first
+            const activeEvent = events.find(e => e.isActive) || events[0];
+            const eventType = eventTypes.find(t => t.id === activeEvent.customEventTypeId);
+            const color = eventType?.color || '#E70068';
+
+            dish.marker.setStyle({
+                fillColor: color,
+                fillOpacity: 0.9,
+                color: color,
+            });
+        });
+    }
+    /**
      * Resets all tooltips to non-permanent hover behaviour
      */
     resetTooltips() {

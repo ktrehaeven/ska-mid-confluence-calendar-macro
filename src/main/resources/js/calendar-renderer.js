@@ -866,6 +866,11 @@ class CalendarRenderer {
         this.updateVisibleResources();
         this.calendar.update();
         this._updateCurrentTimeLine()
+        // update map colors on every refresh
+        this.mapRenderer.updateDishColors(
+        this.calendar.events.list,
+        this.eventService.customEventTypes
+        );
     }
 
     /**
