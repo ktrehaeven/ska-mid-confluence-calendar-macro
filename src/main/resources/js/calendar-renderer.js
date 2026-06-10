@@ -22,6 +22,8 @@ class CalendarRenderer {
     async init(wrapper) {
         const calendarEl = wrapper.querySelector('.daypilot');
         const navEl = wrapper.querySelector('.daypilot-nav');
+        console.log('calendarEl:', calendarEl);
+        console.log('navEl:', navEl);
         this._initCurrentTimeLine();
 
         if (!calendarEl || this.isInitialized) return;
@@ -29,6 +31,8 @@ class CalendarRenderer {
 
         this.calendar = this._createScheduler(calendarEl);
         this.calendar.init();
+        console.log('rectangleSelectHandling:', this.calendar.rectangleSelectHandling);
+        console.log('onRectangleSelected:', this.calendar.onRectangleSelected);
 
         if (navEl) {
             this.navEl = navEl;
@@ -36,6 +40,7 @@ class CalendarRenderer {
             this.navigator.init();
             this.initRowFilter();
             this.initNavFooter();
+            this._initLegend();
         }
 
         const xhair = new DayPilotCrosshair(this.calendar);
@@ -83,6 +88,9 @@ class CalendarRenderer {
             timeHeaderClickHandling: "Update",
             onTimeHeaderClick: (args) => this._handleTimeHeaderClick(args),
             onBeforeTimeHeaderRender: (args) => this._handleTimeHeaderRender(args),
+            rectangleSelectHandling: "EventSelect",
+            onRectangleSelected: (args) => this._handleRectangleSelected(args),
+            onBeforeEventRender: (args) => this._handleBeforeEventRender(args),
         });
     }
 
@@ -221,6 +229,91 @@ class CalendarRenderer {
         }
     }
 
+    _handleBeforeEventRender(args) {
+        const eventTypeId = args.data.customEventTypeId;
+        const eventType = this.eventService.customEventTypes.find(
+            t => t.id === eventTypeId
+        );
+
+        if (eventType?.color) {
+            args.data.backColor = eventType.color;
+            args.data.borderColor = eventType.color;
+            args.data.fontColor = "#ffffff";
+        }
+    }
+
+    _initLegend() {
+        const wrapper = this.navEl?.parentNode;
+        if (!wrapper) return;
+
+        // inject styles once
+        if (!document.getElementById('calendar-legend-styles')) {
+            const style = document.createElement('style');
+            style.id = 'calendar-legend-styles';
+            style.textContent = `
+                .calendar-legend {
+                    margin-top: 12px;
+                    padding: 10px 12px;
+                    background: #fff;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 6px;
+                    font-family: inherit;
+                }
+                .calendar-legend-title {
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #344563;
+                    margin-bottom: 8px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                }
+                .calendar-legend-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin-bottom: 6px;
+                    font-size: 13px;
+                    color: #172b4d;
+                }
+                .calendar-legend-item:last-child {
+                    margin-bottom: 0;
+                }
+                .calendar-legend-dot {
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    flex-shrink: 0;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        const legend = document.createElement('div');
+        legend.className = 'calendar-legend';
+
+        const title = document.createElement('div');
+        title.className = 'calendar-legend-title';
+        title.textContent = 'Event Types';
+        legend.appendChild(title);
+
+        this.eventService.customEventTypes.forEach(type => {
+            const item = document.createElement('div');
+            item.className = 'calendar-legend-item';
+
+            const dot = document.createElement('span');
+            dot.className = 'calendar-legend-dot';
+            dot.style.backgroundColor = type.color;
+
+            const label = document.createElement('span');
+            label.textContent = type.name;
+
+            item.appendChild(dot);
+            item.appendChild(label);
+            legend.appendChild(item);
+        });
+
+        wrapper.appendChild(legend);
+    }
     /**
      * Handles event deletion
      * Deletes the DayPilot event, all sibling events and corresponding Confluence event
@@ -385,19 +478,44 @@ class CalendarRenderer {
         console.log('deltaMs:', deltaMs, 'isVerticalMove:', isVerticalMove,
                     'originalResource:', originalResource, 'newResource:', args.newResource);
 
+        // calculate dish offset for vertical moves
+        const dishList = this.dishDataManager.dishList;
+        const originalIndex = dishList.findIndex(d => d.id === originalResource);
+        const newIndex = dishList.findIndex(d => d.id === args.newResource);
+        const dishOffset = newIndex - originalIndex;
+
+        console.log('originalResource:', originalResource);
+        console.log('newResource:', args.newResource);
+        console.log('originalIndex:', originalIndex);
+        console.log('newIndex:', newIndex);
+        console.log('dishOffset:', dishOffset);
+        console.log('dishList sample:', dishList.slice(0, 6).map(d => d.id));
         targets.forEach(ev => {
             const evStart = ev.start instanceof DayPilot.Date
                 ? ev.start : new DayPilot.Date(ev.start);
+            const evDateStr = ev.id.split('_').pop();
 
             if (scope === "all" && isVerticalMove) {
-                const evDateStr = ev.id.split('_').pop();
-                const newEvId = this.eventService.makeEventId(
+                if (ev.id === args.e.data.id) return; // ← skip dragged event, DayPilot already
+                const currentDishIndex = dishList.findIndex(d => d.id === ev.resource);
+                const targetDishIndex = currentDishIndex + dishOffset;
+
+                if (targetDishIndex < 0 || targetDishIndex >= dishList.length) return;
+
+                const targetDish = dishList[targetDishIndex].id;
+                const targetId = this.eventService.makeEventId(
                     this.eventService.getUUIDFromEventId(ev.id),
-                    args.newResource
+                    targetDish
                 ) + (evDateStr?.match(/^\d{8}$/) ? `_${evDateStr}` : '');
+
+                const alreadyExists = this.calendar.events.list.find(e =>
+                    e.id === targetId && e.id !== ev.id
+                );
+                if (alreadyExists) return;
+
                 this._updateEventInstance(ev.id, {
-                    resource: args.newResource,
-                    id: newEvId,
+                    resource: targetDish,
+                    id: targetId,
                     creator: user.displayName,
                 });
             } else if (scope === "all" && !isVerticalMove) {
@@ -420,6 +538,43 @@ class CalendarRenderer {
                     }),
                 });
             }
+        });
+
+        this.refresh();
+    }
+
+    async _handleRectangleSelected(args) {
+        console.log('_handleRectangleSelected fired', args);
+        const selectedEvents = this.calendar.events.selected();
+        if (!selectedEvents || selectedEvents.length === 0) return;
+
+        // show action prompt
+        const action = await DayPilot.Modal.confirm(
+            `${selectedEvents.length} event(s) selected. What would you like to do?`,
+            { okText: "Move", cancelText: "Cancel" }
+        );
+        if (!action.result) return;
+
+        // show time range picker for new start
+        const modal = await DayPilot.Modal.form([
+            { name: "New Start", id: "start", type: "datetime", dateFormat: "dd/MM/yyyy" },
+            { name: "New Resource (optional)", id: "resource", type: "text" }
+        ], { start: selectedEvents[0].data.start });
+
+        if (modal.canceled) return;
+
+        const newStart = new DayPilot.Date(modal.result.start);
+        const newResource = modal.result.resource?.trim() || null;
+
+        selectedEvents.forEach(ev => {
+            const duration = new DayPilot.Date(ev.data.end).getTime() - 
+                            new DayPilot.Date(ev.data.start).getTime();
+            const updatedData = {
+                start: newStart,
+                end: new DayPilot.Date(newStart.getTime() + duration),
+            };
+            if (newResource) updatedData.resource = newResource;
+            this._updateEventInstance(ev.data.id, updatedData);
         });
 
         this.refresh();

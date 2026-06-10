@@ -12,10 +12,10 @@ class EventService {
     constructor(dishDataManager) {
         this.dishDataManager = dishDataManager;
         this.customEventTypesList = [
-        { id: "type-meeting", title: "Meeting" },
-        { id: "type-booking", title: "Booking" },
-        { id: "type-maintenance", title: "Maintenance" },
-        { id: "type-other", title: "Other" },
+            { id: "type-meeting", title: "Meeting", color: "#7B68EE" },
+            { id: "type-booking", title: "Booking", color: "#FFD700" },
+            { id: "type-maintenance", title: "Maintenance", color: "#E70068" },
+            { id: "type-other", title: "Other", color: "#ADFF2F" },
         ];
         this.user = null;
     }
@@ -26,7 +26,7 @@ class EventService {
      */
     get customEventTypes() {
         return this.customEventTypesList
-            .map(eventType => ({ name: eventType.title, id: eventType.id }))
+            .map(eventType => ({ name: eventType.title, id: eventType.id, color: eventType.color }))
             .sort((a, b) => a.name.localeCompare(b.name));
     }
 
