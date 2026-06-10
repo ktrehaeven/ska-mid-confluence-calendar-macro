@@ -870,7 +870,7 @@ class CalendarRenderer {
         this.mapRenderer.updateDishColors(
         this.calendar.events.list,
         this.eventService.customEventTypes
-        );
+    );
     }
 
     /**

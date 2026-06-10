@@ -143,6 +143,29 @@
     overflow-y: auto;
 }
 
+@keyframes dish-pulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.2;
+        transform: scale(1.3);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.dish-active {
+    animation: dish-pulse 2s ease-in-out infinite;
+    transform-origin: center;
+    transform-box: fill-box;
+}
+
 /* crosshair highlighting */
 
 .dp-xh-row {

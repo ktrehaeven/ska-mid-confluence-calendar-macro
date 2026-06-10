@@ -127,7 +127,7 @@ class MapRenderer {
         // reset all dishes to default color first
         Object.values(this.dishDataManager.dishData).forEach(dish => {
             if (!dish.marker || !dish.marker.setStyle) return;
-            dish.marker.setStyle({ fillColor: '#ffffff', fillOpacity: 0.8 });
+            dish.marker.setStyle({ fillColor: '#ffffff', fillOpacity: 0.8, color: '#070068' });
         });
 
         // get current time
@@ -144,6 +144,7 @@ class MapRenderer {
             bookedDishes[resource].push({
                 ...ev,
                 isActive: evStart <= now && evEnd >= now,
+                isUpcoming: evStart > now,
             });
         });
 
@@ -154,14 +155,32 @@ class MapRenderer {
 
             // prefer active booking, else use first
             const activeEvent = events.find(e => e.isActive) || events[0];
-            const eventType = eventTypes.find(t => t.id === activeEvent.customEventTypeId);
+            const upcomingEvent = events.find(e => e.isUpcoming);
+            const targetEvent = activeEvent || upcomingEvent || events[0];
+            const eventType = eventTypes.find(t => t.id === targetEvent.customEventTypeId);
             const color = eventType?.color || '#E70068';
 
-            dish.marker.setStyle({
-                fillColor: color,
-                fillOpacity: 0.9,
-                color: color,
-            });
+            if (activeEvent) {
+                // currently booked — full color, pulsing border
+                dish.marker.setStyle({
+                    fillColor: color,
+                    fillOpacity: 1.0,
+                    color: color,
+                    weight: 3,
+                });
+                dish.marker.getElement()?.classList.add('dish-active');
+
+            } else {
+                // upcoming — lighter fill, colored border
+                dish.marker.setStyle({
+                    fillColor: color,
+                    fillOpacity: 0.3,
+                    color: color,
+                    weight: 2,
+                });
+                dish.marker.getElement()?.classList.remove('dish-active');
+
+            }
         });
     }
     /**
