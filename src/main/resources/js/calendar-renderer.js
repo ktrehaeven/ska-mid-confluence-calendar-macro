@@ -322,16 +322,29 @@ class CalendarRenderer {
      */
     async _handleEventDelete(args) {
         args.preventDefault();
+
         const result = await this.eventFormManager.confirmDelete(args.e.data);
-        if (!result) return;
+        if (!result) return; // ← check result BEFORE prompting scope
+
+        const siblings = this.getSiblings(args.e.data);
+        const scope = await this._promptScope(siblings);
+        const targets = scope === "all" ? siblings : [args.e.data];
 
         if (result.deleteScope === "single") {
-            // only remove the clicked event, not siblings
-            this._removeEventInstance(args.e.data.id);
+            // delete only the clicked occurrence, on targeted dishes
+            targets.forEach(ev => {
+                if (ev.id === args.e.data.id || scope === "all") {
+                    this._removeEventInstance(ev.id);
+                }
+            });
         } else {
-            // remove all siblings
-            const siblings = this.getSiblings(args.e.data);
-            siblings.forEach(ev => this._removeEventInstance(ev.id));
+            // delete all siblings across all dates and targeted dishes
+            const uuid = this.eventService.getUUIDFromEventId(args.e.data.id);
+            const allOccurrences = this.calendar.events.list.filter(ev =>
+                this.eventService.getUUIDFromEventId(ev.id) === uuid &&
+                (scope === "all" || ev.resource === args.e.data.resource)
+            );
+            allOccurrences.forEach(ev => this._removeEventInstance(ev.id));
         }
 
         this.refresh();
