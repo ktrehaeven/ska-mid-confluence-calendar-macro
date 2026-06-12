@@ -160,27 +160,32 @@ class MapRenderer {
             const eventType = eventTypes.find(t => t.id === targetEvent.customEventTypeId);
             const color = eventType?.color || '#E70068';
 
-            if (activeEvent) {
-                // currently booked — full color, pulsing border
-                dish.marker.setStyle({
-                    fillColor: color,
-                    fillOpacity: 1.0,
-                    color: color,
-                    weight: 3,
-                });
-                dish.marker.getElement()?.classList.add('dish-active');
+            const el = dish.marker.getElement();
+            if (el) {
+                el.classList.remove('dish-active');
 
-            } else {
-                // upcoming — lighter fill, colored border
-                dish.marker.setStyle({
-                    fillColor: color,
-                    fillOpacity: 0.3,
-                    color: color,
-                    weight: 2,
-                });
-                dish.marker.getElement()?.classList.remove('dish-active');
+                if (activeEvent) {
+                    // currently booked — full color, pulsing border
+                    dish.marker.setStyle({
+                        fillColor: color,
+                        fillOpacity: 1.0,
+                        color: color,
+                        weight: 3,
+                    });
+                    el.classList.add('dish-active');
+                    // dish.marker.getElement()?.classList.add('dish-active');
 
-            }
+                } else {
+                    // upcoming — lighter fill, colored border
+                    dish.marker.setStyle({
+                        fillColor: color,
+                        fillOpacity: 0.3,
+                        color: color,
+                        weight: 2,
+                    });
+                    // dish.marker.getElement()?.classList.remove('dish-active');
+
+                    }    }
         });
     }
     /**

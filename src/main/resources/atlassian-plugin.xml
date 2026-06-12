@@ -64,5 +64,15 @@
             </parameter>
         </parameters>
     </xhtml-macro>
-    
+
+    <xhtml-macro
+        name="ska-mid-table-macro"
+        key="ska-mid-table-macro"
+        class="com.skao.confluence.plugins.macro.SkaMidTableMacro"
+        icon="/download/resources/com.skao.confluence.plugins.ska-mid-confluence-calendar-macro:ska-mid-confluence-calendar-macro-resources/images/pluginIcon.png">
+
+        <description key="skamidtable.macro.desc"/>
+        <category name="visuals"/>
+        <parameters/>
+    </xhtml-macro>
 </atlassian-plugin>

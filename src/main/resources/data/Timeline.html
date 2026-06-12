@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@600;700&family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SKA-Low Timeline</title>
+  <style>
+    body {
+  font-family: 'Noto Sans', sans-serif;
+  margin: 0;
+  padding: 20px;
+  background-color: #f5f5f5;
+}
+h1,
+.year-header,
+.sub-column h4 {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+}
+.year-subheader {
+  text-align: center;
+  font-size: 14px;
+  background-color: #fce6f0; /* light gray background */
+  color: #E50869; /* darker text for contrast */
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-top: -8px;
+  margin-bottom: 10px;
+}
+    .timeline {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+    }
+    .year-column {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      width: 200px;
+      flex-shrink: 0;
+    }
+    .year-column:hover {
+  transform: translateY(-2px);
+}
+    .year-header {
+      text-align: center;
+      background: #E50869;
+      color: white;
+      padding: 5px;
+      font-size: 18px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      word-wrap: break-word;
+    }
+    .multi-column {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .sub-column {
+      border-top: 1px solid #ccc;
+      padding-top: 5px;
+    }
+    .sub-column h4 {
+      margin: 5px 0;
+      font-size: 16px;
+      color: #070068;
+      word-wrap: break-word;
+    }
+    .category-label {
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 8px;
+      color: #666;
+    }
+    .section {
+      margin-bottom: 10px;
+    }
+.section-tile {
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border: 2px solid transparent;
+  background-color: transparent; /* no background */
+}
+
+.tile-science-verification {
+  border-color: #d8d8d8; /* darker gray border */
+}
+
+.tile-shared-risk {
+  border-color: #e5e5e5; /* lighter gray border */
+}
+
+.tile-standard-operations {
+  border-color: #f2f2f2; /* black border for contrast */
+}
+    .item {
+      font-size: 13px;
+      margin: 2px 0;
+      padding: 2px 5px;
+      border-left: 4px solid #000;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    .filter-buttons {
+  margin-bottom: 20px;
+}
+.filter-buttons button {
+  background-color: #b2b2b2;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  margin-right: 5px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.filter-buttons button:hover {
+  background-color: #070068;
+}
+    .item:hover {
+  background-color: #dceeff;
+  cursor: pointer;
+    }
+    .blue { background-color: #e6e5ef; border-color: #070068; }
+    .cyan { border-color: #008D96; }
+    .pink { background-color: #fce6f0; border-color: #E50869; }
+    .orange { border-color: #FF7F11; }
+    .purple { border-color: #321d6b; }
+    .gray { background-color: #eee; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>SKA-Low Delivery Timeline</h1>
+  
+  <div class="filter-buttons">
+    <button onclick="filterItems('all')">Show All</button>
+    <button onclick="filterItems('blue')">Continuum</button>
+    <button onclick="filterItems('pink')">Spectral Line</button>
+    <button onclick="filterItems('cyan')">Beamforming</button>
+    <button onclick="filterItems('orange')">Transient</button>
+  </div>
+
+  <div class="timeline">
+    <div class="year-column">
+      <div class="year-header">AA2<br/>2027</div>
+      <div class="year-subheader">68 stations<br/>Max baseline 65 km</div>
+      <div class="multi-column">
+        <div class="sub-column">
+      <div class="item gray">Single subarray</div>
+      </div>
+        <div class="sub-column section-tile tile-science-verification">
+          <h4>Science Verification</h4>
+        <div class="item gray">Both sidereal and non-sidereal tracking</div>
+        <div class="category-label">Continuum</div>
+        <div class="item blue">Max 4 hr integration</div>
+        <div class="item blue">Single beam</div>
+        <div class="item blue">Single pointing</div>
+        <div class="item blue"> Full Field of View</div>
+        <div class="item blue">Full bandwidth of 150 MHz</div>
+        <div class="item blue">Max 40 channels</div>
+        <div class="item blue"> Data: calibrated, averaged and gridded visibilities; image cubes</div>
+        <div class="category-label">Spectral Line</div>
+        <div class="item pink">Max 4 hr integration</div>
+        <div class="item pink">Single beam</div>
+        <div class="item pink">Single pointing</div>
+        <div class="item pink"> Full Field of View</div>
+        <div class="item pink">Full bandwidth of 150 MHz</div>
+        <div class="item pink">Max 4000 channels</div>
+        <div class="item pink">Early implementation
+of continuum subtraction </div>
+        <div class="item pink"> Data: calibrated, averaged and gridded visibilities; image cubes</div>
+        <div class="category-label">Beamforming</div>
+        <div class="item cyan">PST at least 1 beam (full processing)</div>
+        </div>
+      </div>
+    </div>
+      
+    <div class="year-column">
+      <div class="year-header">AA*<br/>2029</div>
+      <div class="year-subheader">307 stations<br/>Max baseline 74 km</div>
+      <div class="multi-column">
+      <div class="sub-column">
+      <div class="item gray">Single subarray</div>
+      </div>
+        <div class="sub-column section-tile tile-science-verification">
+          <h4>Science Verification</h4>
+        <div class="category-label">Continuum</div>
+        <div class="item blue">Max 8 hr integration</div>
+        <div class="item blue">Up to 16 station beams</div>
+        <div class="item blue"> At least 1 substation arrangement (capped by data-rates)</div>
+        <div class="item blue">Full bandwidth of 300 MHz</div>
+        <div class="item blue">Up to 16 images (either in time i.e. 30 min, pointings, or station beams)</div>
+        <div class="category-label">Spectral Line</div>
+        <div class="item pink">Max 4 hr integration</div>
+        <div class="item pink">Up to 8 station beams</div>
+        <div class="item pink"> At least 1 substation arrangement (capped by data-rates)</div>
+        <div class="item pink">Up to 8 images (either in time i.e. 30 min, pointings, or station beams)</div>
+        <div class="item pink">Continuum substraction</div>
+        <div class="category-label">Beamforming</div>
+        <div class="item cyan">PST at least 2 beams (full processing)</div>
+        <div class="item cyan">PSS 8 beams (full processing)</div>
+        <div class="item cyan">VLBI at least 1 beam</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="year-column">
+      <div class="year-header">Cycle 0<br/>2030</div>
+      <div class="year-subheader">307 stations<br/>Max baseline 74 km</div>
+      <div class="multi-column">
+      <div class="sub-column">
+      <div class="item gray">4 subarrays</div>
+      </div>
+        <div class="sub-column section-tile tile-science-verification">
+          <h4>Science Verification</h4>
+          <div class="item gray">Drift scanning capped at a few minutes</div>
+          <div class="category-label">Beamforming</div>
+          <div class="item cyan">PSS 50 beams </div>
+          <div class="item cyan">VLBI at least 2 beams </div>
+        </div>
+        <div class="sub-column section-tile tile-shared-risk">
+          <h4>Shared Risk</h4>
+          <div class="category-label">Continuum</div>
+          <div class="item blue">50 hr integration</div>
+          <div class="item blue">Up to 24 station beams</div>
+          <div class="item blue">2 substation arrangement (capped by data-rates)</div>
+          <div class="item blue">Basic image-based mosaicing</div>
+          <div class="category-label">Spectral Line</div>
+          <div class="item pink">12 hr integration</div>
+          <div class="item pink">Up to 24 station beams</div>
+          <div class="item pink">2 substation arrangement (capped by data-rates)</div>
+	      <div class="item pink">Basic image-based mosaicing</div>
+          <div class="item pink"> Max 16,000 channels </div>
+          <div class="category-label">Beamforming</div>
+          <div class="item cyan">PST full 8 beam capacity </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <div class="year-column">
+      <div class="year-header">Cycle 1<br/>2031</div>
+      <div class="year-subheader">307 stations<br/>Max baseline 74 km</div>
+      <div class="multi-column">
+      <div class="sub-column">
+      <div class="item gray">16 subarrays</div>
+      </div>
+        <div class="sub-column section-tile tile-science-verification">
+          <h4>Science Verification</h4>
+          <div class="category-label">Continuum</div>
+          <div class="item blue">PLDP generation tests</div>
+          <div class="item blue">Joint deconvolution</div>
+          <div class="category-label">Spectral Line</div>
+          <div class="item pink">Limited support for PLDP generation testing</div>
+          <div class="item pink">Limited joint deconvolution</div>
+          <div class="category-label">Transient</div>
+          <div class="item orange">Transient buffer triggered by PSS observations</div>
+        </div>
+        <div class="sub-column section-tile tile-shared-risk">
+          <h4>Shared Risk</h4>
+          <div class="item gray">Drift scanning capped at a few minutes</div>
+          <div class="category-label">Continuum</div>
+          <div class="item blue">Source finding & associated image cutouts</div>
+          <div class="category-label">Spectral Line</div>
+          <div class="item pink">Source finding & associated image cutouts</div>
+          <div class="item pink">Max 64,000 channels</div>
+          <div class="category-label">Beamforming</div>
+          <div class="item cyan">PSS full basic capability </div>
+          <div class="item cyan">VLBI full basic capability </div>
+        </div>
+        <div class="sub-column section-tile tile-standard-operations">
+          <h4>Standard Operations</h4>
+          <div class="category-label">Continuum</div>
+          <div class="item blue">50 hr integration</div>
+          <div class="item blue">Multiple pointings</div>
+          <div class="item blue">>2 substation arrangement (capped by data-rates)</div>
+          <div class="category-label">Spectral Line</div>
+          <div class="item pink">12 hr integration</div>
+          <div class="item pink">Multiple pointings</div>
+          <div class="item pink">>2 substation arrangement (capped by data-rates)</div>
+          <div class="item pink">Increased channels</div>
+          <div class="category-label">Beamforming</div>
+          <div class="item cyan">PST full 8 beam capacity</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="year-column">
+      <div class="year-header">Cycle 2<br/>2032</div>
+      <div class="year-subheader">307 stations<br/>Max baseline 74 km</div>
+      <div class="multi-column">
+      <div class="sub-column">
+      <div class="item gray">16 subarrays</div>
+      </div>
+        <div class="sub-column section-tile tile-science-verification">
+          <h4>Science Verification</h4>
+          <div class="item gray">Full drift scanning capabilities</div>
+          <div class="category-label">Beamforming</div>
+          <div class="item cyan">Improved PSS machine learning for improved triggering </div>
+          <div class="category-label">Transient</div>
+          <div class="item orange">Fast imaging</div>
+          <div class="item orange">Transient buffer triggered by fast imaging</div>
+        </div>
+        <div class="sub-column section-tile tile-shared-risk">
+          <h4>Shared Risk</h4>
+          <div class="category-label">Continuum</div>
+          <div class="item blue">Limited PLDP generation </div>
+          <div class="item blue">Joint deconvolution</div>
+          <div class="category-label">Spectral Line</div>
+          <div class="item pink">Limited PLDP generation</div>
+          <div class="item pink">Joint deconvolution</div>
+          <div class="category-label">Transient</div>
+          <div class="item orange">Transient buffer triggered by PSS observations</div>
+        </div>
+        <div class="sub-column section-tile tile-standard-operations">
+          <h4>Standard Operations</h4>
+          <div class="category-label">Continuum</div>
+          <div class="item blue">Full substation capability</div>
+          <div class="category-label">Spectral Line</div>
+          <div class="item pink">Improved source finding & image cutouts</div>
+          <div class="item pink">Full substation capability</div>
+          <div class="category-label">Beamforming</div>
+          <div class="item cyan">PSS full basic capability </div>
+          <div class="item cyan">VLBI full basic capability  </div>
+        </div>
+      </div>
+    </div>
+
+<div class="year-column">
+      <div class="year-header">Cycle 3<br/>2033</div>
+      <div class="year-subheader">307 stations<br/>Max baseline 74 km</div>
+      <div class="multi-column">
+      <div class="sub-column">
+      <div class="item gray">16 subarrays</div>
+      </div>
+        <div class="sub-column section-tile tile-science-verification">
+          <h4>Science Verification</h4>
+          <div class="category-label">Continuum</div>
+          <div class="item blue">Autocorrelation processed data products  </div>
+          <div class="category-label">Spectral Line</div>
+          <div class="item pink">Autocorrelation processed data products </div>
+        </div>
+        <div class="sub-column section-tile tile-shared-risk">
+          <h4>Shared Risk</h4>
+          <div class="category-label">Beamforming</div>
+          <div class="item cyan">Improved PSS machine learning for improved triggering </div>
+          <div class="category-label">Transient</div>
+          <div class="item orange">Fast imaging</div>
+          <div class="item orange">Transient buffer triggered by fast imaging</div>
+        </div>
+        <div class="sub-column section-tile tile-standard-operations">
+          <h4>Standard Operations</h4>
+          <div class="category-label">Continuum</div>
+          <div class="item blue">Full PLDP capabilities </div>
+          <div class="item blue">Joint deconvolution </div>
+          <div class="category-label">Spectral Line</div>
+          <div class="item pink">Full PLDP capabilities</div>
+          <div class="item pink">Full joint deconvolution capabilities</div>
+          <div class="category-label">Transient</div>
+          <div class="item orange">Transient buffer triggered by PSS observations</div>
+        </div>
+      </div>
+    </div>
+
+
+  <script>
+    function filterItems(color) {
+      const items = document.querySelectorAll('.item');
+      items.forEach(item => {
+        if (color === 'all') {
+          item.style.display = 'block';
+        } else {
+          if (item.classList.contains(color)) {
+            item.style.display = 'block';
+          } else {
+            item.style.display = 'none';
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
+
