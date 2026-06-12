@@ -12,6 +12,7 @@ class EventService {
     constructor(dishDataManager) {
         this.dishDataManager = dishDataManager;
         this.customEventTypesList = [
+            {id: "type-Booking", title: "Booking", color: "#FFD700" },
             { id: "type-Airplane", title: "Airplane", color: "#7B68EE" },
             { id: "type-ObservationSchedule", title: "Observation Schedule", color: "#ADFF2F" },
             { id: "type-maintenance", title: "Maintenance", color: "#E70068" },
