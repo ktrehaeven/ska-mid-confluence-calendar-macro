@@ -41,6 +41,7 @@ class CalendarRenderer {
             this.initRowFilter();
             this.initNavFooter();
             this._initLegend();
+            this._initSummaryButton();
         }
 
         const xhair = new DayPilotCrosshair(this.calendar);
@@ -314,6 +315,253 @@ class CalendarRenderer {
 
         wrapper.appendChild(legend);
     }
+
+    _initSummaryButton() {
+        const wrapper = this.navEl?.parentNode;
+        if (!wrapper) return;
+
+        const btn = document.createElement('button');
+        btn.textContent = '📋 Daily Summary';
+        btn.className = 'summary-btn';
+        btn.style.cssText = `
+            width: 100%;
+            margin-top: 12px;
+            padding: 8px 12px;
+            background: #0052cc;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        `;
+        btn.addEventListener('click', () => this._showDailySummary());
+        wrapper.appendChild(btn);
+    }
+
+    _buildSummaryData() {
+        const viewDate = this.calendar.startDate;
+        const viewStart = new DayPilot.Date(viewDate).getTime();
+        const viewEnd = new DayPilot.Date(viewDate).addDays(1).getTime();
+
+        const todayEvents = this.calendar.events.list.filter(ev => {
+            const evStart = new DayPilot.Date(ev.start).getTime();
+            const evEnd = new DayPilot.Date(ev.end).getTime();
+            return evStart < viewEnd && evEnd > viewStart;
+        });
+
+        const eventTypes = this.eventService.customEventTypes;
+
+        // group sibling events (same UUID) into single bookings
+        const bookingMap = {};
+        todayEvents.forEach(ev => {
+            const uuid = this.eventService.getUUIDFromEventId(ev.id);
+            if (!bookingMap[uuid]) {
+                bookingMap[uuid] = {
+                    uuid,
+                    text: ev.text || 'Untitled',
+                    description: ev.description || '',
+                    customEventTypeId: ev.customEventTypeId,
+                    creator: ev.creator || 'Unknown',
+                    start: ev.start,
+                    end: ev.end,
+                    dishes: [],
+                };
+            }
+            bookingMap[uuid].dishes.push(ev.resource);
+        });
+
+        // sort bookings chronologically
+        const bookings = Object.values(bookingMap).sort((a, b) =>
+            new DayPilot.Date(a.start).getTime() - new DayPilot.Date(b.start).getTime()
+        );
+
+        // hours per event type (raw booked hours)
+        const hoursByType = {};
+        eventTypes.forEach(t => hoursByType[t.id] = 0);
+        bookings.forEach(booking => {
+            const evStart = Math.max(new DayPilot.Date(booking.start).getTime(), viewStart);
+            const evEnd = Math.min(new DayPilot.Date(booking.end).getTime(), viewEnd);
+            const hours = (evEnd - evStart) / (1000 * 60 * 60);
+            if (hoursByType[booking.customEventTypeId] !== undefined) {
+                hoursByType[booking.customEventTypeId] += hours;
+            }
+        });
+
+        // overlap detection
+        const overlaps = [];
+        const bookingList = Object.values(bookingMap);
+        for (let i = 0; i < bookingList.length; i++) {
+            for (let j = i + 1; j < bookingList.length; j++) {
+                const aStart = new DayPilot.Date(bookingList[i].start).getTime();
+                const aEnd = new DayPilot.Date(bookingList[i].end).getTime();
+                const bStart = new DayPilot.Date(bookingList[j].start).getTime();
+                const bEnd = new DayPilot.Date(bookingList[j].end).getTime();
+                const sharedDishes = bookingList[i].dishes.filter(d =>
+                    bookingList[j].dishes.includes(d)
+                );
+                if (aStart < bEnd && aEnd > bStart && sharedDishes.length > 0) {
+                    overlaps.push({
+                        a: bookingList[i],
+                        b: bookingList[j],
+                        dishes: sharedDishes,
+                    });
+                }
+            }
+        }
+
+        return {
+            date: new DayPilot.Date(viewDate).toString('dd/MM/yyyy'),
+            totalBookings: bookings.length,
+            bookings,
+            hoursByType,
+            overlaps,
+            eventTypes,
+        };
+    }
+
+    _showDailySummary() {
+        const data = this._buildSummaryData();
+        const eventTypes = data.eventTypes;
+
+        // ── Section 1: Hours by event type ──────────────────────────────
+        const typeRows = eventTypes.map(t => {
+            const hours = (data.hoursByType[t.id] || 0);
+            const utilization = ((hours / 24) * 100).toFixed(1);
+            const hoursStr = hours.toFixed(1);
+            return `
+                <tr>
+                    <td style="padding:6px 8px;">
+                        <span style="display:inline-block; width:10px; height:10px;
+                                    border-radius:50%; background:${t.color};
+                                    margin-right:6px;"></span>
+                        ${t.name}
+                    </td>
+                    <td style="padding:6px 8px; text-align:right;">${hoursStr}h</td>
+                    <td style="padding:6px 8px; text-align:right;">${utilization}%</td>
+                </tr>`;
+        }).join('');
+
+        // total
+        const totalHours = Object.values(data.hoursByType).reduce((a, b) => a + b, 0);
+        const totalUtilization = ((totalHours / 24) * 100).toFixed(1);
+
+        // ── Section 2: Chronological booking details ─────────────────────
+        const bookingRows = data.bookings.length === 0
+            ? '<p style="color:#5e6c84; font-size:13px;">No bookings for this day.</p>'
+            : data.bookings.map(booking => {
+                const eventType = eventTypes.find(t => t.id === booking.customEventTypeId);
+                const color = eventType?.color || '#888';
+                const typeName = eventType?.name || 'Unknown';
+
+                const startStr = new DayPilot.Date(booking.start).toString('HH:mm');
+                const endStr = new DayPilot.Date(booking.end).toString('HH:mm');
+                const hours = (
+                    (new DayPilot.Date(booking.end).getTime() -
+                    new DayPilot.Date(booking.start).getTime()) /
+                    (1000 * 60 * 60)
+                ).toFixed(1);
+
+                const dishList = booking.dishes.sort().join(', ');
+
+                return `
+                    <div style="border-left: 3px solid ${color}; padding: 10px 14px;
+                                margin-bottom: 10px; background: #f9f9f9; border-radius: 0 6px 6px 0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:13px; font-weight:600; color:#172b4d;">
+                                ${startStr} – ${endStr}
+                                <span style="font-weight:400; color:#5e6c84;">(${hours}h)</span>
+                            </span>
+                            <span style="font-size:11px; font-weight:600; color:${color};
+                                        background:${color}22; padding:2px 8px; border-radius:12px;">
+                                ${typeName}
+                            </span>
+                        </div>
+                        <div style="font-size:14px; font-weight:600; margin-top:4px; color:#172b4d;">
+                            ${booking.text}
+                        </div>
+                        <div style="font-size:12px; color:#5e6c84; margin-top:2px;">
+                            👤 ${booking.creator}
+                        </div>
+                        <div style="font-size:12px; color:#5e6c84; margin-top:2px;">
+                            📡 ${dishList}
+                        </div>
+                        ${booking.description ? `
+                        <div style="font-size:12px; color:#344563; margin-top:6px;
+                                    padding-top:6px; border-top:1px solid #e0e0e0;">
+                            ${booking.description}
+                        </div>` : ''}
+                    </div>`;
+            }).join('');
+
+        // ── Section 3: Overlap warnings ──────────────────────────────────
+        const overlapHtml = data.overlaps.length === 0
+            ? '<p style="color:#36B37E; font-size:13px;">✓ No overlapping bookings detected.</p>'
+            : data.overlaps.map(o => `
+                <div style="color:#DE350B; font-size:12px; margin-bottom:6px;
+                            padding:6px 10px; background:#fff3f0; border-radius:4px;">
+                    ⚠ <strong>${o.dishes.join(', ')}</strong>: 
+                    "${o.a.text || 'Untitled'}" overlaps with "${o.b.text || 'Untitled'}"
+                </div>`).join('');
+
+        // ── Assemble modal ────────────────────────────────────────────────
+        const html = `
+            <div style="font-family:inherit; padding:4px;">
+
+                <h3 style="margin:0 0 4px; color:#172b4d; font-size:16px;">
+                    📋 Daily Summary
+                </h3>
+                <p style="color:#5e6c84; font-size:13px; margin:0 0 16px;">
+                    ${data.date} &nbsp;·&nbsp; ${data.totalBookings} booking(s)
+                </p>
+
+                <h4 style="margin:0 0 8px; color:#344563; font-size:13px;
+                        text-transform:uppercase; letter-spacing:0.05em;">
+                    Hours by Event Type
+                </h4>
+                <table style="width:100%; border-collapse:collapse;
+                            margin-bottom:20px; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f4f5f7;">
+                            <th style="padding:6px 8px; text-align:left;">Type</th>
+                            <th style="padding:6px 8px; text-align:right;">Hours</th>
+                            <th style="padding:6px 8px; text-align:right;">Utilization</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${typeRows}
+                        <tr style="border-top:2px solid #ddd; font-weight:600;">
+                            <td style="padding:6px 8px;">Total</td>
+                            <td style="padding:6px 8px; text-align:right;">${totalHours.toFixed(1)}h</td>
+                            <td style="padding:6px 8px; text-align:right;">${totalUtilization}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4 style="margin:0 0 8px; color:#344563; font-size:13px;
+                        text-transform:uppercase; letter-spacing:0.05em;">
+                    Bookings
+                </h4>
+                <div style="margin-bottom:20px;">
+                    ${bookingRows}
+                </div>
+
+                <h4 style="margin:0 0 8px; color:#344563; font-size:13px;
+                        text-transform:uppercase; letter-spacing:0.05em;">
+                    Overlap Detection
+                </h4>
+                ${overlapHtml}
+
+            </div>`;
+
+        DayPilot.Modal.alert(html, {
+            okText: "Close",
+            width: 720,
+            scrollWithPage: false,
+            zIndex: 1000,
+        });
+    }
+
     /**
      * Handles event deletion
      * Deletes the DayPilot event, all sibling events and corresponding Confluence event
