@@ -579,21 +579,47 @@ class CalendarRenderer {
         const targets = scope === "all" ? siblings : [args.e.data];
 
         if (result.deleteScope === "single") {
-            // delete only the clicked occurrence, on targeted dishes
-            targets.forEach(ev => {
-                if (ev.id === args.e.data.id || scope === "all") {
-                    this._removeEventInstance(ev.id);
-                }
-            });
-        } else {
-            // delete all siblings across all dates and targeted dishes
-            const uuid = this.eventService.getUUIDFromEventId(args.e.data.id);
-            const allOccurrences = this.calendar.events.list.filter(ev =>
-                this.eventService.getUUIDFromEventId(ev.id) === uuid &&
-                (scope === "all" || ev.resource === args.e.data.resource)
-            );
-            allOccurrences.forEach(ev => this._removeEventInstance(ev.id));
+
+            if (scope === "all") {
+
+                // delete only same occurrence across dishes
+                const sameOccurrence = this.calendar.events.list.filter(ev =>
+                    ev.id === args.e.data.id ||
+                    (
+                        ev.start?.getTime() === args.e.data.start?.getTime() &&
+                        ev.end?.getTime() === args.e.data.end?.getTime() &&
+                        this.eventService.getUUIDFromEventId(ev.id) ===
+                        this.eventService.getUUIDFromEventId(args.e.data.id)
+                    )
+                );
+
+                sameOccurrence.forEach(ev =>
+                    this._removeEventInstance(ev.id)
+                );
+
+            } else {
+
+                // delete ONLY clicked occurrence
+                this._removeEventInstance(args.e.data.id);
+            }
+
         }
+        // if (result.deleteScope === "single") {
+        //     // delete only the clicked occurrence, on targeted dishes
+        //     targets.forEach(ev => {
+        //         if (ev.id === args.e.data.id || scope === "all") {
+        //             this._removeEventInstance(ev.id);
+        //         }
+        //     });
+        // } else {
+        //     // delete all siblings across all dates and targeted dishes
+        //     const uuid = this.eventService.getUUIDFromEventId(args.e.data.id);
+        //     const allOccurrences = this.calendar.events.list.filter(ev =>
+        //         this.eventService.getUUIDFromEventId(ev.id) === uuid &&
+        //         (scope === "all" || ev.resource === args.e.data.resource)
+        //     );
+        //     allOccurrences.forEach(ev => this._removeEventInstance(ev.id));
+        // }
 
         this.refresh();
     }
