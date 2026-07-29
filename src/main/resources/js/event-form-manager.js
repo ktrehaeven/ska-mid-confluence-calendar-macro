@@ -538,13 +538,25 @@ class EventFormManager {
         //    `<option value="${cluster}">${cluster}</option>`
         //).join("");
 
-        const dishOptionsHtml = dishes.map(dish => {
-            const selected = data.resource.includes(dish.Label) ? 'selected' : '';
-            const busy = data.start && data.end ? this._isDishBusy(dish.Label, data.start, data.end, eventsList) : false;
-            const dot = busy ? '🔴' : '🟢';
-            //const cluster = clusterFilters.find(c => dish.Label.startsWith(c)) ?? '';
-            return `<option value="${dish.Label}" data-phase="${dish.Phase}" ${selected}>${dot} ${dish.Label}</option>`; //data-cluster="${cluster}"
-        }).join("");
+        // const dishOptionsHtml = dishes.map(dish => {
+        //     const selected = data.resource.includes(dish.Label) ? 'selected' : '';
+        //     const busy = data.start && data.end ? this._isDishBusy(dish.Label, data.start, data.end, eventsList) : false;
+        //     const dot = busy ? '🔴' : '🟢';
+        //     //const cluster = clusterFilters.find(c => dish.Label.startsWith(c)) ?? '';
+        //     return `<option value="${dish.Label}" data-phase="${dish.Phase}" ${selected}>${dot} ${dish.Label}</option>`; //data-cluster="${cluster}"
+        // }).join("");
+        const dishOptionsHtml = dishes
+            .sort((a, b) => {
+                const aSelected = data.resource.includes(a.Label) ? 0 : 1;
+                const bSelected = data.resource.includes(b.Label) ? 0 : 1;
+                return aSelected - bSelected;
+            })
+            .map(dish => {
+                const selected = data.resource.includes(dish.Label) ? 'selected' : '';
+                const busy = data.start && data.end ? this._isDishBusy(dish.Label, data.start, data.end, eventsList) : false;
+                const dot = busy ? '🔴' : '🟢';
+                return `<option value="${dish.Label}" data-phase="${dish.Phase}" ${selected}>${dot} ${dish.Label}</option>`;
+            }).join("");
 
         const html = `
             <div style="display:flex; gap:12px; width:100%; align-items:stretch;">
@@ -576,14 +588,27 @@ class EventFormManager {
         //const clusterSelect = document.getElementById('cluster-multiselect');
         const dishSelect = document.getElementById('dish-multiselect');
 
+        // phaseSelect.addEventListener('change', () => {
+        //     const selectedPhases = Array.from(phaseSelect.selectedOptions).map(o => o.value);
+        //     //Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
+        //     Array.from(dishSelect.options).forEach(opt => {
+        //         opt.selected = selectedPhases.includes(opt.dataset.phase);
+        //     });
+        // });
+
         phaseSelect.addEventListener('change', () => {
             const selectedPhases = Array.from(phaseSelect.selectedOptions).map(o => o.value);
-            //Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
+
             Array.from(dishSelect.options).forEach(opt => {
                 opt.selected = selectedPhases.includes(opt.dataset.phase);
             });
-        });
 
+            // Re-sort: selected options float to top
+            const options = Array.from(dishSelect.options);
+            options.sort((a, b) => (a.selected ? 0 : 1) - (b.selected ? 0 : 1));
+            dishSelect.innerHTML = '';
+            options.forEach(opt => dishSelect.appendChild(opt));
+        });
         //clusterSelect.addEventListener('change', () => {
         //    const selectedClusters = Array.from(clusterSelect.selectedOptions).map(o => o.value);
         //    Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
