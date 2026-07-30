@@ -22,6 +22,8 @@ class CalendarRenderer {
     async init(wrapper) {
         const calendarEl = wrapper.querySelector('.daypilot');
         const navEl = wrapper.querySelector('.daypilot-nav');
+        console.log('calendarEl:', calendarEl);
+        console.log('navEl:', navEl);
         this._initCurrentTimeLine();
 
         if (!calendarEl || this.isInitialized) return;
@@ -29,6 +31,8 @@ class CalendarRenderer {
 
         this.calendar = this._createScheduler(calendarEl);
         this.calendar.init();
+        console.log('rectangleSelectHandling:', this.calendar.rectangleSelectHandling);
+        console.log('onRectangleSelected:', this.calendar.onRectangleSelected);
 
         if (navEl) {
             this.navEl = navEl;
@@ -36,14 +40,13 @@ class CalendarRenderer {
             this.navigator.init();
             this.initRowFilter();
             this.initNavFooter();
+            this._initLegend();
+            this._initSummaryButton();
         }
 
         const xhair = new DayPilotCrosshair(this.calendar);
         xhair.attach();
 
-        await this.eventService.loadCalendars(wrapper);
-        await this.eventService.getCurrentUser();
-        this.calendar.events.list = await this.eventService.fetchAllEvents();
         this._startAutoRefresh();
         this.refresh();
     }
@@ -86,6 +89,9 @@ class CalendarRenderer {
             timeHeaderClickHandling: "Update",
             onTimeHeaderClick: (args) => this._handleTimeHeaderClick(args),
             onBeforeTimeHeaderRender: (args) => this._handleTimeHeaderRender(args),
+            rectangleSelectHandling: "EventSelect",
+            onRectangleSelected: (args) => this._handleRectangleSelected(args),
+            onBeforeEventRender: (args) => this._handleBeforeEventRender(args),
         });
     }
 
@@ -107,7 +113,7 @@ class CalendarRenderer {
      */
     async _updateCurrentTimeLine() {
 
-        const now = new DayPilot.Date(new Date().toLocaleString("sv-SE", { timeZone: "South Africa/Johannesburg" })).getTime();
+        const now = new DayPilot.Date(new Date().toLocaleString("sv-SE", { timeZone: "Africa/Johannesburg" })).getTime();
         const start = this.calendar.startDate.getTime();
         const end = new DayPilot.Date(this.calendar.startDate).addDays(this.calendar.days).getTime();
 
@@ -160,29 +166,28 @@ class CalendarRenderer {
     /**
      * Updates an existing DayPilot calendar event instance
      * @private
-     * @param {string} confluenceId - Confluence event ID
-     * @param {string} resource - Resource/dish ID
+     * @param {Array} eventId - event ID
      * @param {Object} updatedData - Updated event properties
      * @returns {Object|null} Updated event or null if not found
      */
-    _updateEventInstance(confluenceId, resource, updatedData) {
-        const id = this.eventService.makeEventId(confluenceId, resource);
-        const ev = this.calendar.events.find(id);
+    _updateEventInstance(eventId, updatedData) {
+        const ev = this.calendar.events.find(eventId);
+
         if (ev) {
             Object.assign(ev.data, updatedData);
         }
+
         return ev;
     }
 
     /**
      * Removes an existing DayPilot calendar event instance
      * @private
-     * @param {string} confluenceId - Confluence event ID
-     * @param {string} resource - Resource/dish ID
+     * @param {Array} eventId - event ID
      */
-    _removeEventInstance(confluenceId, resource) {
-        const id = this.eventService.makeEventId(confluenceId, resource);
-        const ev = this.calendar.events.find(id);
+    _removeEventInstance(eventId) {
+        const ev = this.calendar.events.find(eventId);
+
         if (ev) {
             this.calendar.events.remove(ev);
         }
@@ -191,27 +196,370 @@ class CalendarRenderer {
     /**
      * Adds a new DayPilot calendar event instance
      * @private
-     * @param {string} confluenceId - Confluence event ID
-     * @param {string} dish - Dish/resource identifier
+     * @param {string} seriesUuid - event series uuid
      * @param {Object} eventData - Event data object
+     * @param {Object} dish - dish
      */
-    _addEventInstance(confluenceId, dish, eventData) {
-        const id = this.eventService.makeEventId(confluenceId, dish);
-        if (!this.calendar.events.find(id)) {
+    _addEventInstance(eventData, seriesUuid, dish) {
+        // include date in ID to make each occurrence unique
+        // const dateStr = new DayPilot.Date(eventData.start).toString('yyyyMMdd');
+        const dateStr = eventData.start instanceof DayPilot.Date
+            ? eventData.start.toString('yyyyMMdd')
+            : new DayPilot.Date(eventData.start).toString('yyyyMMdd');
+
+        // keep base ID for sibling lookups, add date only for uniqueness
+        const baseId = this.eventService.makeEventId(seriesUuid, dish);
+        const eventId = `${baseId}_${dateStr}`;
+        // const eventId = this.eventService.makeEventId(seriesUuid, dish) + '_' + dateStr;
+        console.log('adding event:', eventId, 'exists:', !!this.calendar.events.find(eventId));
+        if (!this.calendar.events.find(eventId)) {
 
             const newEvent = new DayPilot.Event({
-                id: this.eventService.makeEventId(confluenceId, dish),
-                confluenceId: confluenceId,
+                id: eventId,
                 text: eventData.text,
                 start: eventData.start,
                 end: eventData.end,
                 resource: dish,
                 customEventTypeId: eventData.customEventTypeId,
                 description: eventData.description,
+                seriesUuid: seriesUuid,
+                baseId: baseId,
             });
 
             this.calendar.events.add(newEvent);
         }
+    }
+
+    _handleBeforeEventRender(args) {
+        const eventTypeId = args.data.customEventTypeId;
+        const eventType = this.eventService.customEventTypes.find(
+            t => t.id === eventTypeId
+        );
+
+        if (eventType?.color) {
+            args.data.backColor = eventType.color;
+            args.data.borderColor = eventType.color;
+            args.data.fontColor = "#ffffff";
+        }
+    }
+
+    _initLegend() {
+        const wrapper = this.navEl?.parentNode;
+        if (!wrapper) return;
+
+        // inject styles once
+        if (!document.getElementById('calendar-legend-styles')) {
+            const style = document.createElement('style');
+            style.id = 'calendar-legend-styles';
+            style.textContent = `
+                .calendar-legend {
+                    margin-top: 12px;
+                    padding: 10px 12px;
+                    background: #fff;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 6px;
+                    font-family: inherit;
+                }
+                .calendar-legend-title {
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #344563;
+                    margin-bottom: 8px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                }
+                .calendar-legend-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin-bottom: 6px;
+                    font-size: 13px;
+                    color: #172b4d;
+                }
+                .calendar-legend-item:last-child {
+                    margin-bottom: 0;
+                }
+                .calendar-legend-dot {
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    flex-shrink: 0;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        const legend = document.createElement('div');
+        legend.className = 'calendar-legend';
+
+        const title = document.createElement('div');
+        title.className = 'calendar-legend-title';
+        title.textContent = 'Event Types';
+        legend.appendChild(title);
+
+        this.eventService.customEventTypes.forEach(type => {
+            const item = document.createElement('div');
+            item.className = 'calendar-legend-item';
+
+            const dot = document.createElement('span');
+            dot.className = 'calendar-legend-dot';
+            dot.style.backgroundColor = type.color;
+
+            const label = document.createElement('span');
+            label.textContent = type.name;
+
+            item.appendChild(dot);
+            item.appendChild(label);
+            legend.appendChild(item);
+        });
+
+        wrapper.appendChild(legend);
+    }
+
+    _initSummaryButton() {
+        const wrapper = this.navEl?.parentNode;
+        if (!wrapper) return;
+
+        const btn = document.createElement('button');
+        btn.textContent = '📋 Daily Summary';
+        btn.className = 'summary-btn';
+        btn.style.cssText = `
+            width: 100%;
+            margin-top: 12px;
+            padding: 8px 12px;
+            background: #0052cc;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        `;
+        btn.addEventListener('click', () => this._showDailySummary());
+        wrapper.appendChild(btn);
+    }
+
+    _buildSummaryData() {
+        const viewDate = this.calendar.startDate;
+        const viewStart = new DayPilot.Date(viewDate).getTime();
+        const viewEnd = new DayPilot.Date(viewDate).addDays(1).getTime();
+
+        const todayEvents = this.calendar.events.list.filter(ev => {
+            const evStart = new DayPilot.Date(ev.start).getTime();
+            const evEnd = new DayPilot.Date(ev.end).getTime();
+            return evStart < viewEnd && evEnd > viewStart;
+        });
+
+        const eventTypes = this.eventService.customEventTypes;
+
+        // group sibling events (same UUID) into single bookings
+        const bookingMap = {};
+        todayEvents.forEach(ev => {
+            const uuid = this.eventService.getUUIDFromEventId(ev.id);
+            if (!bookingMap[uuid]) {
+                bookingMap[uuid] = {
+                    uuid,
+                    text: ev.text || 'Untitled',
+                    description: ev.description || '',
+                    customEventTypeId: ev.customEventTypeId,
+                    creator: ev.creator || 'Unknown',
+                    start: ev.start,
+                    end: ev.end,
+                    dishes: [],
+                };
+            }
+            bookingMap[uuid].dishes.push(ev.resource);
+        });
+
+        // sort bookings chronologically
+        const bookings = Object.values(bookingMap).sort((a, b) =>
+            new DayPilot.Date(a.start).getTime() - new DayPilot.Date(b.start).getTime()
+        );
+
+        // hours per event type (raw booked hours)
+        const hoursByType = {};
+        eventTypes.forEach(t => hoursByType[t.id] = 0);
+        bookings.forEach(booking => {
+            const evStart = Math.max(new DayPilot.Date(booking.start).getTime(), viewStart);
+            const evEnd = Math.min(new DayPilot.Date(booking.end).getTime(), viewEnd);
+            const hours = (evEnd - evStart) / (1000 * 60 * 60);
+            if (hoursByType[booking.customEventTypeId] !== undefined) {
+                hoursByType[booking.customEventTypeId] += hours;
+            }
+        });
+
+        // overlap detection
+        const overlaps = [];
+        const bookingList = Object.values(bookingMap);
+        for (let i = 0; i < bookingList.length; i++) {
+            for (let j = i + 1; j < bookingList.length; j++) {
+                const aStart = new DayPilot.Date(bookingList[i].start).getTime();
+                const aEnd = new DayPilot.Date(bookingList[i].end).getTime();
+                const bStart = new DayPilot.Date(bookingList[j].start).getTime();
+                const bEnd = new DayPilot.Date(bookingList[j].end).getTime();
+                const sharedDishes = bookingList[i].dishes.filter(d =>
+                    bookingList[j].dishes.includes(d)
+                );
+                if (aStart < bEnd && aEnd > bStart && sharedDishes.length > 0) {
+                    overlaps.push({
+                        a: bookingList[i],
+                        b: bookingList[j],
+                        dishes: sharedDishes,
+                    });
+                }
+            }
+        }
+
+        return {
+            date: new DayPilot.Date(viewDate).toString('dd/MM/yyyy'),
+            totalBookings: bookings.length,
+            bookings,
+            hoursByType,
+            overlaps,
+            eventTypes,
+        };
+    }
+
+    _showDailySummary() {
+        const data = this._buildSummaryData();
+        const eventTypes = data.eventTypes;
+
+        // ── Section 1: Hours by event type ──────────────────────────────
+        const typeRows = eventTypes.map(t => {
+            const hours = (data.hoursByType[t.id] || 0);
+            const utilization = ((hours / 24) * 100).toFixed(1);
+            const hoursStr = hours.toFixed(1);
+            return `
+                <tr>
+                    <td style="padding:6px 8px;">
+                        <span style="display:inline-block; width:10px; height:10px;
+                                    border-radius:50%; background:${t.color};
+                                    margin-right:6px;"></span>
+                        ${t.name}
+                    </td>
+                    <td style="padding:6px 8px; text-align:right;">${hoursStr}h</td>
+                    <td style="padding:6px 8px; text-align:right;">${utilization}%</td>
+                </tr>`;
+        }).join('');
+
+        // total
+        const totalHours = Object.values(data.hoursByType).reduce((a, b) => a + b, 0);
+        const totalUtilization = ((totalHours / 24) * 100).toFixed(1);
+
+        // ── Section 2: Chronological booking details ─────────────────────
+        const bookingRows = data.bookings.length === 0
+            ? '<p style="color:#5e6c84; font-size:13px;">No bookings for this day.</p>'
+            : data.bookings.map(booking => {
+                const eventType = eventTypes.find(t => t.id === booking.customEventTypeId);
+                const color = eventType?.color || '#888';
+                const typeName = eventType?.name || 'Unknown';
+
+                const startStr = new DayPilot.Date(booking.start).toString('HH:mm');
+                const endStr = new DayPilot.Date(booking.end).toString('HH:mm');
+                const hours = (
+                    (new DayPilot.Date(booking.end).getTime() -
+                    new DayPilot.Date(booking.start).getTime()) /
+                    (1000 * 60 * 60)
+                ).toFixed(1);
+
+                const dishList = booking.dishes.sort().join(', ');
+
+                return `
+                    <div style="border-left: 3px solid ${color}; padding: 10px 14px;
+                                margin-bottom: 10px; background: #f9f9f9; border-radius: 0 6px 6px 0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:13px; font-weight:600; color:#172b4d;">
+                                ${startStr} – ${endStr}
+                                <span style="font-weight:400; color:#5e6c84;">(${hours}h)</span>
+                            </span>
+                            <span style="font-size:11px; font-weight:600; color:${color};
+                                        background:${color}22; padding:2px 8px; border-radius:12px;">
+                                ${typeName}
+                            </span>
+                        </div>
+                        <div style="font-size:14px; font-weight:600; margin-top:4px; color:#172b4d;">
+                            ${booking.text}
+                        </div>
+                        <div style="font-size:12px; color:#5e6c84; margin-top:2px;">
+                            👤 ${booking.creator}
+                        </div>
+                        <div style="font-size:12px; color:#5e6c84; margin-top:2px;">
+                            📡 ${dishList}
+                        </div>
+                        ${booking.description ? `
+                        <div style="font-size:12px; color:#344563; margin-top:6px;
+                                    padding-top:6px; border-top:1px solid #e0e0e0;">
+                            ${booking.description}
+                        </div>` : ''}
+                    </div>`;
+            }).join('');
+
+        // ── Section 3: Overlap warnings ──────────────────────────────────
+        const overlapHtml = data.overlaps.length === 0
+            ? '<p style="color:#36B37E; font-size:13px;">✓ No overlapping bookings detected.</p>'
+            : data.overlaps.map(o => `
+                <div style="color:#DE350B; font-size:12px; margin-bottom:6px;
+                            padding:6px 10px; background:#fff3f0; border-radius:4px;">
+                    ⚠ <strong>${o.dishes.join(', ')}</strong>: 
+                    "${o.a.text || 'Untitled'}" overlaps with "${o.b.text || 'Untitled'}"
+                </div>`).join('');
+
+        // ── Assemble modal ────────────────────────────────────────────────
+        const html = `
+            <div style="font-family:inherit; padding:4px;">
+
+                <h3 style="margin:0 0 4px; color:#172b4d; font-size:16px;">
+                    📋 Daily Summary
+                </h3>
+                <p style="color:#5e6c84; font-size:13px; margin:0 0 16px;">
+                    ${data.date} &nbsp;·&nbsp; ${data.totalBookings} booking(s)
+                </p>
+
+                <h4 style="margin:0 0 8px; color:#344563; font-size:13px;
+                        text-transform:uppercase; letter-spacing:0.05em;">
+                    Hours by Event Type
+                </h4>
+                <table style="width:100%; border-collapse:collapse;
+                            margin-bottom:20px; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f4f5f7;">
+                            <th style="padding:6px 8px; text-align:left;">Type</th>
+                            <th style="padding:6px 8px; text-align:right;">Hours</th>
+                            <th style="padding:6px 8px; text-align:right;">Utilization</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${typeRows}
+                        <tr style="border-top:2px solid #ddd; font-weight:600;">
+                            <td style="padding:6px 8px;">Total</td>
+                            <td style="padding:6px 8px; text-align:right;">${totalHours.toFixed(1)}h</td>
+                            <td style="padding:6px 8px; text-align:right;">${totalUtilization}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4 style="margin:0 0 8px; color:#344563; font-size:13px;
+                        text-transform:uppercase; letter-spacing:0.05em;">
+                    Bookings
+                </h4>
+                <div style="margin-bottom:20px;">
+                    ${bookingRows}
+                </div>
+
+                <h4 style="margin:0 0 8px; color:#344563; font-size:13px;
+                        text-transform:uppercase; letter-spacing:0.05em;">
+                    Overlap Detection
+                </h4>
+                ${overlapHtml}
+
+            </div>`;
+
+        DayPilot.Modal.alert(html, {
+            okText: "Close",
+            width: 720,
+            scrollWithPage: false,
+            zIndex: 1000,
+        });
     }
 
     /**
@@ -223,28 +571,57 @@ class CalendarRenderer {
     async _handleEventDelete(args) {
 
         args.preventDefault();
-        const result = await this.eventFormManager.confirmDelete(args.e.data)
-        if (!result) return
 
-        if (result.deleteScope == "single") {
-            // handle single delete without confluence request for faster response
-            const events = this.getSiblings(args.e.data);
-            events.forEach(ev => this._removeEventInstance(ev.confluenceId, ev.resource));
-            await this.eventService.deleteEvent(args.e.data, result.deleteScope);
-        }
-        else {
-            // request events from the subcalendar of updated event to update recurrence
-            await this.eventService.deleteEvent(args.e.data, result.deleteScope);
-            const eventId = args.e.data.customEventTypeId
-            if (eventId) {
-                const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
-                this.calendar.events.list = [
-                    ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
-                    ...updatedEvents
-                ];
+        const result = await this.eventFormManager.confirmDelete(args.e.data);
+        if (!result) return; // ← check result BEFORE prompting scope
+
+        const siblings = this.getSiblings(args.e.data);
+        const scope = await this._promptScope(siblings);
+        const targets = scope === "all" ? siblings : [args.e.data];
+
+        if (result.deleteScope === "single") {
+
+            if (scope === "all") {
+
+                // delete only same occurrence across dishes
+                const sameOccurrence = this.calendar.events.list.filter(ev =>
+                    ev.id === args.e.data.id ||
+                    (
+                        ev.start?.getTime() === args.e.data.start?.getTime() &&
+                        ev.end?.getTime() === args.e.data.end?.getTime() &&
+                        this.eventService.getUUIDFromEventId(ev.id) ===
+                        this.eventService.getUUIDFromEventId(args.e.data.id)
+                    )
+                );
+
+                sameOccurrence.forEach(ev =>
+                    this._removeEventInstance(ev.id)
+                );
+
+            } else {
+
+                // delete ONLY clicked occurrence
+                this._removeEventInstance(args.e.data.id);
             }
-            else { this.calendar.events.list = await this.eventService.fetchAllEvents(); }
+
         }
+        // if (result.deleteScope === "single") {
+        //     // delete only the clicked occurrence, on targeted dishes
+        //     targets.forEach(ev => {
+        //         if (ev.id === args.e.data.id || scope === "all") {
+        //             this._removeEventInstance(ev.id);
+        //         }
+        //     });
+        // } else {
+        //     // delete all siblings across all dates and targeted dishes
+        //     const uuid = this.eventService.getUUIDFromEventId(args.e.data.id);
+        //     const allOccurrences = this.calendar.events.list.filter(ev =>
+        //         this.eventService.getUUIDFromEventId(ev.id) === uuid &&
+        //         (scope === "all" || ev.resource === args.e.data.resource)
+        //     );
+        //     allOccurrences.forEach(ev => this._removeEventInstance(ev.id));
+        // }
+
         this.refresh();
     }
 
@@ -255,60 +632,259 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     async _handleEventResize(args) {
-        const events = this.getSiblings(args.e.data);
-        const updatedData = {
-            start: args.newStart,
-            end: args.newEnd
-        };
-        events.forEach(ev => this._updateEventInstance(ev.confluenceId, ev.resource, updatedData));
-        this.refresh();
-        // Prepare form data with all sibling resources for the Confluence API
-        const formData = {
-            ...args.e.data,
+        const user = await this.eventService.getCurrentUser();
+        // const events = this.getSiblings(args.e.data);
+        const siblings = this.getSiblings(args.e.data);
+        console.log('resize siblings count:', siblings.length);
+        console.log('resize siblings ids:', siblings.map(s => s.id));
+        const scope = await this._promptScope(siblings);
+        // calculate the new duration from the resized event
+        const newDuration = new DayPilot.Date(args.newEnd).getTime() - 
+                        new DayPilot.Date(args.newStart).getTime();
+        const targets = scope === "all" ? siblings : [args.e.data];
+        console.log('resize targets:', targets.map(t => t.id));
+
+        targets.forEach(ev => {
+            if (scope === "all") {
+                // preserve each occurrence's own start, just apply new duration
+                const evStart = ev.start instanceof DayPilot.Date 
+                    ? ev.start 
+                    : new DayPilot.Date(ev.start);
+                const newEnd = new DayPilot.Date(evStart.getTime() + newDuration);
+                this._updateEventInstance(ev.id, {
+                    end: newEnd,
+                    creator: user.displayName,
+                });
+            } else {
+                // single — update both start and end as dragged
+                this._updateEventInstance(ev.id, {
             start: args.newStart,
             end: args.newEnd,
-            resource: events.map(ev => String(ev.resource)).filter(Boolean)
-        };
-        await this.eventService.updateEvent(formData, args.e.data);
+                    creator: user.displayName,
+                });
+            }
+        });
+
+        this.refresh();
+    }
+    //     const updatedData = {
+    //         start: args.newStart,
+    //         end: args.newEnd,
+    //         creator: user.displayName,
+    //     };
+    //     targets.forEach(ev => {
+    //         this._updateEventInstance(ev.id, updatedData);
+    //     });
+    //     this.refresh();
+    // }
+
+    async _promptScope(siblings) {
+        if (siblings.length <= 1) return "all";
+        const scope = await DayPilot.Modal.confirm(
+            "Apply to this dish only, or all dishes in this booking?",
+            { okText: "All dishes", cancelText: "This dish only" }
+        );
+        return scope.result ? "all" : "single";
     }
 
-    /**
-     * Handles event moving
-     * moves all sibling events and updates confluence event
-     * @private
-     * @param {Object} args - Event arguments
-     */
-    async _handleEventMove(args) {
-        const newId = this.eventService.makeEventId(args.e.data.confluenceId, args.newResource);
-        // const newId = `${args.e.data.confluenceId}-${args.newResource}`; // fallback without eventService
+    // async _handleEventMove(args) {
+    //     const dateStr = args.e.data.id.split('_').pop(); // extract existing date suffix
+    //     const newId = this.eventService.makeEventId(
+    //         this.eventService.getUUIDFromEventId(args.e.data.id),
+    //         args.newResource
+    //         ) + (dateStr?.match(/^\d{8}$/) ? `_${dateStr}` : ''
+    //     );
+    //     const event = args.e.data;
+    //     const siblings = this.getSiblings(event);
 
-        // catch for moving an event to a resource where a sibling exists
-        // (would result in duplicate id)
-        if (args.e.data.id != newId && this.calendar.events.find(newId)) {
+    //     // prevent duplicate sibling resource assignment
+    //     const duplicate = this.calendar.events.list.find(ev =>
+    //         ev.id === newId && ev.id !== args.e.data.id
+    //     );
+    //     if (duplicate) {
+    //         args.preventDefault();
+    //         DayPilot.Modal.alert("This booking is already assigned to that dish.");
+    //         return;
+    //     }
+
+    //     const user = await this.eventService.getCurrentUser();
+    //     const scope = await this._promptScope(siblings);
+    //     const targets = scope === "all" ? siblings : [event];
+
+    //     targets.forEach(ev => {
+    //         this._updateEventInstance(ev.id, {
+    //             start: args.newStart,
+    //             end: args.newEnd,
+    //             creator: user.displayName,
+    //             // only update resource and id for the actually dragged event
+    //             ...(ev.id === args.e.data.id && {
+    //                 resource: args.newResource,
+    //                 id: newId,
+    //             }),
+    //         });
+    //     });
+
+    //     this.refresh();
+    // }
+
+    async _handleEventMove(args) {
+        // capture BEFORE any await — DayPilot mutates after async points
+        const originalStartMs = new DayPilot.Date(args.e.data.start).getTime();
+        const originalResource = args.e.data.resource;
+
+        const dateStr = args.e.data.id.split('_').pop();
+        const newId = this.eventService.makeEventId(
+            this.eventService.getUUIDFromEventId(args.e.data.id),
+            args.newResource
+        ) + (dateStr?.match(/^\d{8}$/) ? `_${dateStr}` : '');
+
+        const event = args.e.data;
+        const siblings = this.getSiblings(event);
+
+        const duplicate = this.calendar.events.list.find(ev =>
+            ev.id === newId && ev.id !== args.e.data.id
+        );
+        if (duplicate) {
             args.preventDefault();
             DayPilot.Modal.alert("This booking is already assigned to that dish.");
             return;
         }
-        args.e.data.id = newId;
-        args.e.data.resource = args.newResource
 
-        const events = this.getSiblings(args.e.data);
+        const user = await this.eventService.getCurrentUser();
+        const scope = await this._promptScope(siblings);
+        const targets = scope === "all" ? siblings : [event];
+
+        const newStart = args.newStart instanceof DayPilot.Date
+            ? args.newStart : new DayPilot.Date(args.newStart);
+        const newEnd = args.newEnd instanceof DayPilot.Date
+            ? args.newEnd : new DayPilot.Date(args.newEnd);
+
+        const deltaMs = newStart.getTime() - originalStartMs;
+        const duration = newEnd.getTime() - newStart.getTime();
+        const isVerticalMove = args.newResource !== originalResource;
+
+        console.log('deltaMs:', deltaMs, 'isVerticalMove:', isVerticalMove,
+                    'originalResource:', originalResource, 'newResource:', args.newResource);
+
+        // calculate dish offset for vertical moves
+        const dishList = this.dishDataManager.dishList;
+        const originalIndex = dishList.findIndex(d => d.id === originalResource);
+        const newIndex = dishList.findIndex(d => d.id === args.newResource);
+        const dishOffset = newIndex - originalIndex;
+
+        console.log('originalResource:', originalResource);
+        console.log('newResource:', args.newResource);
+        console.log('originalIndex:', originalIndex);
+        console.log('newIndex:', newIndex);
+        console.log('dishOffset:', dishOffset);
+        console.log('dishList sample:', dishList.slice(0, 6).map(d => d.id));
+        targets.forEach(ev => {
+            const evStart = ev.start instanceof DayPilot.Date
+                ? ev.start : new DayPilot.Date(ev.start);
+            const evDateStr = ev.id.split('_').pop();
+
+            if (scope === "all" && isVerticalMove) {
+                if (ev.id === args.e.data.id) return; // ← skip dragged event, DayPilot already
+                const currentDishIndex = dishList.findIndex(d => d.id === ev.resource);
+                const targetDishIndex = currentDishIndex + dishOffset;
+
+                if (targetDishIndex < 0 || targetDishIndex >= dishList.length) return;
+
+                const targetDish = dishList[targetDishIndex].id;
+                const targetId = this.eventService.makeEventId(
+                    this.eventService.getUUIDFromEventId(ev.id),
+                    targetDish
+                ) + (evDateStr?.match(/^\d{8}$/) ? `_${evDateStr}` : '');
+
+                const alreadyExists = this.calendar.events.list.find(e =>
+                    e.id === targetId && e.id !== ev.id
+                );
+                if (alreadyExists) return;
+
+                this._updateEventInstance(ev.id, {
+                    resource: targetDish,
+                    id: targetId,
+                    creator: user.displayName,
+                });
+            } else if (scope === "all" && !isVerticalMove) {
+                if (ev.id === args.e.data.id) return; // Skip the original event
+                const shiftedStart = new DayPilot.Date(evStart.getTime() + deltaMs);
+                const shiftedEnd = new DayPilot.Date(shiftedStart.getTime() + duration);
+                this._updateEventInstance(ev.id, {
+                    start: shiftedStart,
+                    end: shiftedEnd,
+                    creator: user.displayName,
+                });
+            } else {
+                this._updateEventInstance(ev.id, {
+                    start: args.newStart,
+                    end: args.newEnd,
+                    creator: user.displayName,
+                    ...(ev.id === args.e.data.id && {
+                        resource: args.newResource,
+                        id: newId,
+                    }),
+                });
+            }
+        });
+
+        this.refresh();
+    }
+
+    async _handleRectangleSelected(args) {
+        console.log('_handleRectangleSelected fired', args);
+        const selectedEvents = this.calendar.events.selected();
+        if (!selectedEvents || selectedEvents.length === 0) return;
+
+        // show action prompt
+        const action = await DayPilot.Modal.confirm(
+            `${selectedEvents.length} event(s) selected. What would you like to do?`,
+            { okText: "Move", cancelText: "Cancel" }
+        );
+        if (!action.result) return;
+
+        // show time range picker for new start
+        const modal = await DayPilot.Modal.form([
+            { name: "New Start", id: "start", type: "datetime", dateFormat: "dd/MM/yyyy" },
+            { name: "New Resource (optional)", id: "resource", type: "text" }
+        ], { start: selectedEvents[0].data.start });
+
+        if (modal.canceled) return;
+
+        const newStart = new DayPilot.Date(modal.result.start);
+        const newResource = modal.result.resource?.trim() || null;
+
+        selectedEvents.forEach(ev => {
+            const duration = new DayPilot.Date(ev.data.end).getTime() - 
+                            new DayPilot.Date(ev.data.start).getTime();
         const updatedData = {
-            start: args.newStart,
-            end: args.newEnd
+                start: newStart,
+                end: new DayPilot.Date(newStart.getTime() + duration),
         };
-        events.forEach(ev => {
-            this._updateEventInstance(ev.confluenceId, ev.resource, updatedData);
+            if (newResource) updatedData.resource = newResource;
+            this._updateEventInstance(ev.data.id, updatedData);
         });
         this.refresh();
-        // Prepare form data with all sibling resources for the Confluence API
-        const formData = {
-            ...args.e.data,
-            start: args.newStart,
-            end: args.newEnd,
-            resource: events.map(ev => String(ev.resource)).filter(Boolean)
-        };
-        await this.eventService.updateEvent(formData, args.e.data);
+    }
+
+    async _handleEventClick(args) {
+        const user = await this.eventService.getCurrentUser();
+        let event = { ...args.e.data };
+        const siblings = this.getSiblings(event);
+
+        const result = await this.eventFormManager.show(event, this.calendar.events.list);
+        if (!result) return;
+
+        const scope = await this._promptScope(siblings);
+        const targets = scope === "all" ? siblings : [event];
+
+        const uuid = this.eventService.getUUIDFromEventId(event.id);
+        targets.forEach(ev => {
+            this._removeEventInstance(ev.id);
+            this._addEventInstance(result, uuid, ev.resource);
+        });
+
+        this.refresh();
     }
 
     /**
@@ -318,10 +894,11 @@ class CalendarRenderer {
      * @param {Object} args - Event arguments
      */
     async _handleTimeRangeSelected(args) {
+        const user = await this.eventService.getCurrentUser();
         const result = await this.eventFormManager.show({
             start: args.start,
             customEventTypeId: this.eventService.customEventTypes.find(e => e.name === "Other").id,
-            creator: this.eventService.user.displayName,
+            creator: user.displayName,
             end: args.end,
             resource: args.resource,
         }, this.calendar.events.list);
@@ -329,75 +906,143 @@ class CalendarRenderer {
         this.calendar.clearSelection();
         if (!result) return;
 
-        //retrieve confluence response so we can use the event id generated
-        const postedEvent = await this.eventService.createEvent(result);
-        if (!postedEvent?.success) return;
 
-        const eventId = result.customEventTypeId
-        const updatedEvents = await this.eventService.fetchEventsByEventId(eventId);
-        this.calendar.events.list = [
-            ...this.calendar.events.list.filter(e => e.customEventTypeId !== eventId),
-            ...updatedEvents
-        ];
+        const seriesUuid = this.eventService.createSeriesUUID();
+        console.log('result.rruleStr before expand:', result.rruleStr);
+        // generate occurrences from rrule if recurring
+        const instances = this._expandEvent(result, seriesUuid);
+        console.log('instances after expand:', instances.length);
+        
+        instances.forEach(instance => {
+            result.resource.forEach(dish => {
+                this._addEventInstance(instance, seriesUuid, dish);
+            });
+        });
+
         this.refresh();
-
-        // // Add new DayPilot events for each selected dish
-        // result.resource.forEach(dish => {
-        //     this._addEventInstance(postedEvent.event.id, dish, result);
-        // });
-
-        // this.refresh();
     }
 
+    _expandEvent(result, uuid) {
+        console.log('_expandEvent called', result);
+        if (!result.rruleStr) {
+            console.log('_expandEvent: no rruleStr, returning as-is');
+            return [result]; // not recurring, just return as-is
+        }
+
+        const parsed = this.eventFormManager._parseRrule(result.rruleStr);
+        console.log('parsed rrule:', parsed);  // ← add this
+        // new DayPilot.Date(this.eventFormManager._rruleDateToInput(parsed.UNTIL));
+        if (!parsed.FREQ) {
+            console.log('_expandEvent: no FREQ after parsing, returning as-is');
+            return [result];
+        }
+
+        const freq = parsed.FREQ;
+        const interval = parseInt(parsed.INTERVAL) || 1;
+        const byday = parsed.BYDAY ? parsed.BYDAY.split(',') : [];
+        const count = parsed.COUNT ? parseInt(parsed.COUNT) : null;
+        console.log('parsed.UNTIL:', parsed.UNTIL);
+        const until = (parsed.UNTIL && typeof parsed.UNTIL === 'string')
+            ? new DayPilot.Date(this.eventFormManager._rruleDateToInput(parsed.UNTIL))
+            : null;
+
+        const DAY_MAP = { MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6, SU: 0 };
+
+        // guard against invalid start
+        const startDate = result.start instanceof DayPilot.Date 
+        ? result.start 
+        : new DayPilot.Date(result.start);
+        if (!startDate || !startDate.getTime()) {
+            console.warn('_expandEvent: invalid start date', result.start);
+            return [result];
+        }
+        const endDate = result.end instanceof DayPilot.Date 
+        ? result.end 
+        : new DayPilot.Date(result.end);
+        const duration = endDate.getTime() - startDate.getTime();
+
+        // cap expansion to 1 year ahead to avoid infinite loops
+        const hardLimit = startDate.addDays(365);
+        const rangeEnd = until
+            ? (until.getTime() < hardLimit.getTime() ? until : hardLimit)
+            : hardLimit;
+
+        const instances = [];
+        let current = startDate;
+        let countSoFar = 0;
+
+        while (current.getTime() <= rangeEnd.getTime()) {
+            if (count && countSoFar >= count) break;
+
+            const jsDate = current.toDate();
+            const dayOfWeek = jsDate.getDay();
+
+            let matches = false;
+            if (freq === 'DAILY') {
+                matches = true;
+            }
+            if (freq === 'WEEKLY') {
+                matches = byday.length === 0 || byday.some(d => DAY_MAP[d] === dayOfWeek);
+            }
+            if (freq === 'MONTHLY') {
+                matches = jsDate.getDate() === startDate.toDate().getDate();
+            }
+            if (freq === 'YEARLY') {
+                const orig = startDate.toDate();
+                matches = jsDate.getDate() === orig.getDate() &&
+                        jsDate.getMonth() === orig.getMonth();
+            }
+
+            if (matches) {
+                console.log('match found at:', current.toString());
+                instances.push({
+                    ...result,
+                    start: current,
+                    end: new DayPilot.Date(current.getTime() + duration),
+                });
+                console.log('total instances:', instances.length);
+                console.log('instance dates:', instances.map(i => i.start.toString()));
+                countSoFar++;
+            }
+
+            // advance by interval only when we hit a freq boundary
+            if (freq === 'DAILY' && matches) {
+                current = current.addDays(interval);
+            } else if (freq === 'WEEKLY') {
+                // advance day by day, jump by interval weeks after completing a week
+                current = current.addDays(1);
+                if (current.toDate().getDay() === startDate.toDate().getDay() && instances.length > 0) {
+                    current = current.addDays((interval - 1) * 7);
+                }
+            } else if (freq === 'MONTHLY' && matches) {
+                current = current.addDays(1); // let it find next matching date
+                // jump ahead by interval months minus remaining days
+                const nextMonth = new DayPilot.Date(
+                    new Date(jsDate.getFullYear(), jsDate.getMonth() + interval, jsDate.getDate())
+                );
+                current = nextMonth;
+            } else if (freq === 'YEARLY' && matches) {
+                current = new DayPilot.Date(
+                    new Date(jsDate.getFullYear() + interval, jsDate.getMonth(), jsDate.getDate())
+                );
+            } else {
+                current = current.addDays(1);
+            }
+        console.log('freq:', freq);
+        console.log('byday:', byday);
+        console.log('startDate:', startDate.toString());
+        console.log('startDate dayOfWeek:', startDate.toDate().getDay());
+        console.log('DAY_MAP MO:', DAY_MAP['MO']);
+        }
+
+        return instances;
+    }
     /**
      * Handles event click
      * updates event, all siblings and corresponding confluence event
      * @private
      * @param {Object} args - Event arguments
      */
-    async _handleEventClick(args) {
-        let event = { ...args.e.data };
-        event.resource = this.getSiblings(event).map(ev => ev.resource);
-        const result = await this.eventFormManager.show(event, this.calendar.events.list);
-        if (!result) return;
-
-        await this.eventService.updateEvent(result, event);
-
-        this.calendar.events.list = await this.eventService.fetchAllEvents();
-        this.refresh();
-        return
-
-        // The below code was an attempt to update events without refetching all events 
-        // from Confluence, but due to the complexity of handling recurring events and 
-        // event types it is less error-prone to simply refetch all events after an update.
-
-        // const currentResources = event.resource
-        // const nextResources = result.resource;
-        // const toAdd = nextResources.filter(r => !currentResources.includes(r));
-        // const toRemove = currentResources.filter(r => !nextResources.includes(r));
-        // const toKeep = nextResources.filter(r => currentResources.includes(r));
-
-        // toKeep.forEach(resource => {
-        //     this._updateEventInstance(event.confluenceId, resource, {
-        //         text: result.text,
-        //         customEventTypeId: result.customEventTypeId || "",
-        //         start: result.start,
-        //         end: result.end,
-        //         resource: resource,
-        //         description: result.description
-        //     });
-        // });
-
-        // toRemove.forEach(resource => {
-        //     this._removeEventInstance(event.confluenceId, resource);
-        // });
-
-        // toAdd.forEach(resource => {
-        //     this._addEventInstance(event.confluenceId, resource, result);
-        // });
-
-        // this.refresh();
-    }
 
     /**
      * Handles row/resource click
@@ -508,6 +1153,11 @@ class CalendarRenderer {
         this.updateVisibleResources();
         this.calendar.update();
         this._updateCurrentTimeLine()
+        // update map colors on every refresh
+        this.mapRenderer.updateDishColors(
+        this.calendar.events.list,
+        this.eventService.customEventTypes
+    );
     }
 
     /**
@@ -519,9 +1169,16 @@ class CalendarRenderer {
      * @returns {Array} Array of sibling events
      */
     getSiblings(event) {
-        return this.calendar.events.list.filter(
-            ev => ev.confluenceId === event.confluenceId
-        );
+        // for recurring events, match by seriesUuid stored in event data
+        const uuid = event.seriesUuid || this.eventService.getUUIDFromEventId(event.id);
+        console.log('getSiblings uuid:', uuid);
+        return this.calendar.events.list.filter(ev => {
+            const evUuid = ev.seriesUuid || this.eventService.getUUIDFromEventId(ev.id);
+            return evUuid === uuid;
+        });
+        // return this.calendar.events.list.filter(
+        //     ev => this.eventService.getUUIDFromEventId(ev.id) === this.eventService.getUUIDFromEventId(event.id)
+        // );
     }
 
     /**
@@ -553,7 +1210,7 @@ class CalendarRenderer {
      */
     _startAutoRefresh(intervalMs = 300000) {
         this._refreshInterval = setInterval(async () => {
-            this.calendar.events.list = await this.eventService.fetchAllEvents();
+            //this.calendar.events.list = await this.eventService.fetchAllEvents();
             this.refresh()
         },
             intervalMs);
@@ -566,7 +1223,7 @@ class CalendarRenderer {
      */
     async _onVisibilityChange() {
         if (document.visibilityState === 'visible') {
-            this.calendar.events.list = await this.eventService.fetchAllEvents();
+            //this.calendar.events.list = await this.eventService.fetchAllEvents();
             this.refresh()
         }
     }
