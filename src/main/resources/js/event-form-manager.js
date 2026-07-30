@@ -25,7 +25,9 @@ class EventFormManager {
             scrollWithPage: false,
             autoStretch: true,
             zIndex: 1000,
-            onClose: (modal) => this._handleFormClose(modal)
+            onClose: (modal) => {
+                this._handleFormClose(modal);
+            }
         });
         if (modal.canceled) return null;
         return modal.result;
@@ -61,6 +63,39 @@ class EventFormManager {
     // RECURRENCE
     // ─────────────────────────────────────────────────────────────────────────
 
+    // _buildRruleString() {
+    //     const freq = document.getElementById('rfm-freq').value;
+    //     if (!freq) return '';
+
+    //     const interval = parseInt(document.getElementById('rfm-interval-val').value) || 1;
+    //     const endTimes = document.getElementById('rfm-end-times').checked;
+    //     const endUntil = document.getElementById('rfm-end-until').checked;
+
+    //     let rrule = `FREQ=${freq};INTERVAL=${interval}`;
+
+    //     if (freq === 'WEEKLY') {
+    //         const activeDays = [...document.querySelectorAll('.rfm-day-btn.rfm-day-active')]
+    //             .map(btn => btn.dataset.day);
+    //         if (activeDays.length > 0) rrule += `;BYDAY=${activeDays.join(',')}`;
+    //     }
+
+    //     if (freq === 'MONTHLY') {
+    //         const isWeekday = document.getElementById('rfm-monthly-weekday').checked;
+    //         if (isWeekday) {
+    //             const byday = this._getMonthlyWeekdayRule();
+    //             if (byday) rrule += `;BYDAY=${byday}`;
+    //         }
+    //     }
+
+    //     if (endTimes) {
+    //         const count = parseInt(document.getElementById('rfm-end-times-val').value) || 1;
+    //         rrule += `;COUNT=${count}`;
+    //     } else if (endUntil && this._untilValue) {
+    //         rrule += `;UNTIL=${this._untilValue}`;
+    //     }
+
+    //     return rrule;
+    // }
     /**
      * Builds the recurrence HTML form field.
      * Pre-selects values from data.rruleStr if present.
@@ -278,6 +313,10 @@ class EventFormManager {
 
         const INTERVAL_LABELS = { DAILY: 'days', WEEKLY: 'weeks', MONTHLY: 'months', YEARLY: 'years' };
 
+        const syncRrule = () => {
+            const out = document.getElementById('rfm-rrule-out');
+            if (out) out.value = this._buildRruleFromForm();
+        };
         // Populate monthly labels from whatever start date is currently in the form
         this._updateMonthlyLabels();
 
@@ -293,12 +332,16 @@ class EventFormManager {
             if (show) intervalLbl.textContent = INTERVAL_LABELS[freq] || '';
         };
 
-        freqEl.addEventListener('change', updateVisibility);
+        // freqEl.addEventListener('change', updateVisibility);
+        freqEl.addEventListener('change', () => { updateVisibility(); syncRrule(); });
         updateVisibility(); // run once in case of pre-populated freq
 
         // Day toggle buttons
         document.querySelectorAll('.rfm-day-btn').forEach(btn => {
-            btn.addEventListener('click', () => btn.classList.toggle('rfm-day-active'));
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('rfm-day-active');
+                syncRrule();
+            });
         });
 
         // Enable/disable end-repeat sub-inputs
@@ -309,16 +352,27 @@ class EventFormManager {
         };
 
         document.querySelectorAll('input[name="rfm-end"]').forEach(r =>
-            r.addEventListener('change', syncEndInputs)
+            r.addEventListener('change', () => { syncEndInputs(); syncRrule(); })
         );
+        // document.querySelectorAll('input[name="rfm-end"]').forEach(r =>
+        //     r.addEventListener('change', syncEndInputs)
+        // );
 
-        // Interval validation
         intervalVal.addEventListener('input', () => {
             const v = parseInt(intervalVal.value);
             intervalErr.style.display = (v > 0 && v < 100) ? 'none' : 'block';
+            syncRrule();
         });
+        // // Interval validation
+        // intervalVal.addEventListener('input', () => {
+        //     const v = parseInt(intervalVal.value);
+        //     intervalErr.style.display = (v > 0 && v < 100) ? 'none' : 'block';
+        // });
 
         // Inline date picker for "until" field
+        console.log('end-never checked:', document.getElementById('rfm-end-never')?.checked);
+        console.log('end-times checked:', document.getElementById('rfm-end-times')?.checked);
+        console.log('end-until checked:', document.getElementById('rfm-end-until')?.checked);
         if (endUntilPickerBtn) {
             endUntilPickerBtn.addEventListener('click', () => {
 
@@ -328,7 +382,8 @@ class EventFormManager {
                     zIndex: 1100,
                     onTimeRangeSelected: args => {
                         this._untilValue = args.date.toString("yyyyMMdd");
-                        endUntilVal.value = args.date.toString("dd/MM/yyyy");;
+                        endUntilVal.value = args.date.toString("dd/MM/yyyy");
+                        syncRrule();
                     }
                 });
 
@@ -379,6 +434,9 @@ class EventFormManager {
             if (count > 0) parts.push(`COUNT=${count}`);
         }
 
+        else if (endType === 'until') {
+            if (this._untilValue) parts.push(`UNTIL=${this._untilValue}`);
+        }
         return parts.join(';');
     }
 
@@ -401,6 +459,9 @@ class EventFormManager {
      * @returns {string}
      */
     _rruleDateToInput(rruleDate) {
+        // Return empty string if rruleDate is undefined or null
+        if (!rruleDate) return '';
+        console.log('rruleDate value:', rruleDate);
         const d = rruleDate.replace(/T.*$/, ''); // e.g. "20260301"
         return `${d.slice(6, 8)}/${d.slice(4, 6)}/${d.slice(0, 4)}`; // "01/03/2026"
     }
@@ -458,24 +519,40 @@ class EventFormManager {
      * Builds the dish selection HTML form field.
      */
     _buildDishSelect(data, eventsList = []) {
-        const phaseFilters = ["Airstrip", "AA0.5", "AA1", "AA2", "AAstar"];
+        const phaseFilters = ["Airstrip", "MKT", "AA0.5", "AA1", "AA2", "AAstar", "AA4"];
         //const clusterFilters = ["S8", "S9", "S10"];
         const dishes = this.dishDataManager.getDishesByPhase(phaseFilters);
 
-        const phaseOptionsHtml = phaseFilters.map(phase =>
-            `<option value="${phase}">${phase}</option>`
-        ).join("");
+        const phaseOptionsHtml = this.dishDataManager.getIncludedPhases(phaseFilters.indexOf("AA4"), phaseFilters)
+            .map(phase => `<option value="${phase}">${phase}</option>`)
+            .join("");
+
+        //const phaseOptionsHtml = phaseFilters.map(phase =>
+        //    `<option value="${phase}">${phase}</option>`
+        //).join("");
 
         //const clusterOptionsHtml = clusterFilters.map(cluster =>
         //    `<option value="${cluster}">${cluster}</option>`
         //).join("");
 
-        const dishOptionsHtml = dishes.map(dish => {
+        // const dishOptionsHtml = dishes.map(dish => {
+        //     const selected = data.resource.includes(dish.Label) ? 'selected' : '';
+        //     const busy = data.start && data.end ? this._isDishBusy(dish.Label, data.start, data.end, eventsList) : false;
+        //     const dot = busy ? '🔴' : '🟢';
+        //     //const cluster = clusterFilters.find(c => dish.Label.startsWith(c)) ?? '';
+        //     return `<option value="${dish.Label}" data-phase="${dish.Phase}" ${selected}>${dot} ${dish.Label}</option>`; //data-cluster="${cluster}"
+        // }).join("");
+        const dishOptionsHtml = dishes
+            .sort((a, b) => {
+                const aSelected = data.resource.includes(a.Label) ? 0 : 1;
+                const bSelected = data.resource.includes(b.Label) ? 0 : 1;
+                return aSelected - bSelected;
+            })
+            .map(dish => {
             const selected = data.resource.includes(dish.Label) ? 'selected' : '';
             const busy = data.start && data.end ? this._isDishBusy(dish.Label, data.start, data.end, eventsList) : false;
             const dot = busy ? '🔴' : '🟢';
-            //const cluster = clusterFilters.find(c => dish.Label.startsWith(c)) ?? '';
-            return `<option value="${dish.Label}" data-phase="${dish.Phase}" ${selected}>${dot} ${dish.Label}</option>`; //data-cluster="${cluster}"
+                return `<option value="${dish.Label}" data-phase="${dish.Phase}" ${selected}>${dot} ${dish.Label}</option>`;
         }).join("");
 
         const html = `
@@ -500,7 +577,8 @@ class EventFormManager {
                     ${dishOptionsHtml}
                 </select>
             </div>
-        </div>`;
+            </div>
+        `;
 
         return { name: "Dishes", id: "text", type: "html", html };
     }
@@ -510,8 +588,16 @@ class EventFormManager {
      */
     _setupDishListeners() {
         const phaseSelect = document.getElementById('phase-multiselect');
-        const clusterSelect = document.getElementById('cluster-multiselect');
+        //const clusterSelect = document.getElementById('cluster-multiselect');
         const dishSelect = document.getElementById('dish-multiselect');
+
+        // phaseSelect.addEventListener('change', () => {
+        //     const selectedPhases = Array.from(phaseSelect.selectedOptions).map(o => o.value);
+        //     //Array.from(clusterSelect.options).forEach(opt => opt.selected = false);
+        //     Array.from(dishSelect.options).forEach(opt => {
+        //         opt.selected = selectedPhases.includes(opt.dataset.phase);
+        //     });
+        // });
 
         phaseSelect.addEventListener('change', () => {
             const selectedPhases = Array.from(phaseSelect.selectedOptions).map(o => o.value);
@@ -519,15 +605,20 @@ class EventFormManager {
             Array.from(dishSelect.options).forEach(opt => {
                 opt.selected = selectedPhases.includes(opt.dataset.phase);
             });
-        });
 
-        clusterSelect.addEventListener('change', () => {
-            const selectedClusters = Array.from(clusterSelect.selectedOptions).map(o => o.value);
-            Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
-            Array.from(dishSelect.options).forEach(opt => {
-                opt.selected = selectedClusters.includes(opt.dataset.cluster);
-            });
+            // Re-sort: selected options float to top
+            const options = Array.from(dishSelect.options);
+            options.sort((a, b) => (a.selected ? 0 : 1) - (b.selected ? 0 : 1));
+            dishSelect.innerHTML = '';
+            options.forEach(opt => dishSelect.appendChild(opt));
         });
+        //clusterSelect.addEventListener('change', () => {
+        //    const selectedClusters = Array.from(clusterSelect.selectedOptions).map(o => o.value);
+        //    Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
+        //    Array.from(dishSelect.options).forEach(opt => {
+        //        opt.selected = selectedClusters.includes(opt.dataset.cluster);
+        //    });
+        //});
 
         dishSelect.addEventListener('change', () => {
             Array.from(phaseSelect.options).forEach(opt => opt.selected = false);
@@ -617,6 +708,10 @@ class EventFormManager {
      */
     _handleFormClose(modal) {
         // Capture dish selections
+        console.log('_handleFormClose called');
+        console.log('rfm-rrule-out value:', document.getElementById('rfm-rrule-out')?.value);
+        console.log('_buildRruleFromForm result:', this._buildRruleFromForm());
+
         const selectEl = document.getElementById("dish-multiselect");
         if (selectEl && modal.result) {
             modal.result.resource = Array.from(selectEl.selectedOptions).map(opt => opt.value);
