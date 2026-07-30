@@ -11,8 +11,12 @@
 class EventService {
     constructor(dishDataManager) {
         this.dishDataManager = dishDataManager;
-        this.subCalendarIds = [];
-        this.childSubCalendarsByEventId = {};
+        this.customEventTypesList = [
+            { id: "type-FlightsActivities", title: "Airplane", color: "#7B68EE" },
+            { id: "type-ObservationSchedule", title: "Observation Schedule", color: "#ADFF2F" },
+            { id: "type-maintenance", title: "Maintenance", color: "#E70068" },
+            { id: "type-other", title: "Other", color: "#FF69B4" },
+        ];
         this.user = null;
     }
 
@@ -21,10 +25,34 @@ class EventService {
      * @returns {Array} Array of event types with {name, id} format
      */
     get customEventTypes() {
-        return Object.entries(this.childSubCalendarsByEventId)
-            .map(([id, eventType]) => ({ name: eventType.title, id }))
+        return this.customEventTypesList
+            .map(eventType => ({ name: eventType.title, id: eventType.id, color: eventType.color }))
             .sort((a, b) => a.name.localeCompare(b.name));
     }
+
+    /**
+    * Add a new custom event type
+    */
+    addCustomEventType(id, title) {
+        if (!this.customEventTypesList.find(t => t.id === id)) {
+            this.customEventTypesList.push({ id, title });
+        }
+    }
+
+    /**
+     * Remove a custom event type
+     */
+    removeCustomEventType(id) {
+        this.customEventTypesList = this.customEventTypesList.filter(t => t.id !== id);
+    }
+
+    /**
+     * Get all custom event types
+     */
+    getAllCustomEventTypes() {
+        return this.customEventTypesList;
+    }
+
 
     /**
      * Base HTTP request method for Confluence REST API calls.
@@ -448,71 +476,48 @@ class EventService {
      * @returns {Promise<void>}
      */
     async getCurrentUser() {
-        this.user = await this._request('/rest/api/user/current');
+        const user = await this._request('/rest/api/user/current');
+        this.user = user;
+        return user;
     }
 
     /**
-     * Required to push through edits to recurring event updates
-     * @param {Object} event - Event just edited
-     * @returns {Promise<Object>} Response from server
+     * Creates a seriesUUID (generated once per booking)
+     * This UUID is shared by all events from the same series,
+     * making them siblings with different resourceIds.
+     * @returns {string} The unique UUID for this service instance
      */
-    async deleteHiddenEvents(event) {
-        const formData = new URLSearchParams();
-        formData.append("subCalendarId", event.childSubCalendarId);
-        formData.append("subCalendarId", event.subCalendarId);
-        return this._request(
-            '/rest/calendar-services/1.0/calendar/preferences/events/hidden.json',
-            'DELETE',
-            formData
-        );
+    createSeriesUUID() {
+        return crypto.randomUUID();
     }
 
     /**
-     * Removes the timezone component from a Confluence date string
-     * @param {string} dateString - ISO date string potentially containing a timezone offset
-     * @returns {DayPilot.Date} DayPilot date with timezone stripped
+     * Creates unique event ID combining the stored instance UUID and resource ID.
+     * All events from the same instance share the same UUID prefix
      */
-    removeTZ(dateString) {
-        return new DayPilot.Date(dateString.split("+")[0]);
+    makeEventId(seriesUuid, resourceId) {
+        return `${seriesUuid}:${resourceId}`;
     }
 
     /**
-     * Formats a date using Intl.DateTimeFormat
-     * @private
+     * Extracts the UUID prefix from an event ID
+     * Useful for finding the shared UUID among sibling events.
+     * 
+     * @param {string} eventId - Full event ID in format "uuid:resourceId"
+     * @returns {string} Just the UUID part before the colon
      */
-    _formatDateWithIntl(dateString, options, timeZone = "South Africa/Johannesburg") {
-        const dateObject = new Date(dateString);
-        return new Intl.DateTimeFormat('en-US', { ...options, timeZone }).format(dateObject);
+    getUUIDFromEventId(eventId) {
+        return eventId.split(':')[0];
     }
 
     /**
-     * Converts date string to Confluence date format
-     * @param {string} dateString - ISO date string
-     * @returns {string} Formatted date
+     * Extracts the resourceId from an event ID
+     * 
+     * @param {string} eventId - Full event ID in format "uuid:resourceId"
+     * @returns {string} Just the resourceId part after the colon
      */
-    convertToConfluenceDate(dateString) {
-        if (dateString.value) dateString = dateString.value;   // DatePicker object guard
-        return this._formatDateWithIntl(dateString, {
-            year: 'numeric', month: 'long', day: 'numeric'
-        });
-    }
-
-    /**
-     * Converts date string to Confluence time format
-     * @param {string} dateString - ISO date string
-     * @returns {string} Formatted time
-     */
-    convertToConfluenceTime(dateString) {
-        return this._formatDateWithIntl(dateString, {
-            hour: 'numeric', minute: '2-digit', hour12: true
-        });
-    }
-
-    /**
-     * Creates unique event ID combining Confluence ID and resource ID
-     */
-    makeEventId(confluenceId, resourceId) {
-        return `${confluenceId}:${resourceId}`;
+    getResourceIdFromEventId(eventId) {
+        return eventId.split(':')[1];
     }
 
     /**
